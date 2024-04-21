@@ -128,7 +128,6 @@ const Rabies_Field_Vacc_Form2 = () => {
   
   useEffect(() => {
     // Fetch user data (keep this as is)
-    //const NETWORK_URL1 = 'http://192.168.1.7:3000/Position';
 
     axios.get(`${apiURL}/Position`)
       .then(response => setUser(response.data))
@@ -193,32 +192,29 @@ const Rabies_Field_Vacc_Form2 = () => {
      console.log('Contact Number:', contactNo);
    }
 
-   // Ensure autofill functionality
-   const { petData } = route.params || {};
+   // If editing an existing form, autofill the data
+  if (route.params?.petData) {
+    const petData = route.params.petData;
+    const adjustedDate = new Date(petData.dateVaccinated);
+    adjustedDate.setDate(adjustedDate.getDate() + 1);
 
-   const adjustedDate = new Date(petData.dateVaccinated);
-   adjustedDate.setDate(adjustedDate.getDate() + 1);
+    setpetName(petData.petName || '');
+    setpetAge(petData.petAge || '');
+    setSpeciesValue(petData.species || null);
+    setAnimalSexValue(petData.petSex || null);
+    setcolorMarkings(petData.color || '');
+    setcardNumber(petData.cardNo || '');
+    setvaccineLotNumber(petData.vaccine || '');
+    setsourceOfVaccine(petData.source || '');
+    setSelectedDateVac(adjustedDate);
 
-    if (petData) {
-      setpetName(petData.petName || '');
-      setpetAge(petData.petAge || '');
-      setSpeciesValue(petData.species || null);
-      setAnimalSexValue(petData.petSex || null);
-      setcolorMarkings(petData.color || '');
-      setcardNumber(petData.cardNo || '');
-      setvaccineLotNumber(petData.vaccine || '');
-      setsourceOfVaccine(petData.source || '');
-      //setSelectedDateVac(petData.dateVaccinated ? new Date(petData.dateVaccinated) : null);
-      if (petData.dateVaccinated) setSelectedDateVac(adjustedDate);
-      if (petData.timeFinish) {
-        // Here, ensure you convert the timeFinish to a proper Date object or format it correctly
-        // Assuming timeFinish is a string in 'HH:mm' format and needs conversion
-        const [hours, minutes] = petData.timeFinish.split(':');
-        const time = new Date();
-        time.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0);
-        setFinSelectedTime(time);
-      }
+    if (petData.timeFinish) {
+      const [hours, minutes] = petData.timeFinish.split(':');
+      const time = new Date();
+      time.setHours(parseInt(hours, 10), parseInt(minutes, 10));
+      setFinSelectedTime(time);
     }
+  }
   }, [route.params]);
 
   const handleSubmitPress = () => {
@@ -358,7 +354,10 @@ const navigateAfterSubmit = () => {
 
          {/* White Container */}
       <View style={styles.whiteContainer}>
-        <ScrollView>
+        <ScrollView
+        contentContainerStyle={styles.scrollViewContainer} 
+        nestedScrollEnabled={true} // Enable this on Android
+        >
           <View style={styles.greenContainer}>
               <Text style={styles.greenText}>Input "N/A" if information is unavailable</Text>
           </View>
@@ -406,6 +405,7 @@ const navigateAfterSubmit = () => {
                       placeholder="Please select first"
                       setOpen={handleSpeciesOpen}
                       setValue={handleSpeciesChange}
+                      listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
                       />
               </View>
 
@@ -421,6 +421,7 @@ const navigateAfterSubmit = () => {
                     placeholder="Please select first"
                     setOpen={handleAnimalSexOpen}
                     setValue={handleAnimalSexChange}
+                    listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
                   />
               </View>
           </View>

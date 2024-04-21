@@ -231,7 +231,10 @@ const Neuter_Form = () => {
   
       {/* White Container */}
       <View style={styles.whiteContainer}>
-        <ScrollView>
+        <ScrollView
+        contentContainerStyle={styles.scrollViewContainer} 
+        nestedScrollEnabled={true} // Enable this on Android
+        >
         {/* Green Container */}
         <View style={styles.greenContainer}>
           <Text style={styles.greenText}>Input "N/A" if information is unavailable</Text>
@@ -277,6 +280,7 @@ const Neuter_Form = () => {
               placeholder="Please select first"
               setOpen={handleDistrictOpen}
               setValue={handleDistrictChange}
+              listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
             />
           </View>
         </View>
@@ -322,6 +326,7 @@ const Neuter_Form = () => {
               placeholder="Please select first"
               setOpen={handleProcedureOpen}
               setValue={handleProcedureChange}
+              listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
             />
           </View>
         </View>

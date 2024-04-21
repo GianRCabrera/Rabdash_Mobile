@@ -59,6 +59,8 @@ const styles = StyleSheet.create({
       dropdownContainer: {
         width: '48%',
         marginBottom: 10,
+        borderWidth: 0, 
+        maxHeight: 200 
       },
       header: {
         fontSize: 19,
@@ -90,6 +92,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 10,
+        marginBottom: 25,
       },
       buttonText: {
         color: 'white',

@@ -291,7 +291,10 @@ const navigateAfterSubmit = () => {
   
       {/* White Container */}
       <View style={styles.whiteContainer}>
-        <ScrollView>
+        <ScrollView
+        contentContainerStyle={styles.scrollViewContainer} 
+        nestedScrollEnabled={true} // Enable this on Android
+        >
         {/* Green Container */}
         <View style={styles.greenContainer}>
           <Text style={styles.greenText}>Input "N/A" if information is unavailable</Text>
@@ -330,6 +333,7 @@ const navigateAfterSubmit = () => {
                     placeholder="Please select first"
                     setOpen={handleSpeciesOpen}
                     setValue={handleSpeciesChange}
+                    listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
                 />
           </View>
         </View>
@@ -348,6 +352,7 @@ const navigateAfterSubmit = () => {
                     placeholder="Please select first"
                     setOpen={handleSexOpen}
                     setValue={handleSexChange}
+                    listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
                 />
           </View>
 

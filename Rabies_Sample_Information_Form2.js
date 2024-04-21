@@ -3,13 +3,14 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity 
+  TouchableOpacity,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import DropDownPicker from 'react-native-dropdown-picker'; // Add this import
 import Modal from 'react-native-modal';
 import axios from 'axios';
 import styles from './styles/submitform';
+import { ScrollView } from 'react-native-gesture-handler';
 
 const Rabies_Sample_Information_Form2 = () => {
   
@@ -495,6 +496,11 @@ const navigateAfterSubmit = () => {
 
        {/* White Container */}
     <View style={styles.whiteContainer}>
+      <ScrollView
+        contentContainerStyle={styles.scrollViewContainer}
+        style={{ flex: 1 }} // Make sure ScrollView takes the full height
+        nestedScrollEnabled={true} // Important for Android
+      >
       <View style={styles.greenContainer}>
           <Text style={styles.greenText}>Input "N/A" if information is unavailable</Text>
       </View>
@@ -513,6 +519,7 @@ const navigateAfterSubmit = () => {
                   placeholder="Please select first"
                   setOpen={handleSexOpen}
                   setValue={handleSexChange}
+                  listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
                 />
           </View>
 
@@ -529,6 +536,7 @@ const navigateAfterSubmit = () => {
                 placeholder="Please select first"
                 setOpen={handleSpecimenOpen}
                 setValue={handleSpecimenChange}
+                listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
                 />
              </View>
       </View>
@@ -547,6 +555,7 @@ const navigateAfterSubmit = () => {
                 placeholder="Please select first"
                 setOpen={handleTypeofOwnershipOpen}
                 setValue={handleTypeofOwnershipChange}
+                listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
                 />
           </View>
 
@@ -563,6 +572,7 @@ const navigateAfterSubmit = () => {
                 placeholder="Please select first"
                 setOpen={handleDogvaccinatedOpen}
                 setValue={handleDogvaccinatedChange}
+                listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
                 />
           </View>
       </View>
@@ -583,6 +593,7 @@ const navigateAfterSubmit = () => {
                 placeholder="Please select first"
                 setOpen={handleContactOpen}
                 setValue={handleContactChange}
+                listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
                 />
           </View>
 
@@ -599,6 +610,7 @@ const navigateAfterSubmit = () => {
                 placeholder="Please select first"
                 setOpen={handlePetmanagementOpen}
                 setValue={handlePetmanagementChange}
+                listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
                 />
           </View>
       </View>
@@ -619,28 +631,35 @@ const navigateAfterSubmit = () => {
                 placeholder="Please select first"
                 setOpen={handleCauseOpen}
                 setValue={handleCauseChange}
+                listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
             />
         </View>
 
-        <View style={[styles.dropdownContainer, {zIndex:changesZIndex }]}>
-            <Text style={styles.labelText}>Behavioral Changes</Text>
-            <DropDownPicker
-                open={isChangesOpen}
-                value={changesValue}
-                items={[
-                    { label: 'None', value: 'None' },
-                    { label: 'Restlessness', value: 'Restlessness' },
-                    { label: 'Apprehensive Watchful Look', value: 'Apprehensive Watchful Look' },
-                    { label: 'Unprovoked Aggressiveness', value: 'Unprovoked Aggressiveness' },
-                    { label: 'Aimless Running', value: 'Aimless Running' },
-                    { label: 'Eating Inanimate Objects', value: 'Eating Inanimate Objects' },
-                    { label: 'Drooling Saliva', value: 'Drooling Saliva' },
-                    { label: 'Paralysis', value: 'Paralysis' },
-                ]}
-                placeholder="Please select first"
-                setOpen={handleChangesOpen}
-                setValue={handleChangesChange}
-            />
+        <View style={[styles.dropdownContainer, { zIndex: changesZIndex }]}>
+        <Text style={styles.labelText}>Behavioral Changes</Text>
+        <DropDownPicker
+            open={isChangesOpen}
+            value={changesValue}
+            items={[
+                { label: 'None', value: 'None' },
+                { label: 'Restlessness', value: 'Restlessness' },
+                { label: 'Apprehensive Watchful Look', value: 'Apprehensive Watchful Look' },
+                { label: 'Unprovoked Aggressiveness', value: 'Unprovoked Aggressiveness' },
+                { label: 'Aimless Running', value: 'Aimless Running' },
+                { label: 'Eating Inanimate Objects', value: 'Eating Inanimate Objects' },
+                { label: 'Drooling Saliva', value: 'Drooling Saliva' },
+                { label: 'Paralysis', value: 'Paralysis' }
+            ]}
+            placeholder="Please select first"
+            setOpen={handleChangesOpen}
+            setValue={handleChangesChange}
+            listMode="SCROLLVIEW"
+            maxHeight={200}
+            dropDownDirection="AUTO" // Adjust the direction based on space
+            scrollViewProps={{
+                nestedScrollEnabled: true, // Ensure scrolling within the dropdown is enabled on Android
+            }}
+          />
         </View>
       </View>
 
@@ -665,6 +684,12 @@ const navigateAfterSubmit = () => {
                 placeholder="Please select first"
                 setOpen={handleIllnessOpen}
                 setValue={handleIllnessChange}
+                listMode="SCROLLVIEW"
+                maxHeight={200}
+                dropDownDirection="AUTO" // Adjust the direction based on space
+                scrollViewProps={{
+                  nestedScrollEnabled: true, // Ensure scrolling within the dropdown is enabled on Android
+                }}
             />
         </View>
 
@@ -680,6 +705,7 @@ const navigateAfterSubmit = () => {
                 placeholder="Please select first"
                 setOpen={handleFATOpen}
                 setValue={handleFATChange}
+                listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
             />
         </View>
       </View>
@@ -766,6 +792,7 @@ const navigateAfterSubmit = () => {
               </TouchableOpacity>
             </View>
           </Modal>
+        </ScrollView>
     </View>
   </View>
       );

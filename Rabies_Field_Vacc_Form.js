@@ -261,7 +261,10 @@ const Rabies_Field_Vacc_Form = () => {
   
       {/* White Container */}
       <View style={styles.whiteContainer}>
-      <ScrollView>
+      <ScrollView
+        contentContainerStyle={styles.scrollViewContainer} 
+        nestedScrollEnabled={true} // Enable this on Android
+      >
 
         {/* Green Container */}
         <View style={styles.greenContainer}>
@@ -308,6 +311,7 @@ const Rabies_Field_Vacc_Form = () => {
               placeholder="Please select first"
               setOpen={handleDistrictOpen}
               setValue={handleDistrictChange}
+              listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
             />
           </View>
         </View>
@@ -414,6 +418,7 @@ const Rabies_Field_Vacc_Form = () => {
                   placeholder="Please select first"
                   setOpen={handleSexOpen}
                   setValue={handleSexChange}
+                  listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
                 />
             </View>
 

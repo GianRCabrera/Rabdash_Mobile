@@ -80,10 +80,11 @@ const ScheduleForm = () => {
 
   useEffect(() => {
     const { item, fromArchive } = route.params || {};
-    const adjustedDate = new Date(item.date);
-    adjustedDate.setDate(adjustedDate.getDate() + 1);
-
-    if(fromArchive && item){
+    
+    if (fromArchive && item) {
+      const adjustedDate = new Date(item.date);
+      adjustedDate.setDate(adjustedDate.getDate() + 1);
+  
       // Autofill fields if coming from archives
       setSelectedDate(adjustedDate);
       setTitleValue(item.title);
@@ -91,14 +92,10 @@ const ScheduleForm = () => {
       setBarangayValue(item.barangay);
       setPurokValue(item.purok);
   
-      // Additional logic to handle editable item from archives
-      if (route.params?.fromArchive && route.params?.item) {
-        // Set editableItem state to the item passed from archives
-        setEditableItem(route.params.item);
-      }
-  
+      // Set editableItem state to the item passed from archives
+      setEditableItem(item);
     }
-   }, [route.params]);
+  }, [route.params]);
 
    const handleBackPress = () => {
     const backTo = route.params?.from;
@@ -182,7 +179,10 @@ const navigateAfterSubmit = () => {
 
        {/* White Container */}
     <View style={styles.whiteContainer}>
-    <ScrollView>
+    <ScrollView
+      contentContainerStyle={styles.scrollViewContainer} 
+      nestedScrollEnabled={true} // Enable this on Android
+    >
       <View style={styles.greenContainer}>
           <Text style={styles.greenText}>Input "N/A" if information is unavailable</Text>
       </View>
@@ -243,6 +243,7 @@ const navigateAfterSubmit = () => {
               placeholder="Please select first"
               setOpen={handleDistrictOpen}
               setValue={handleDistrictChange}
+              listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
             />
           </View>
         </View>

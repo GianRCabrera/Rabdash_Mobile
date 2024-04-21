@@ -127,30 +127,29 @@ const Rabies_Sample_Information_Form = () => {
         // Handle error, e.g., navigate to login screen
       });
 
-      // Conditional Autofill based on 'fromArchive' flag
+    // Conditional Autofill based on 'fromArchive' flag
     const { item, fromArchive } = route.params || {};
-    const adjustedDate = new Date(item.date);
-    adjustedDate.setDate(adjustedDate.getDate() + 1);
+    if (fromArchive && item) {
+      const adjustedDate = item.date ? new Date(item.date) : new Date();
+      adjustedDate.setDate(adjustedDate.getDate() + 1);
 
-    if (fromArchive && item){
-      setNameValue(item.name);
-      setSexValue(item.sex);
-      setAddress(item.address);
-      setNumber(item.number);
-      setDistrictValue(item.district);
-      setBarangay(item.barangay);
+      setNameValue(item.name || '');
+      setSexValue(item.sex || '');
+      setAddress(item.address || '');
+      setNumber(item.number || '');
+      setDistrictValue(item.district || '');
+      setBarangay(item.barangay || '');
       setSelectedDate(adjustedDate);
-      setSpeciesValue(item.species);
-      setBreed(item.breed);
-      setAge(item.age);
+      setSpeciesValue(item.species || '');
+      setBreed(item.breed || '');
+      setAge(item.age || '');
     }
 
     // Additional logic to handle editable item from archives
-    if (route.params?.fromArchive && route.params?.item) {
+    if (fromArchive && item) {
       // Set editableItem state to the item passed from archives
-      setEditableItem(route.params.item);
+      setEditableItem(item);
     }
-
   }, [route.params]);
   
   const handleNextPress = () => {
@@ -241,7 +240,10 @@ const Rabies_Sample_Information_Form = () => {
 
        {/* White Container */}
     <View style={styles.whiteContainer}>
-      <ScrollView>
+      <ScrollView
+      contentContainerStyle={styles.scrollViewContainer} 
+      nestedScrollEnabled={true} // Enable this on Android
+      >
       <View style={styles.greenContainer}>
           <Text style={styles.greenText}>Input "N/A" if information is unavailable</Text>
       </View>
@@ -276,6 +278,7 @@ const Rabies_Sample_Information_Form = () => {
                   placeholder="Please select first"
                   setOpen={handleSexOpen}
                   setValue={handleSexChange}
+                  listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
                 />
           </View>
       </View>
@@ -330,6 +333,7 @@ const Rabies_Sample_Information_Form = () => {
               placeholder="Please select first"
               setOpen={handleDistrictOpen}
               setValue={handleDistrictChange}
+              listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
             />
           </View>
 
@@ -379,6 +383,7 @@ const Rabies_Sample_Information_Form = () => {
               placeholder="Please select first"
               setOpen={handleSpeciesOpen}
               setValue={handleSpeciesChange}
+              listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
               />
           </View>
       </View>

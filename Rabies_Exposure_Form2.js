@@ -452,14 +452,16 @@ const navigateAfterSubmit = () => {
   }
 };
 
-
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Welcome To Rabies Exposure Form (Part 2) </Text>
   
       {/* White Container */}
       <View style={styles.whiteContainer}>
-        <ScrollView>
+        <ScrollView
+          contentContainerStyle={styles.scrollViewContainer} 
+          nestedScrollEnabled={true} // Enable this on Android
+        >
         {/* Green Container */}
         <View style={styles.greenContainer}>
           <Text style={styles.greenText}>Input "N/A" if information is unavailable</Text>
@@ -485,6 +487,7 @@ const navigateAfterSubmit = () => {
                     placeholder="Please select first"
                     setOpen={handleCategoryOpen}
                     setValue={handleCategoryChange}
+                    listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
                 />
           </View>
 
@@ -501,6 +504,7 @@ const navigateAfterSubmit = () => {
                     placeholder="Please select first"
                     setOpen={handleWashingOpen}
                     setValue={handleWashingChange}
+                    listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
                 />
           </View>
         </View>
@@ -650,6 +654,7 @@ const navigateAfterSubmit = () => {
               ]}
               setOpen={handleOutcomeOpen}
               setValue={handleOutcomeChange}
+              listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
               zIndex={3000} // Adjust zIndex to ensure dropdown appears above other components
               zIndexInverse={1000}
             />
@@ -671,6 +676,7 @@ const navigateAfterSubmit = () => {
             setOpen={handleBitingStatusOpen}
             setValue={handleBitingStatusChange}
             placeholder="Please select first"
+            listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
             zIndex={3000} // Adjust zIndex to ensure dropdown appears above other components
             zIndexInverse={1000}
           />

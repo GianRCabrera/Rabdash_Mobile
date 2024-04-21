@@ -261,11 +261,12 @@ const handleBackPress = () => {
     >
     <View style={styles.innercontainer}>
       <Text style={styles.header}>Welcome To Rabies Exposure Form </Text>
-  
       {/* White Container */}
       <View style={styles.whiteContainer}>
-      <ScrollView>
-
+      <ScrollView
+        contentContainerStyle={styles.scrollViewContainer} 
+        nestedScrollEnabled={true} // Enable this on Android
+      >
         {/* Green Container */}
         <View style={styles.greenContainer}>
           <Text style={styles.greenText}>Input "N/A" if information is unavailable</Text>
@@ -304,7 +305,6 @@ const handleBackPress = () => {
             onCancel={hideDateTimePicker}
           /> 
           </View>
-
         </View>
   
         {/* Container for Name and Address */}
@@ -364,6 +364,7 @@ const handleBackPress = () => {
                   placeholder="Please select first"
                   setOpen={handleSexOpen}
                   setValue={handleSexChange}
+                  listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
                 />
             </View>
         </View>
@@ -425,6 +426,7 @@ const handleBackPress = () => {
                   placeholder="Please select first"
                   setOpen={handleTypeOpen}
                   setValue={handleTypeChange}
+                  listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
                 />
             </View>
           </View>

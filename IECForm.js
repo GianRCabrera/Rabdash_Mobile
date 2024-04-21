@@ -93,31 +93,31 @@ const IECForm = () => {
     setMaterialValue(text);
   };
 
- useEffect(() => {
-  const { item, fromArchive } = route.params || {};
-
-  const adjustedDate = new Date(item.date);
-  adjustedDate.setDate(adjustedDate.getDate() + 1);
-
-  if(fromArchive && item){
-    // Autofill fields if coming from archives
-    setSelectedDate(adjustedDate);
-    setTitleValue(item.title);
-    setDistrictValue(item.district);
-    setBarangayValue(item.barangay);
-    setPurokValue(item.purok);
-    setParticipantValue(item.participants.toString()); // Ensure conversion to string if necessary
-    setBrochureValue(item.brochure);
-    setMaterialValue(item.materials.toString()); // Ensure conversion to string if necessary
-
-    // Additional logic to handle editable item from archives
-    if (route.params?.fromArchive && route.params?.item) {
-      // Set editableItem state to the item passed from archives
-      setEditableItem(route.params.item);
+  useEffect(() => {
+    const { item, fromArchive } = route.params || {};
+  
+    if (fromArchive && !item) {
+      console.error('No item data provided.');
+      navigation.goBack(); // Go back if no item data is provided
+      return; // Exit early to prevent further execution
     }
-
-  }
- }, [route.params]);
+  
+    if (fromArchive && item) {
+      const adjustedDate = new Date(item.date);
+      adjustedDate.setDate(adjustedDate.getDate() + 1);
+  
+      setSelectedDate(adjustedDate);
+      setTitleValue(item.title);
+      setDistrictValue(item.district);
+      setBarangayValue(item.barangay);
+      setPurokValue(item.purok);
+      setParticipantValue(item.participants.toString());
+      setBrochureValue(item.brochure);
+      setMaterialValue(item.materials.toString());
+  
+      setEditableItem(item);
+    }
+  }, [route.params, navigation]);
 
  const handleBackPress = () => {
   const backTo = route.params?.from;
@@ -212,7 +212,10 @@ const navigateAfterSubmit = () => {
 
        {/* White Container */}
     <View style={styles.whiteContainer}>
-    <ScrollView>
+    <ScrollView
+      contentContainerStyle={styles.scrollViewContainer}
+      nestedScrollEnabled={true} // Enable this on Android
+    >
       <View style={styles.greenContainer}>
           <Text style={styles.greenText}>Input "N/A" if information is unavailable</Text>
       </View>
@@ -273,6 +276,7 @@ const navigateAfterSubmit = () => {
               placeholder="Please select first"
               setOpen={handleDistrictOpen}
               setValue={handleDistrictChange}
+              listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
             />
           </View>
         </View>

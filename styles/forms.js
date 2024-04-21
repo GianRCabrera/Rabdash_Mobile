@@ -63,6 +63,7 @@ export const styles = StyleSheet.create({
   dropdownContainer: {
     width: '48%',
     marginBottom: 10,
+    maxHeight: 150, // Set a fixed height for dropdown to make it scrollable
   },
   labelText: {
     fontSize: 16,
