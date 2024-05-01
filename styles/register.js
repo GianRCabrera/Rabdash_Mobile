@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
       fontWeight: 'bold',
       marginBottom: 20,
       color: 'white',
-      textAlign: 'center',
+      textAlign: 'center', // Ensures text is centered
     },
     input: {
       width: '80%',
@@ -29,6 +29,26 @@ const styles = StyleSheet.create({
       paddingHorizontal: 10,
       marginBottom: 10,
       backgroundColor: 'white',
+    },
+    passwordInputContainer: {
+      flexDirection: 'row',
+      width: '80%',
+      height: 40,
+      marginBottom: 10,
+      borderColor: 'gray',
+      borderWidth: 1,
+      borderRadius: 5,
+      backgroundColor: 'white',
+      paddingHorizontal: 10,
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    visibilityButton: {
+      padding: 10,
+      // Remove absolute positioning to ensure button stays within the container
+    },
+    visibilityButtonText: {
+      color: "#888",
     },
     dropdownContainer: {
       width: '80%',
@@ -48,9 +68,11 @@ const styles = StyleSheet.create({
       fontSize: 16,
       fontWeight: 'bold',
     },
-    errorText: {
-      color: 'black',
-      marginBottom: 10,
+    separator: {
+      width: '80%',
+      height: 1,
+      backgroundColor: 'white',
+      marginVertical: 10,
     },
     modalContainer: {
       backgroundColor: 'white',
@@ -74,32 +96,6 @@ const styles = StyleSheet.create({
       fontSize: 16,
       fontWeight: 'bold',
     },
-  
-    visibilityButton: {                   //See password
-      position: "absolute",
-      right: 50,
-      top: "150%",
-      transform: [{ translateY: -10 }],
-    },
-  
-    visibilityButtonText: {
-      color: "#888",
-    },
-  
-    separator: {
-      width: '80%',
-      height: 1,
-      backgroundColor: 'white',
-      marginVertical: 10,
-    },
-  
-    Loginlinkink: {
-      marginTop: 10,
-    },
-    LoginlinkText: {
-      color: 'white',
-      fontSize: 14,
-    },
-  });
+});
 
 export default styles;

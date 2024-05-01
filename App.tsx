@@ -39,6 +39,8 @@ import Rabies_Exposure_Form_Archive from './Rabies_Exposure_Form_Archive';
 import WeatherFormArchive from './WeatherFormArchive';
 import DownloadableForms from './DownloadableForms';
 import DownloadableFormsPrivVet from './DownloadableFormsPrivVet';
+import Landing_page from './Landing_page';
+
 
 const Stack = createStackNavigator();
 
@@ -46,44 +48,44 @@ const App = () => {
   return (
     <AuthProvider>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="Login">
-          <Stack.Screen name="Login" component={LoginPage} />
-          <Stack.Screen name="MainMenu" component={MainMenu} />
-          <Stack.Screen name="VetMenu" component={VetMenu} />
-          <Stack.Screen name="ResetPassword" component={ResetPasswordPage} />
-          <Stack.Screen name="Register" component={RegisterPage} />
-          <Stack.Screen name="AboutUs" component={AboutUs} />
-          <Stack.Screen name="UserProfile" component={UserProfile} />
-          <Stack.Screen name="InputForms" component={InputForms} />
-          <Stack.Screen name="VetInputForms" component={VetInputForms} />
-          <Stack.Screen name="Rabies_Field_Vacc_Form" component={RabiesFieldVaccForm} />
-          <Stack.Screen name="Rabies_Field_Vacc_Form2" component={RabiesFieldVaccForm2} />
-          <Stack.Screen name="Neuter_Form" component={NeuterForm} />
-          <Stack.Screen name="Neuter_Form2" component={NeuterForm2} />
-          <Stack.Screen name="Rabies_Sample_Information_Form" component={RabiesSampleInformationForm} />
-          <Stack.Screen name="Rabies_Sample_Information_Form2" component={RabiesSampleInformationForm2} />
-          <Stack.Screen name="ClientDatabase" component={ClientDatabase} />
-          <Stack.Screen name="BudgetForm" component={BudgetForm} />
-          <Stack.Screen name="WeatherForm" component={WeatherForm} />
-          <Stack.Screen name="ScheduleForm" component={ScheduleForm} />
-          <Stack.Screen name="IECForm" component={IECForm} />
-          <Stack.Screen name="AnimalControlForm" component={AnimalControlForm} />
-          <Stack.Screen name="Rabies_Exposure_Form1" component={Rabies_Exposure_Form1} />
-          <Stack.Screen name="Rabies_Exposure_Form2" component={Rabies_Exposure_Form2} />
-          <Stack.Screen name="Field_vacc_archives" component={Field_vacc_archives} />
-          <Stack.Screen name="Neuter_Form_archive" component={Neuter_Form_archive} />
-          <Stack.Screen name="Sample_form_archive" component={Sample_form_archive} />
-          <Stack.Screen name="VetArchiveMenu" component={VetArchiveMenu} />
-          <Stack.Screen name="AnimalControlArchives" component={AnimalControlArchives} />
-          <Stack.Screen name="IECFormArchive" component={IECFormArchive} />
-          <Stack.Screen name="ScheduleFormArchive" component={ScheduleFormArchive} />
-          <Stack.Screen name="BudgetFormArchive" component={BudgetFormArchive} />
-          <Stack.Screen name="WeatherFormArchive" component={WeatherFormArchive} />
-          <Stack.Screen name="Rabies_Exposure_Form_Archive" component={Rabies_Exposure_Form_Archive} />
-          <Stack.Screen name="DownloadableForms" component={DownloadableForms} />
-          <Stack.Screen name="DownloadableFormsPrivVet" component={DownloadableFormsPrivVet} />
-
-        </Stack.Navigator>
+      <Stack.Navigator initialRouteName="Landing_page">
+        <Stack.Screen name="Landing_page" component={Landing_page} options={{ headerShown: false }}/>
+        <Stack.Screen name="Login" component={LoginPage} options={{ headerShown: false }} />
+        <Stack.Screen name="MainMenu" component={MainMenu} options={{ headerShown: false }}/>
+        <Stack.Screen name="VetMenu" component={VetMenu} options={{ headerShown: false }}/>
+        <Stack.Screen name="ResetPassword" component={ResetPasswordPage} options={{ headerShown: false }}/>
+        <Stack.Screen name="Register" component={RegisterPage} options={{ headerShown: false }}/>
+        <Stack.Screen name="AboutUs" component={AboutUs} options={{ headerShown: false }}/>
+        <Stack.Screen name="UserProfile" component={UserProfile} options={{ headerShown: false }}/>
+        <Stack.Screen name="InputForms" component={InputForms} options={{ headerShown: false }}/>
+        <Stack.Screen name="VetInputForms" component={VetInputForms} options={{ headerShown: false }}/>
+        <Stack.Screen name="Rabies_Field_Vacc_Form" component={RabiesFieldVaccForm} options={{ headerShown: false }}/>
+        <Stack.Screen name="Rabies_Field_Vacc_Form2" component={RabiesFieldVaccForm2} options={{ headerShown: false }}/>
+        <Stack.Screen name="Neuter_Form" component={NeuterForm} options={{ headerShown: false }}/>
+        <Stack.Screen name="Neuter_Form2" component={NeuterForm2} options={{ headerShown: false }}/>
+        <Stack.Screen name="Rabies_Sample_Information_Form" component={RabiesSampleInformationForm} options={{ headerShown: false }}/>
+        <Stack.Screen name="Rabies_Sample_Information_Form2" component={RabiesSampleInformationForm2} options={{ headerShown: false }}/>
+        <Stack.Screen name="ClientDatabase" component={ClientDatabase} options={{ headerShown: false }}/>
+        <Stack.Screen name="BudgetForm" component={BudgetForm} options={{ headerShown: false }}/>
+        <Stack.Screen name="WeatherForm" component={WeatherForm} options={{ headerShown: false }}/>
+        <Stack.Screen name="ScheduleForm" component={ScheduleForm} options={{ headerShown: false }}/>
+        <Stack.Screen name="IECForm" component={IECForm} options={{ headerShown: false }}/>
+        <Stack.Screen name="AnimalControlForm" component={AnimalControlForm} options={{ headerShown: false }}/>
+        <Stack.Screen name="Rabies_Exposure_Form1" component={Rabies_Exposure_Form1} options={{ headerShown: false }}/>
+        <Stack.Screen name="Rabies_Exposure_Form2" component={Rabies_Exposure_Form2} options={{ headerShown: false }}/>
+        <Stack.Screen name="Field_vacc_archives" component={Field_vacc_archives} options={{ headerShown: false }}/>
+        <Stack.Screen name="Neuter_Form_archive" component={Neuter_Form_archive} options={{ headerShown: false }}/>
+        <Stack.Screen name="Sample_form_archive" component={Sample_form_archive} options={{ headerShown: false }}/>
+        <Stack.Screen name="VetArchiveMenu" component={VetArchiveMenu} options={{ headerShown: false }}/>
+        <Stack.Screen name="AnimalControlArchives" component={AnimalControlArchives} options={{ headerShown: false }}/>
+        <Stack.Screen name="IECFormArchive" component={IECFormArchive} options={{ headerShown: false }}/>
+        <Stack.Screen name="ScheduleFormArchive" component={ScheduleFormArchive} options={{ headerShown: false }}/>
+        <Stack.Screen name="BudgetFormArchive" component={BudgetFormArchive} options={{ headerShown: false }}/>
+        <Stack.Screen name="WeatherFormArchive" component={WeatherFormArchive} options={{ headerShown: false }}/>
+        <Stack.Screen name="Rabies_Exposure_Form_Archive" component={Rabies_Exposure_Form_Archive} options={{ headerShown: false }}/>
+        <Stack.Screen name="DownloadableForms" component={DownloadableForms} options={{ headerShown: false }}/>
+        <Stack.Screen name="DownloadableFormsPrivVet" component={DownloadableFormsPrivVet} options={{ headerShown: false }}/>
+      </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>
   );

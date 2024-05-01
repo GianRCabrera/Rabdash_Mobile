@@ -11,11 +11,12 @@ const styles = StyleSheet.create({
       width: 200,
       height: 200,
       marginTop: 20, // Move the image 50 units higher
-      marginBottom: 20,
+      marginBottom: 50,
     },
     header: {
       fontSize: 24,
       fontWeight: 'bold',
+      marginTop: -20, // Move the image 50 units higher
       marginBottom: 20,
       color: 'white',
     },
@@ -23,29 +24,29 @@ const styles = StyleSheet.create({
       width: '80%',
       height: 40,
       borderColor: 'gray',
-      borderWidth: 1,
+      borderWidth: 0,
       borderRadius: 5,
       paddingHorizontal: 10,
       marginBottom: 10,
       backgroundColor: 'white',
     },
+
     passwordInputContainer: {
       flexDirection: 'row',
-      alignItems: 'center',
       width: '80%',
+      height: 40,
       marginBottom: 10,
       borderColor: 'gray',
-      borderWidth: 1,
+      borderWidth: 1, 
       borderRadius: 5,
       backgroundColor: 'white',
-    },
-    passwordInput: {
-      flex: 1,
-      height: 40,
       paddingHorizontal: 10,
+      justifyContent: 'space-between', // Align items with space between
+      alignItems: 'center', // Align items in the center
     },
+
     visibilityButton: {                   //See password
-      padding: 10,
+      padding: 8,
     },
   
     visibilityButtonText: {

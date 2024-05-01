@@ -16,12 +16,12 @@
   app.use(cors());
   app.use(bodyParser.json());
 
-// Use the session middleware
-app.use(session({
-  secret: secretKey,
-  resave: false,
-  saveUninitialized: true,
-}));
+  // Use the session middleware
+  app.use(session({
+    secret: secretKey,
+    resave: false,
+    saveUninitialized: true,
+  }));
 
   const dbConfig = {
     host: 'srv615.hstgr.io',
