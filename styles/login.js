@@ -45,13 +45,14 @@ const styles = StyleSheet.create({
       alignItems: 'center', // Align items in the center
     },
 
-    visibilityButton: {                   //See password
+    visibilityButton: {
       padding: 8,
+
     },
-  
     visibilityButtonText: {
-      color: "#888",
+      color: "white",  // Set the text color to a lighter grey if needed
     },
+
   
     button: {
       backgroundColor: 'white',

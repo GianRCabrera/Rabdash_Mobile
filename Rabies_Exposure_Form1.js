@@ -255,12 +255,8 @@ const handleBackPress = () => {
 
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}  // Adjust behavior based on platform
-      style={styles.container}
-    >
-    <View style={styles.innercontainer}>
-      <Text style={styles.header}>Welcome To Rabies Exposure Form </Text>
+    <View style={styles.container}>
+      <Text style={styles.header}>Rabies Exposure Form </Text>
       {/* White Container */}
       <View style={styles.whiteContainer}>
       <ScrollView
@@ -478,7 +474,6 @@ const handleBackPress = () => {
         </ScrollView>
       </View>
     </View>
-    </KeyboardAvoidingView>
   );
 };
 

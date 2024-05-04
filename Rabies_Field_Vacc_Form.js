@@ -252,12 +252,8 @@ const Rabies_Field_Vacc_Form = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}  // Adjust behavior based on platform
-      style={styles.container}
-    >
-    <View style={styles.innercontainer}>
-      <Text style={styles.header}>Welcome To Rabies Field Vaccination Form</Text>
+    <View style={styles.container}>
+      <Text style={styles.header}>Rabies Field Vaccination Form</Text>
   
       {/* White Container */}
       <View style={styles.whiteContainer}>
@@ -467,7 +463,6 @@ const Rabies_Field_Vacc_Form = () => {
         </ScrollView>
       </View>
     </View>
-    </KeyboardAvoidingView>
   );
 };
 

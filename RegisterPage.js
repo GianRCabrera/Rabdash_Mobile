@@ -24,7 +24,6 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(true);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
   const [open, setOpen] = useState(false);
@@ -143,7 +142,7 @@ const RegisterPage = () => {
     setShowPassword(!showPassword);
   };
 
-  const togglePasswordVisibility1 = () => {
+  const toggleConfirmPasswordVisibility = () => {
     setShowConfirmPassword(!showConfirmPassword);
   };
   
@@ -212,14 +211,11 @@ const RegisterPage = () => {
       <View style={styles.passwordInputContainer}>
         <TextInput
           placeholder="Confirm Password"
-          onChangeText={text => {
-            setConfirmPassword(text);
-            setPasswordError(false);
-          }}
+          onChangeText={setConfirmPassword}
           value={confirmPassword}
           secureTextEntry={!showConfirmPassword} // Controls whether the password is visible
           />
-        <TouchableOpacity onPress={togglePasswordVisibility1} style={styles.visibilityButton}>
+        <TouchableOpacity onPress={toggleConfirmPasswordVisibility} style={styles.visibilityButton}>
             {showPassword ? (
               // SVG for "Hide" (Eye Slash Icon)
               <Svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width="24" height="24">

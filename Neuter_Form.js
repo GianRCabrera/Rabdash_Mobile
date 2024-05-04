@@ -227,7 +227,7 @@ const Neuter_Form = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Welcome To Neuter Form</Text>
+      <Text style={styles.header}>Neuter Form</Text>
   
       {/* White Container */}
       <View style={styles.whiteContainer}>

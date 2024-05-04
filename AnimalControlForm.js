@@ -272,12 +272,8 @@ const navigateAfterSubmit = () => {
 };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}  // Adjust behavior based on platform
-      style={styles.container}
-    >
-    <View style={styles.innercontainer}>
-      <Text style={styles.headerText}>Welcome To Animal Control & Rehabilitation Section Daily Report Form </Text>
+    <View style={styles.container}>
+      <Text style={styles.header}>Animal Control & Rehab. Section</Text>
   
       {/* White Container */}
       <View style={styles.whiteContainer}>
@@ -518,7 +514,6 @@ const navigateAfterSubmit = () => {
         </ScrollView>
       </View>
     </View>
-    </KeyboardAvoidingView>
   );
 };
 

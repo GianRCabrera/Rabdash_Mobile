@@ -96,6 +96,13 @@ const styles = StyleSheet.create({
       fontSize: 16,
       fontWeight: 'bold',
     },
+    Loginlink: {
+      marginTop: 7,
+    },
+    LoginlinkText: {
+      color: 'white',
+      fontSize: 16,
+    },
 });
 
 export default styles;

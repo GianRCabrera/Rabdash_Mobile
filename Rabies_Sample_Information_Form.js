@@ -236,7 +236,7 @@ const Rabies_Sample_Information_Form = () => {
 
   return (
       <View style={styles.container}>
-      <Text style={styles.header}>Rabies Sample Information Form</Text>
+      <Text style={styles.header}>Rabies Sample Information</Text>
 
        {/* White Container */}
     <View style={styles.whiteContainer}>

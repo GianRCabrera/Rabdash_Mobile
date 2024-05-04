@@ -345,10 +345,6 @@ const navigateAfterSubmit = () => {
 };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
     <View style={styles.container}>
         <Text style={styles.header}>Rabies Field Vaccination Form (Part 2)</Text>
 
@@ -602,8 +598,6 @@ const navigateAfterSubmit = () => {
         </ScrollView>
       </View>
     </View>
-    
-  </KeyboardAvoidingView>
   );
   
 };

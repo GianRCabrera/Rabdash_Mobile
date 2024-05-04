@@ -492,13 +492,12 @@ const navigateAfterSubmit = () => {
 
     return (
       <View style={styles.container}>
-      <Text style={styles.headerText}>Rabies Sample Information Form (Part 2)</Text>
+      <Text style={styles.header}>Rabies Sample Information(Part 2)</Text>
 
        {/* White Container */}
     <View style={styles.whiteContainer}>
       <ScrollView
         contentContainerStyle={styles.scrollViewContainer}
-        style={{ flex: 1 }} // Make sure ScrollView takes the full height
         nestedScrollEnabled={true} // Important for Android
       >
       <View style={styles.greenContainer}>

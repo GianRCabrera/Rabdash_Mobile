@@ -8,23 +8,27 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#E74A3B',
+    padding: 20,
+
   },
   header: {
-    fontSize: 19,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginTop: 30,
     color: 'white',
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
+    marginTop: 80,
+    marginBottom: 30,
+    paddingHorizontal: 20, // Add horizontal padding for better text alignment
+    
   },
   whiteContainer: {
     backgroundColor: 'white',
     flex: 10,
-    width: '95%',
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: 15,
     borderBottomWidth: 30,
     borderBottomColor: 'white',
     borderRadius: 15,

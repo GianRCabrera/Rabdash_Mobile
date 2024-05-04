@@ -15,13 +15,11 @@ const DownloadableForms = () => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
 
-  //const SERVER_URL = 'http://192.168.1.7:3000'; // Replace with your server's base URL
-  const SERVER_URL = 'http://192.168.1.211:3000'; // Replace with your server's base URL
-
+  const apiURL = process.env.EXPO_PUBLIC_URL;
 
     const handleDownloadIEC = async () => {
       try {
-        const fileUrl = `${SERVER_URL}/assets/templates/IEC_Report_form.xlsx`;
+        const fileUrl = `${apiURL}/assets/templates/IEC_Report_form.xlsx`;
         await downloadFile(fileUrl, 'IEC_Report_form.xlsx');
       } catch (error) {
         console.error('Error downloading file:', error);
@@ -30,7 +28,7 @@ const DownloadableForms = () => {
 
     const handleDownloadSch = async () => {
       try {
-        const fileUrl = `${SERVER_URL}/assets/templates/Schedule_Report_form.xlsx`;
+        const fileUrl = `${apiURL}/assets/templates/Schedule_Report_form.xlsx`;
         await downloadFile(fileUrl, 'Schedule_Report_form.xlsx');
       } catch (error) {
         console.error('Error downloading file:', error);
@@ -39,7 +37,7 @@ const DownloadableForms = () => {
 
     const handleDownloadRabVac = async () => {
       try {
-        const fileUrl = `${SERVER_URL}/assets/templates/Vaccination_Report_form.xlsx`;
+        const fileUrl = `${apiURL}/assets/templates/Vaccination_Report_form.xlsx`;
         await downloadFile(fileUrl, 'Vaccination_Report_form.xlsx');
       } catch (error) {
         console.error('Error downloading file:', error);
@@ -48,7 +46,7 @@ const DownloadableForms = () => {
 
     const handleDownloadDailyReportform = async () => {
       try {
-        const fileUrl = `${SERVER_URL}/assets/templates/Daily_Report_form.xlsx`;
+        const fileUrl = `${apiURL}/assets/templates/Daily_Report_form.xlsx`;
         await downloadFile(fileUrl, 'Daily_Report_form.xlsx');
       } catch (error) {
         console.error('Error downloading file:', error);
@@ -57,7 +55,7 @@ const DownloadableForms = () => {
 
     const handleDownloadNeuterForm = async () => {
       try {
-        const fileUrl = `${SERVER_URL}/assets/templates/Neuter_Report_form.xlsx`;
+        const fileUrl = `${apiURL}/assets/templates/Neuter_Report_form.xlsx`;
         await downloadFile(fileUrl, 'Neuter_Report_form.xlsx');
       } catch (error) {
         console.error('Error downloading file:', error);
@@ -66,7 +64,7 @@ const DownloadableForms = () => {
       
     const handleDownloadRabSampleForm = async () => {
       try {
-        const fileUrl = `${SERVER_URL}/assets/templates/Rabies_Sample_Report_form.xlsx`;
+        const fileUrl = `${apiURL}/assets/templates/Rabies_Sample_Report_form.xlsx`;
         await downloadFile(fileUrl, 'Rabies_Sample_Report_form.xlsx');
       } catch (error) {
         console.error('Error downloading file:', error);
@@ -75,7 +73,7 @@ const DownloadableForms = () => {
 
     const handleDownloadBudgetForm = async () => {
       try {
-        const fileUrl = `${SERVER_URL}/assets/templates/Budget_Report_form.xlsx`;
+        const fileUrl = `${apiURL}/assets/templates/Budget_Report_form.xlsx`;
         await downloadFile(fileUrl, 'Budget_Report_form.xlsx');
       } catch (error) {
         console.error('Error downloading file:', error);
@@ -84,7 +82,7 @@ const DownloadableForms = () => {
 
     const handleDownloadExpForm = async () => {
       try {
-        const fileUrl = `${SERVER_URL}/assets/templates/Rabies_Exposure_Report_form.xlsx`;
+        const fileUrl = `${apiURL}/assets/templates/Rabies_Exposure_Report_form.xlsx`;
         await downloadFile(fileUrl, 'Rabies_Exposure_Report_form.xlsx');
       } catch (error) {
         console.error('Error downloading file:', error);
@@ -142,37 +140,37 @@ const DownloadableForms = () => {
 
     return (
       <View style={styles.container}>
-        <Text style={styles.header}>CVO Downloadable Forms </Text>
+        <Text style={styles.header}>Downloadable Forms </Text>
         <TouchableOpacity style={styles.button} onPress={handleDownloadIEC}>
-          <Text style={styles.buttonText}>Download IEC Report Form</Text>
+          <Text style={styles.buttonText}>IEC Report Form</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={handleDownloadRabVac}>
-          <Text style={styles.buttonText}>Download Rabies Vaccination Form</Text>
+          <Text style={styles.buttonText}>Rabies Vaccination Form</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={handleDownloadDailyReportform}>
-          <Text style={styles.buttonText}>Download Animal Control and Rehab. Form</Text>
+          <Text style={styles.buttonText}>Animal Control and Rehab. Form</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={handleDownloadNeuterForm}>
-          <Text style={styles.buttonText}>Download Neuter Form</Text>
+          <Text style={styles.buttonText}>Neuter Form</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={handleDownloadRabSampleForm}>
-          <Text style={styles.buttonText}>Download Rabies Sample Information Form</Text>
+          <Text style={styles.buttonText}>Rabies Sample Information Form</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={handleDownloadSch}>
-          <Text style={styles.buttonText}>Download Schedule/Event Form</Text>
+          <Text style={styles.buttonText}>Schedule/Event Form</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={handleDownloadBudgetForm}>
-          <Text style={styles.buttonText}>Download Budget Form</Text>
+          <Text style={styles.buttonText}>Budget Form</Text>
         </TouchableOpacity>
         {/* <TouchableOpacity style={styles.button} onPress={navigateToWeatherFormarchive}>
           <Text style={styles.buttonText}>Weather Form</Text>
         </TouchableOpacity> */}
         <TouchableOpacity style={styles.button} onPress={handleDownloadExpForm}>
-          <Text style={styles.buttonText}>Rabies Exposure Form</Text>
+          <Text style={styles.buttonText}>Exposure Form</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={navigateToVetMenu}>
-          <Text style={styles.buttonText}>Go back to Main Menu</Text>
+          <Text style={styles.buttonText}>Main Menu</Text>
         </TouchableOpacity>
 
         {/* Success Modal */}

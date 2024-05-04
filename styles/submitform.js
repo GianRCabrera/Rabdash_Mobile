@@ -10,7 +10,7 @@ const styles = StyleSheet.create({
       whiteContainer: {
         backgroundColor: 'white',
         flex: 10,
-        width: '95%', // Take the full width
+        width: '90%', // Take the full width
         alignItems: 'center',
         justifyContent: 'center',
         padding: 20, // Adjust the padding as needed
@@ -41,6 +41,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         marginBottom: 10,
+        marginTop: 20,
         color:'#1a202c',
         textAlign: 'left',
       },
@@ -57,21 +58,25 @@ const styles = StyleSheet.create({
         marginTop: 10,
       },
       dropdownContainer: {
-        width: '48%',
+        width: '45%',
         marginBottom: 10,
-        borderWidth: 0, 
+        borderWidth: 10, 
         maxHeight: 200 
       },
       header: {
-        fontSize: 19,
+        fontSize: 20,
         fontWeight: 'bold',
-        marginBottom: 20,
-        marginTop: 20,
         color: 'white',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 80,
+        marginBottom: 30,
+        paddingHorizontal: 20, 
       },
       headerText: {
         fontSize: 16,
         fontWeight: 'bold',
+        marginTop: 20,
         marginBottom: 5,
         color:'#4a5568',
         textAlign: 'left',
@@ -86,7 +91,7 @@ const styles = StyleSheet.create({
       }, 
       button: {
         backgroundColor: '#E74A3B',
-        width: 150,
+        width: '48%',
         height: 40,
         borderRadius: 5,
         justifyContent: 'center',

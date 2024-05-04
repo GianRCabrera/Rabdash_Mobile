@@ -40,6 +40,7 @@ const styles = StyleSheet.create({
       labelText: {
         fontSize: 16,
         fontWeight: 'bold',
+        marginTop: 25,
         marginBottom: 10,
         color:'#1a202c',
         textAlign: 'left',
@@ -61,11 +62,14 @@ const styles = StyleSheet.create({
         marginBottom: 10,
       },
       header: {
-        fontSize: 19,
+        fontSize: 20,
         fontWeight: 'bold',
-        marginBottom: 20,
-        marginTop: 20,
         color: 'white',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 80,
+        marginBottom: 30,
+        paddingHorizontal: 20, 
       },
       headerText: {
         fontSize: 16,
@@ -84,12 +88,12 @@ const styles = StyleSheet.create({
       }, 
       button: {
         backgroundColor: '#E74A3B',
-        width: 150,
+        width: '48%',
         height: 40,
         borderRadius: 5,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 150,
+        marginTop: 80,
       },
       buttonText: {
         color: 'white',

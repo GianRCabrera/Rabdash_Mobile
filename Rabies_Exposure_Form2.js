@@ -454,7 +454,7 @@ const navigateAfterSubmit = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Welcome To Rabies Exposure Form (Part 2) </Text>
+      <Text style={styles.header}>Rabies Exposure Form (Part 2) </Text>
   
       {/* White Container */}
       <View style={styles.whiteContainer}>

@@ -20,11 +20,11 @@ const DownloadableFormsPrivVet = () => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
 
-  const SERVER_URL = 'http://192.168.1.7:3000'; // Replace with your server's base URL
+  const apiURL = process.env.EXPO_PUBLIC_URL;
 
   const handleDownloadRabVac = async () => {
     try {
-      const fileUrl = `${SERVER_URL}/assets/templates/Vaccination_Report_form.xlsx`;
+      const fileUrl = `${apiURL}/assets/templates/Vaccination_Report_form.xlsx`;
       await downloadFile(fileUrl, 'Vaccination_Report_form.xlsx');
     } catch (error) {
       console.error('Error downloading file:', error);
@@ -33,7 +33,7 @@ const DownloadableFormsPrivVet = () => {
   
   const handleDownloadNeuterForm = async () => {
     try {
-      const fileUrl = `${SERVER_URL}/assets/templates/Neuter_Report_form.xlsx`;
+      const fileUrl = `${apiURL}/assets/templates/Neuter_Report_form.xlsx`;
       await downloadFile(fileUrl, 'Neuter_Report_form.xlsx');
     } catch (error) {
       console.error('Error downloading file:', error);
@@ -42,7 +42,7 @@ const DownloadableFormsPrivVet = () => {
   
   const handleDownloadRabSampleForm = async () => {
     try {
-      const fileUrl = `${SERVER_URL}/assets/templates/Rabies_Sample_Report_form.xlsx`;
+      const fileUrl = `${apiURL}/assets/templates/Rabies_Sample_Report_form.xlsx`;
       await downloadFile(fileUrl, 'Rabies_Sample_Report_form.xlsx');
     } catch (error) {
       console.error('Error downloading file:', error);
