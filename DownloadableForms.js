@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Modal from 'react-native-modal';
-import styles from './styles/login';
+import styles from './styles/inputforms';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { Buffer } from 'buffer';
@@ -122,7 +122,7 @@ const DownloadableForms = () => {
         throw error;
       }
     };
-    
+
   // Function to show the modal with a specific message
   const showModal = (message) => {
     setModalMessage(message);
@@ -140,48 +140,65 @@ const DownloadableForms = () => {
 
     return (
       <View style={styles.container}>
+        <Image
+            source={require('./assets/download_page.png')} // Ensure the path is correct
+            style={styles.DLbackgroundImage} // Custom styles for the image
+          />
         <Text style={styles.header}>Downloadable Forms </Text>
-        <TouchableOpacity style={styles.button} onPress={handleDownloadIEC}>
-          <Text style={styles.buttonText}>IEC Report Form</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleDownloadRabVac}>
-          <Text style={styles.buttonText}>Rabies Vaccination Form</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleDownloadDailyReportform}>
-          <Text style={styles.buttonText}>Animal Control and Rehab. Form</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleDownloadNeuterForm}>
-          <Text style={styles.buttonText}>Neuter Form</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleDownloadRabSampleForm}>
-          <Text style={styles.buttonText}>Rabies Sample Information Form</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleDownloadSch}>
-          <Text style={styles.buttonText}>Schedule/Event Form</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleDownloadBudgetForm}>
-          <Text style={styles.buttonText}>Budget Form</Text>
-        </TouchableOpacity>
-        {/* <TouchableOpacity style={styles.button} onPress={navigateToWeatherFormarchive}>
-          <Text style={styles.buttonText}>Weather Form</Text>
-        </TouchableOpacity> */}
-        <TouchableOpacity style={styles.button} onPress={handleDownloadExpForm}>
-          <Text style={styles.buttonText}>Exposure Form</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button} onPress={navigateToVetMenu}>
-          <Text style={styles.buttonText}>Main Menu</Text>
-        </TouchableOpacity>
-
-        {/* Success Modal */}
-        <Modal isVisible={isModalVisible}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>{modalMessage}</Text>
-            <TouchableOpacity style={styles.modalButton} onPress={hideModal}>
-              <Text style={styles.modalButtonText}>OK</Text>
-           </TouchableOpacity>
+        <View style={styles.contentContainer}> 
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.button} onPress={handleDownloadIEC}>
+              <Text style={styles.buttonText}>IEC Report Form</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={handleDownloadRabVac}>
+              <Text style={styles.buttonText}>Rabies Vaccination Form</Text>
+            </TouchableOpacity>
           </View>
-        </Modal>
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.button} onPress={handleDownloadDailyReportform}>
+              <Text style={styles.buttonText}>Animal Control and Rehab. Form</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={handleDownloadNeuterForm}>
+              <Text style={styles.buttonText}>Neuter Form</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.button} onPress={handleDownloadRabSampleForm}>
+              <Text style={styles.buttonText}>Rabies Sample Information Form</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={handleDownloadSch}>
+              <Text style={styles.buttonText}>Schedule/Event Form</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.button} onPress={handleDownloadBudgetForm}>
+            <Text style={styles.buttonText}>Budget Form</Text>
+          </TouchableOpacity>
+          {/* <TouchableOpacity style={styles.button} onPress={navigateToWeatherFormarchive}>
+            <Text style={styles.buttonText}>Weather Form</Text>
+          </TouchableOpacity> */}
+          <TouchableOpacity style={styles.button} onPress={handleDownloadExpForm}>
+            <Text style={styles.buttonText}>Exposure Form</Text>
+          </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity style={styles.Menubutton} onPress={navigateToVetMenu}>
+            <Text style={styles.buttonText}>Main Menu</Text>
+          </TouchableOpacity>
+
+          {/* Success Modal */}
+          <Modal isVisible={isModalVisible}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalText}>{modalMessage}</Text>
+              <TouchableOpacity style={styles.modalButton} onPress={hideModal}>
+                <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+            </View>
+          </Modal>
+        </View>
       </View>
       );
 };

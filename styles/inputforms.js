@@ -16,12 +16,20 @@ const styles = StyleSheet.create({
         top: '-35%', // Moves the image up by 10% of the container's height
         right: '-60%', // Moves the image to the right by 10% of the container's width
       },
+      DLbackgroundImage: {
+        position: 'absolute',
+        width: '200%',
+        height: '100%',
+        opacity: 0.2, // Corrected opacity to a valid value (less than or equal to 1)
+        top: '-50%', // Moves the image up by 10% of the container's height
+        right: '-20%', // Moves the image to the right by 10% of the container's width
+      },
       contentContainer: {
         backgroundColor: '#E74A3B', // Orange background for the inner container
         paddingTop: 50, // Reduced top padding to push children slightly lower
         paddingBottom: 20, // Balance padding at the bottom
         paddingHorizontal: 20, // Horizontal padding remains the same
-        borderRadius: 45,
+        borderRadius: 85,
         width: '120%', // Adjust width as needed
         height: '85%',
         alignItems: 'center',
@@ -103,7 +111,29 @@ const styles = StyleSheet.create({
         color: '#E74A3B',
         fontSize: 18,
         fontWeight: 'bold',
-      }
+      },
+      modalContainer: {
+        backgroundColor: 'white',
+        padding: 20,
+        borderRadius: 10,
+        alignItems: 'center',
+      },
+      modalText: {
+        fontSize: 18,
+        marginBottom: 10,
+        textAlign: 'center',
+      },
+      modalButton: {
+        backgroundColor: '#E74A3B',
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 5,
+      },
+      modalButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
+      },
 });
 
 export default styles;

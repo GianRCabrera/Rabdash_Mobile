@@ -22,6 +22,9 @@ const AnimalControlArchives = () => {
 
   const apiURL = process.env.EXPO_PUBLIC_URL;
 
+  const [currentPage, setCurrentPage] = useState(1); // State to manage current page
+  const itemsPerPage = 5; // Number of items per page
+
   const navigateToVetArchiveMenu = () => {
     navigation.navigate('VetArchiveMenu');
   };
@@ -103,6 +106,20 @@ const addOneDayToDate = (dateStr) => {
   return date.toISOString().split('T')[0]; // Return the date in YYYY-MM-DD format
 };
 
+// Function to handle next page button press
+const handleNextPage = () => {
+  setCurrentPage(currentPage + 1);
+};
+
+// Calculate the slice range based on currentPage and itemsPerPage
+const startIndex = (currentPage - 1) * itemsPerPage;
+const endIndex = startIndex + itemsPerPage;
+
+// Function to handle previous page button press
+const handlePreviousPage = () => {
+  setCurrentPage(currentPage - 1);
+};
+
 if (isLoading) {
   return (
     <View style={[styles.container, { justifyContent: 'center' }]}>
@@ -123,6 +140,7 @@ if (isLoading) {
           returnKeyType="search"
           onSubmitEditing={handleSearchSubmit} // Updated to use the new search submit handler
         />
+        <View style={styles.divider} />
          {isLoading ? (
           <ActivityIndicator size="large" color="#0000ff" />
         ) : (
@@ -158,8 +176,24 @@ if (isLoading) {
           )}
         />
         )}
+
+        <Text Text style={styles.pageText}>Page: <Text>{currentPage}</Text></Text> 
+          <View style={styles.buttonContainer}>
+            {currentPage > 1 && (
+              <TouchableOpacity style={styles.button} onPress={handlePreviousPage}>
+                <Text style={styles.buttonText}>Previous Page</Text>
+              </TouchableOpacity>
+            )}
+
+            {filteredForms.length > endIndex && (
+              <TouchableOpacity style={styles.button} onPress={handleNextPage}>
+                <Text style={styles.buttonText}>Next Page</Text>
+              </TouchableOpacity>
+            )}
+        </View>
+
         <TouchableOpacity style={styles.button} onPress={navigateToVetArchiveMenu}>
-          <Text style={styles.buttonText}>Go back to Archives Menu</Text>
+          <Text style={styles.buttonText}>Archives Menu</Text>
         </TouchableOpacity>
 
         {/* Modal to check if all fields are inputted */}

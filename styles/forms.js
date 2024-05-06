@@ -16,6 +16,7 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
     alignItems: 'center',
+    textAlign: 'center',
     justifyContent: 'center',
     marginTop: 80,
     marginBottom: 30,

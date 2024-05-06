@@ -1,7 +1,7 @@
 import React, { useState } from 'react'; 
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import styles from './styles/login';
+import styles from './styles/inputforms';
 import Modal from 'react-native-modal';
 import { Asset } from 'expo-asset';
 import * as MediaLibrary from 'expo-media-library';
@@ -100,28 +100,34 @@ const DownloadableFormsPrivVet = () => {
 
   return (
     <View style={styles.container}>
+      <Image
+            source={require('./assets/download_page.png')} // Ensure the path is correct
+            style={styles.DLbackgroundImage} // Custom styles for the image
+          />
       <Text style={styles.header}>Downloadable Forms </Text>
-      <TouchableOpacity style={styles.button} onPress={handleDownloadRabVac}>
-        <Text style={styles.buttonText}>Rabies Vaccination Form Download</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={handleDownloadNeuterForm}>
-        <Text style={styles.buttonText}>Neuter Form Download</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={handleDownloadRabSampleForm}>
-        <Text style={styles.buttonText}>Rabies Sample Form Download</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={navigateToMainMenu}>
-        <Text style={styles.buttonText}>Go back to Main Menu</Text>
-      </TouchableOpacity>
-      {/* Success Modal */}
-      <Modal isVisible={isModalVisible}>
-        <View style={styles.modalContainer}>
-          <Text style={styles.modalText}>{modalMessage}</Text>
-          <TouchableOpacity style={styles.modalButton} onPress={hideModal}>
-            <Text style={styles.modalButtonText}>OK</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
+      <View style={styles.contentContainer}> 
+        <TouchableOpacity style={styles.Privbutton} onPress={handleDownloadRabVac}>
+          <Text style={styles.buttonText}>Rabies Vaccination Form Download</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.Privbutton} onPress={handleDownloadNeuterForm}>
+          <Text style={styles.buttonText}>Neuter Form Download</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.Privbutton} onPress={handleDownloadRabSampleForm}>
+          <Text style={styles.buttonText}>Rabies Sample Form Download</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.PrivMenubutton} onPress={navigateToMainMenu}>
+          <Text style={styles.buttonText}>Main Menu</Text>
+        </TouchableOpacity>
+        {/* Success Modal */}
+        <Modal isVisible={isModalVisible}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalText}>{modalMessage}</Text>
+            <TouchableOpacity style={styles.modalButton} onPress={hideModal}>
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
+      </View>
     </View>
   );
 };

@@ -23,18 +23,12 @@ const Field_vacc_archives = () => {
 
   const apiURL = process.env.EXPO_PUBLIC_URL;
 
+  const [currentPage, setCurrentPage] = useState(1); // State to manage current page
+  const itemsPerPage = 5; // Number of items per page
+
   const toggleConfirmModal = () => {
     setConfirmModalVisible(!isConfirmModalVisible);
   };
-
-  //const NETWORK_URL1 = 'http://192.168.1.211:3000/Position';
-  //const NETWORK_URL1 = 'http://192.168.1.7:3000/Position';
-
-  //const NETWORK_URL2 = 'http://192.168.1.211:3000/getVaccinationFormsCVO';
-  //const NETWORK_URL2 = 'http://192.168.1.7:3000/getVaccinationFormsCVO';
-
-  //const NETWORK_URL3 = 'http://192.168.1.211:3000/getVaccinationForms';
-  //const NETWORK_URL3 = 'http://192.168.1.7:3000/getVaccinationForms';
 
   useEffect(() => {
     const fetchUserAndForms = async () => {
@@ -143,6 +137,19 @@ const Field_vacc_archives = () => {
     return date.toISOString().split('T')[0]; // Format back to YYYY-MM-DD
   };
   
+   // Function to handle next page button press
+   const handleNextPage = () => {
+    setCurrentPage(currentPage + 1);
+  };
+
+  // Calculate the slice range based on currentPage and itemsPerPage
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+
+  // Function to handle previous page button press
+  const handlePreviousPage = () => {
+    setCurrentPage(currentPage - 1);
+  };
 
   if (isLoading) {
     return (
@@ -164,13 +171,14 @@ const Field_vacc_archives = () => {
           returnKeyType="search"
           onSubmitEditing={handleSearchSubmit} // Updated to use the new search submit handler
         />
+        <View style={styles.divider} />
         {isLoading ? (
           <ActivityIndicator size="large" color="#0000ff" />
         ) : (
         <FlatList
           ref={flatListRef} // Assign the ref to FlatList
-          data={filteredForms}
-          //data={vaccinationForms}
+          data={filteredForms.slice(startIndex, endIndex)} // Render only the current page items
+          //data={filteredForms}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.itemContainer}>
@@ -204,10 +212,25 @@ const Field_vacc_archives = () => {
           )}
         />
         )}
+        <Text style={styles.pageText}>Page: <Text>{currentPage}</Text></Text> 
+        <View style={styles.buttonContainer}>
+          {currentPage > 1 && (
+            <TouchableOpacity style={styles.button} onPress={handlePreviousPage}>
+              <Text style={styles.buttonText}>Previous Page</Text>
+            </TouchableOpacity>
+          )}
+
+          {filteredForms.length > endIndex && (
+            <TouchableOpacity style={styles.button} onPress={handleNextPage}>
+              <Text style={styles.buttonText}>Next Page</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         <TouchableOpacity style={styles.button} onPress={handleBackPress}>
-          <Text style={styles.buttonText}>Go back to Archives Menu</Text>
-        </TouchableOpacity>
-        
+            <Text style={styles.buttonText}>Archives Menu</Text>
+        </TouchableOpacity>  
+
         {/* Modal to check if all fields are inputted */}
         <Modal isVisible={isConfirmModalVisible}>
           <View style={styles.modalContainer}>

@@ -11,9 +11,13 @@ const styles = StyleSheet.create({
     header: {
       fontSize: 24,
       fontWeight: 'bold',
-      marginBottom: 20,
       color: 'white',
-      textAlign: 'center', // Center header text
+      alignItems: 'center',
+      textAlign: 'center',
+      justifyContent: 'center',
+      marginTop: 80,
+      marginBottom: 20,
+      paddingHorizontal: 20,
     },
     itemContainer: {
       padding: 10, // Add padding around items
@@ -25,10 +29,11 @@ const styles = StyleSheet.create({
     },
     button: {
       backgroundColor: 'white',
-      width: '80%',
+      width: '40%',
       alignSelf: 'center', // Center button horizontally
       height: 40,
       borderRadius: 5,
+      marginHorizontal: 20,
       justifyContent: 'center',
       alignItems: 'center',
       marginTop: 20,
@@ -39,24 +44,27 @@ const styles = StyleSheet.create({
       fontSize: 16,
       fontWeight: 'bold',
     },
-
-    //Modal
-  editButton: {
-    backgroundColor: '#3498db', // A pleasant shade of blue
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20, // Rounded corners for a sleek look
-    shadowColor: "#000",
-    shadowOffset: {
-    width: 0,
-    height: 2,
+    buttonContainer:{
+      flexDirection: 'row',
     },
-    shadowOpacity: 0.23,
-    shadowRadius: 2.62,
-    elevation: 4,
-    marginTop: 10, // Provide some space above the button
-    alignSelf: 'center', // Center button in its container
-  },
+    
+    //Modal
+    editButton: {
+      backgroundColor: '#3498db', // A pleasant shade of blue
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 20, // Rounded corners for a sleek look
+      shadowColor: "#000",
+      shadowOffset: {
+      width: 0,
+      height: 2,
+      },
+      shadowOpacity: 0.23,
+      shadowRadius: 2.62,
+      elevation: 4,
+      marginTop: 10, // Provide some space above the button
+      alignSelf: 'center', // Center button in its container
+    },
    //Modal
    modalContainer: {
     backgroundColor: 'white',
@@ -97,8 +105,19 @@ const styles = StyleSheet.create({
     margin: 10,
     backgroundColor: '#F0F0F0', // Light gray background
     fontSize: 16, // Text size
+    marginTop: 20,
+    marginBottom: 40
   },
 
+  pageText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10, // Add some margin to separate from the buttons
+    textAlign: 'center', // Center the text horizontally
+  },
 });
 
   export default styles;
