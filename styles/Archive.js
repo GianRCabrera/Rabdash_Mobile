@@ -7,17 +7,28 @@ const styles = StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: '#E74A3B',
+      alignItems: 'center', // Center children horizontally
+      justifyContent: 'flex-start', // Align children to the top
+      paddingTop: 60, // Padding at the top for some spacing
+    },
+    headerContainer: {
+      backgroundColor: 'white',
+      width: '90%',
+      borderRadius: 30,
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      marginBottom: 20, // Adjust the margin to give space below the header
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.1,
+      shadowRadius: 10,
+      elevation: 10,
     },
     header: {
-      fontSize: 24,
+      fontSize: 30,
       fontWeight: 'bold',
-      color: 'white',
-      alignItems: 'center',
+      color: '#E74A3B',
       textAlign: 'center',
-      justifyContent: 'center',
-      marginTop: 80,
-      marginBottom: 20,
-      paddingHorizontal: 20,
     },
     itemContainer: {
       padding: 10, // Add padding around items
@@ -44,27 +55,62 @@ const styles = StyleSheet.create({
       fontSize: 16,
       fontWeight: 'bold',
     },
-    buttonContainer:{
-      flexDirection: 'row',
-    },
-    
-    //Modal
-    editButton: {
-      backgroundColor: '#3498db', // A pleasant shade of blue
-      paddingVertical: 10,
-      paddingHorizontal: 20,
-      borderRadius: 20, // Rounded corners for a sleek look
-      shadowColor: "#000",
-      shadowOffset: {
-      width: 0,
-      height: 2,
-      },
+    itemContainer: {
+      backgroundColor: 'white', // Set background color for visibility
+      padding: 10,
+      borderRadius: 20, // Rounded corners for an oblong shape
+      marginHorizontal: 10, // Reduced for wider appearance
+      marginTop: 10,
+      marginBottom: 10,
+      shadowColor: '#000', // Shadow for depth
+      shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.23,
       shadowRadius: 2.62,
-      elevation: 4,
-      marginTop: 10, // Provide some space above the button
-      alignSelf: 'center', // Center button in its container
-    },
+      elevation: 4, // Elevation for Android
+      flexDirection: 'column', // Stack the content vertically
+      width: '95%', // Making container wider
+      alignSelf: 'center', // Ensure it's centered in the parent view
+  },
+    itemText: { // Style for labels
+      fontWeight: 'bold',
+      fontSize: 16,
+      color: '#000',
+  },
+  itemDataText: { // Style for data values
+      fontWeight: 'normal',
+      fontSize: 16,
+      color: '#000',
+  },
+
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly', // Ensures even spacing between buttons
+    marginTop: 10, // Space above the button row
+    width: '100%', // Use full width of the item container
+  },
+    editButton: {
+      backgroundColor: '#3498db',
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 20,
+      flex: 1, // Flex to fill available space evenly
+      margin: 5, // Margin around the button for spacing
+      justifyContent: 'center', // Center text vertically
+      alignItems: 'center', // Center text horizontally
+  },
+
+  deleteButton: {
+      backgroundColor: 'red',
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 20,
+      flex: 1, // Flex to fill available space evenly
+      margin: 5, // Margin around the button for spacing
+      justifyContent: 'center', // Center text vertically
+      alignItems: 'center', // Center text horizontally
+  },
+  
+
    //Modal
    modalContainer: {
     backgroundColor: 'white',
@@ -95,18 +141,24 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
-  //SearchBar
-  searchBar: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F0F0',
     borderRadius: 20,
-    paddingHorizontal: 15,
-    margin: 10,
-    backgroundColor: '#F0F0F0', // Light gray background
-    fontSize: 16, // Text size
-    marginTop: 20,
-    marginBottom: 40
+    paddingHorizontal: 20,
+    width: '90%', // Match the width of the header container
+    marginBottom: 20, // Margin bottom for spacing
+  },
+  searchBar: {
+    flex: 1,
+    paddingLeft: 10,
+    height: 40, // Standardize height for better UI
+    fontSize: 16,
+    color: '#000',
+  },
+  searchIcon: {
+    marginRight: 10,
   },
 
   pageText: {
@@ -115,7 +167,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10, // Add some margin to separate from the buttons
+    marginTop: 40, // Add some margin to separate from the buttons
     textAlign: 'center', // Center the text horizontally
   },
 });

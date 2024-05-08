@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 10,
         marginTop: 20,
-        color:'#1a202c',
+         color:'#1a202c',
         textAlign: 'left',
       },
       rowContainer: {
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
       dropdownContainer: {
         width: '45%',
         marginBottom: 10,
-        borderWidth: 10, 
+        borderWidth: 0, 
         maxHeight: 200 
       },
       header: {
