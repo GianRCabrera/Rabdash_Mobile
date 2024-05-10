@@ -57,41 +57,41 @@ const VetArchiveMenu = () => {
             source={require('./assets/archives.png')} // Ensure the path is correct
             style={styles.DLbackgroundImage} // Custom styles for the image
           />
-          <Text style={styles.header}>CVO Input History (Forms) </Text>
+          <Text style={styles.header}>CVO Input History (Archives) </Text>
           <View style={styles.contentContainer}> 
             <View style={styles.buttonContainer}>
               <TouchableOpacity style={styles.button} onPress={navigateToSeminarFormarchive}>
-                <Text style={styles.buttonText}>SEMINARS/TRAININGS/IEC Report Forms Archives</Text>
+                <Text style={styles.buttonText}>SEMINARS/TRAININGS/IEC Report Forms</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.button} onPress={navigateToField_vacc_archives}>
-                <Text style={styles.buttonText}>Rabies Field Vaccination Form Archives</Text>
+                <Text style={styles.buttonText}>Rabies Field Vaccination Form</Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity style={styles.button} onPress={navigateToAnimalControlarchive}>
-                <Text style={styles.buttonText}>Animal Control and Rehabilitation Section Report Form Archives</Text>
+                <Text style={styles.buttonText}>Animal Control and Rehabilitation Section Report Form</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.button} onPress={navigateToNeuter_Form_archive}>
-                <Text style={styles.buttonText}>Neuter Form Archives</Text>
+                <Text style={styles.buttonText}>Neuter Form</Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity style={styles.button} onPress={navigateToSample_form_archive}>
-                <Text style={styles.buttonText}>Rabies Sample Information rchives</Text>
+                <Text style={styles.buttonText}>Rabies Sample Information</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.button} onPress={navigateToScheduleFormarchive}>
-                <Text style={styles.buttonText}>Schedule/Event Form Archives</Text>
+                <Text style={styles.buttonText}>Schedule/Event Form</Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity style={styles.button} onPress={navigateToBudgetFormarchive}>
-                <Text style={styles.buttonText}>Budget Form Archives</Text>
+                <Text style={styles.buttonText}>Budget Form</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.button} onPress={navigateToRabiesExposureFormarchive}>
-                <Text style={styles.buttonText}>Rabies Exposure Archives</Text>
+                <Text style={styles.buttonText}>Rabies Exposure</Text>
               </TouchableOpacity>
               {/* <TouchableOpacity style={styles.button} onPress={navigateToWeatherFormarchive}>
                 <Text style={styles.buttonText}>Weather Archives</Text>

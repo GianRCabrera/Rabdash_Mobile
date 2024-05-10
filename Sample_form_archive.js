@@ -10,6 +10,7 @@ import { useNavigation } from '@react-navigation/native';
 import styles from './styles/Archive';
 import Modal from 'react-native-modal';
 import axios from 'axios';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const Sample_form_archive = () => {
   
@@ -24,6 +25,12 @@ const Sample_form_archive = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredForms, setFilteredForms] = useState([]);
   const flatListRef = useRef(); // Add this ref for the FlatList
+
+  const [deletableItem, setDeletableItem] = useState(null); // State to store item to be deleted
+  const [isDeleteModalVisible, setDeleteModalVisible] = useState(false); // State to manage delete modal visibility
+
+  const [isNotificationModalVisible, setNotificationModalVisible] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
 
   const navigation = useNavigation();
 
@@ -146,6 +153,46 @@ const Sample_form_archive = () => {
     }
   };
 
+  // Function to handle deletion of item
+  const handleDeletePress = (item) => {
+    setDeletableItem(item); // Store the item to be deleted
+    toggleDeleteModal(); // Open the delete confirmation modal
+  };
+
+  // Function to toggle delete confirmation modal visibility
+  const toggleDeleteModal = () => {
+    setDeleteModalVisible(!isDeleteModalVisible);
+  };
+
+  const deleteItem = () => {
+    if (!deletableItem) return; // Ensure there is an item to delete
+  
+    setIsLoading(true); // Start loading indicator
+    axios.delete(`${apiURL}/deleteRabiesSampleForm/${deletableItem.id}`)
+      .then(response => {
+        if (response.data.success) {
+          setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
+          setNotificationMessage('Entry deleted successfully!');
+        } else {
+          setNotificationMessage('Failed to delete entry. ' + response.data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error deleting item:', error);
+        setNotificationMessage('An error occurred while deleting the entry.');
+      })
+      .finally(() => {
+        setIsLoading(false); // Stop loading indicator
+        toggleDeleteModal(false); // Close the delete confirmation modal
+        toggleNotificationModal(); // Show notification modal
+        setDeletableItem(null); // Clear the deletable item state
+      });
+  };
+
+  const toggleNotificationModal = () => {
+    setNotificationModalVisible(!isNotificationModalVisible);
+  };
+
   // Function to add one day to the date
   const addOneDayToDate = (dateStr) => {
     const date = new Date(dateStr);
@@ -179,15 +226,20 @@ const Sample_form_archive = () => {
     return (
        <ScrollView contentContainerStyle={styles.scrollViewContainer}>
       <View style={styles.container}>
-        <Text style={styles.header}>Rabies Sample Form Archive </Text>
-        <TextInput
-          style={styles.searchBar}
-          placeholder="Search by owner, pet name, or date..."
-          value={searchTerm}
-          onChangeText={setSearchTerm}
-          returnKeyType="search"
-          onSubmitEditing={handleSearchSubmit} // Updated to use the new search submit handler
-        />
+        <View style={styles.headerContainer}>
+          <Text style={styles.header}>Rabies Sample Form Archive</Text>
+        </View>
+        <View style={styles.searchContainer}>
+          <Icon name="search" size={20} color="#000" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchBar}
+            placeholder="Search by owner, pet name, or date..."
+            value={searchTerm}
+            onChangeText={setSearchTerm}
+            returnKeyType="search"
+            onSubmitEditing={handleSearchSubmit}
+          />
+        </View>
         <View style={styles.divider} />
         {isLoading ? (
           <ActivityIndicator size="large" color="#0000ff" />
@@ -195,37 +247,42 @@ const Sample_form_archive = () => {
         <FlatList
           ref={flatListRef} // Assign the ref to FlatList
           data={filteredForms.slice(startIndex, endIndex)} // Render only the data within the current page range
-          //data={filteredForms}  
+          //data={filteredForms}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <View>
-              <Text>Email: {item.username}</Text>
-              <Text>Name: {item.name}</Text>
-              <Text>Sex: {item.sex}</Text>
-              <Text>Address: {item.address}</Text>
-              <Text>Contact No.: {item.number}</Text>
-              <Text>District: {item.district}</Text>
-              <Text>Barangay: {item.barangay}</Text>
-              <Text>Date: {addOneDayToDate(item.date)}</Text>
-              <Text>Species: {item.species}</Text>
-              <Text>Breed: {item.breed}</Text>
-              <Text>Age: {item.age}</Text>
+            <View style={styles.itemContainer}>
+              <Text style={styles.itemText}>Email: <Text style={styles.itemDataText}>{item.username}</Text></Text>
+              <Text style={styles.itemText}>Name: <Text style={styles.itemDataText}>{item.name}</Text></Text>
+              <Text style={styles.itemText}>Sex: <Text style={styles.itemDataText}>{item.sex}</Text></Text>
+              <Text style={styles.itemText}>Address: <Text style={styles.itemDataText}>{item.address}</Text></Text>
+              <Text style={styles.itemText}>Contact No.: <Text style={styles.itemDataText}>{item.number}</Text></Text>
+              <Text style={styles.itemText}>District: <Text style={styles.itemDataText}>{item.district}</Text></Text>
+              <Text style={styles.itemText}>Barangay: <Text style={styles.itemDataText}>{item.barangay}</Text></Text>
+              <Text style={styles.itemText}>Date: <Text style={styles.itemDataText}>{addOneDayToDate(item.date.split('T')[0])}</Text></Text>
+              <Text style={styles.itemText}>Species: <Text style={styles.itemDataText}>{item.species}</Text></Text>
+              <Text style={styles.itemText}>Breed: <Text style={styles.itemDataText}>{item.breed}</Text></Text>
+              <Text style={styles.itemText}>Age: <Text style={styles.itemDataText}>{item.age}</Text></Text>
 
-              <Text>Sex: {item.sampleSex}</Text>
-              <Text>Specimen: {item.specimen}</Text>
-              <Text>Type of Ownership: {item.ownership}</Text>
-              <Text>Dog Vaccinated? {item.vacStatus}</Text>
-              <Text>Possible contact with other animals? {item.contact}</Text>
-              <Text>Pet Management: {item.manage}</Text>
-              <Text>Cause of Death: {item.death}</Text>
-              <Text>Behavioral Changes: {item.changes}</Text>
-              <Text>Other Signs of Illness: {item.otherillness}</Text>
-              <Text>FAT Result: {item.fatcount}</Text>
-              
-              <TouchableOpacity style={styles.editButton} onPress={() => handleEditPress(item)}>
-                <Text style={styles.modalButtonText}>Edit</Text>
-              </TouchableOpacity>
-              <View style={styles.divider} /> 
+              <Text style={styles.itemText}>Sex: <Text style={styles.itemDataText}>{item.sampleSex}</Text></Text>
+              <Text style={styles.itemText}>Specimen: <Text style={styles.itemDataText}>{item.specimen}</Text></Text>
+              <Text style={styles.itemText}>Type of Ownership: <Text style={styles.itemDataText}>{item.ownership}</Text></Text>
+              <Text style={styles.itemText}>Dog Vaccinated? <Text style={styles.itemDataText}>{item.vacStatus}</Text></Text>
+              <Text style={styles.itemText}>Possible contact with other animals? <Text style={styles.itemDataText}>{item.contact}</Text></Text>
+              <Text style={styles.itemText}>Pet Management: <Text style={styles.itemDataText}>{item.manage}</Text></Text>
+              <Text style={styles.itemText}>Cause of Death: <Text style={styles.itemDataText}>{item.death}</Text></Text>
+              <Text style={styles.itemText}>Behavioral Changes: <Text style={styles.itemDataText}>{item.changes}</Text></Text>
+              <Text style={styles.itemText}>Other Signs of Illness: <Text style={styles.itemDataText}>{item.otherillness}</Text></Text>
+              <Text style={styles.itemText}>FAT Result: <Text style={styles.itemDataText}>{item.fatcount}</Text></Text>
+
+              <View style={styles.divider} />
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity style={styles.editButton} onPress={() => handleEditPress(item)}>
+                  <Text style={styles.modalButtonText}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeletePress(item)}>
+                  <Text style={styles.modalButtonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
         />
@@ -262,6 +319,29 @@ const Sample_form_archive = () => {
               </TouchableOpacity>
             </View>
           </View>
+        </Modal>
+
+        <Modal isVisible={isDeleteModalVisible}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalText}>Are you sure you want to delete this entry?</Text>
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity style={styles.modalButton} onPress={deleteItem}>
+                <Text style={styles.modalButtonText}>Yes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalButton} onPress={toggleDeleteModal}>
+                <Text style={styles.modalButtonText}>No</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        <Modal isVisible={isNotificationModalVisible}>
+                <View style={styles.modalContainer}>
+                    <Text style={styles.modalText}>{notificationMessage}</Text>
+                    <TouchableOpacity style={styles.modalButton} onPress={toggleNotificationModal}>
+                        <Text style={styles.modalButtonText}>OK</Text>
+                    </TouchableOpacity>
+                </View>
         </Modal>
       </View>
     </ScrollView>

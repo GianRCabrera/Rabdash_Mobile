@@ -150,26 +150,28 @@ const Field_vacc_archives = () => {
   };
 
   const deleteItem = () => {
-    setDeletableItem(null); // Clear the deletable item state
-    toggleDeleteModal(); // Close the delete confirmation modal
-
+    if (!deletableItem) return; // Ensure there is an item to delete
+  
     setIsLoading(true); // Start loading indicator
-
-    // Simulate the deletion with a timeout
-    setTimeout(() => {
-        setVaccinationForms(prevForms => {
-            const filteredForms = prevForms.filter(form => form.id !== deletableItem.id);
-            if (filteredForms.length !== prevForms.length) {
-                setNotificationMessage('Entry deleted successfully!');
-            } else {
-                setNotificationMessage('Failed to delete entry.');
-            }
-            return filteredForms;
-        });
-
+    axios.delete(`${apiURL}/deleteVaccinationForm/${deletableItem.id}`)
+      .then(response => {
+        if (response.data.success) {
+          setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
+          setNotificationMessage('Entry deleted successfully!');
+        } else {
+          setNotificationMessage('Failed to delete entry. ' + response.data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error deleting item:', error);
+        setNotificationMessage('An error occurred while deleting the entry.');
+      })
+      .finally(() => {
         setIsLoading(false); // Stop loading indicator
+        toggleDeleteModal(false); // Close the delete confirmation modal
         toggleNotificationModal(); // Show notification modal
-    }, 1500); // Delay the process to simulate loading for 1.5 seconds
+        setDeletableItem(null); // Clear the deletable item state
+      });
   };
 
   const toggleNotificationModal = () => {
@@ -254,12 +256,12 @@ const Field_vacc_archives = () => {
                   <Text style={styles.itemText}>Time Finished: <Text style={styles.itemDataText}>{item.timeFinish}</Text></Text>
 
                   <View style={styles.buttonContainer}>
-                      <TouchableOpacity style={styles.editButton} onPress={() => handleEditPress(item)}>
-                          <Text style={styles.modalButtonText}>Edit</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeletePress(item)}>
-                          <Text style={styles.modalButtonText}>Delete</Text>
-                      </TouchableOpacity>
+                    <TouchableOpacity style={styles.editButton} onPress={() => handleEditPress(item)}>
+                      <Text style={styles.modalButtonText}>Edit</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeletePress(item)}>
+                      <Text style={styles.modalButtonText}>Delete</Text>
+                    </TouchableOpacity>
                   </View>
                   <View style={styles.divider} />
               </View>

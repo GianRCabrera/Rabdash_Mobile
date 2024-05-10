@@ -5,15 +5,23 @@ import {
   StyleSheet,
   ScrollView,
   Image,
+  TouchableOpacity,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const AboutUs = () => {
+  const navigation = useNavigation();
+
+  const handleMainMenuNavigation = () => {
+    navigation.navigate('MainMenu');
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.box}>
         <Text style={styles.header}>Welcome to RabDash: A rabies forecasting dashboard.</Text>
       </View>
-      <Text style={styles.subheader}>About the project</Text>
+      <Text style={styles.subheader}>About the Project</Text>
       <Text style={styles.content}>
         Leveraging data and research to assist in achieving a rabies-free Davao
         City by 2030, the RabDash DC project aims to establish a rabies data
@@ -35,41 +43,46 @@ const AboutUs = () => {
       </Text>
       <View style={styles.imageContainer}>
         <Image
-          source={require('./assets/pchrd.png')} // Replace with your image file path
-          style={styles.image}
-          resizeMode="contain" // Set resizeMode to "contain"
-        />
-        <Image
-          source={require('./assets/UPMIN.png')} // Replace with your image file path
-          style={styles.image}
-          resizeMode="contain" // Set resizeMode to "contain"
-        />
-        </View>
-      <View style={styles.imageContainer}>
-        <Image
-          source={require('./assets/cvo.png')} // Replace with your image file path
-          style={styles.image}
-          resizeMode="contain" // Set resizeMode to "contain"
-        />
-        <Image
-          source={require('./assets/stoprabies.png')} // Replace with your image file path
-          style={styles.image}
-          resizeMode="contain" // Set resizeMode to "contain"
-        />
-      </View>
-      <View style={styles.imageContainer}>
-        <Image
-          source={require('./assets/pgc.png')} // Replace with your image file path
+          source={require('./assets/pchrd.png')}
           style={styles.image}
           resizeMode="contain"
         />
         <Image
-          source={require('./assets/pawsitivity1.png')} // Replace with your image file path
+          source={require('./assets/UPMIN.png')}
           style={styles.image}
-          resizeMode="contain" 
+          resizeMode="contain"
         />
       </View>
-      <View style={{ height: 500 }} />
+      <View style={styles.imageContainer}>
+        <Image
+          source={require('./assets/cvo.png')}
+          style={styles.image}
+          resizeMode="contain"
+        />
+        <Image
+          source={require('./assets/stoprabies.png')}
+          style={styles.image}
+          resizeMode="contain"
+        />
+      </View>
+      <View style={styles.imageContainer}>
+        <Image
+          source={require('./assets/pgc.png')}
+          style={styles.image}
+          resizeMode="contain"
+        />
+        <Image
+          source={require('./assets/pawsitivity1.png')}
+          style={styles.image}
+          resizeMode="contain"
+        />
+      </View>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleMainMenuNavigation}
+      >
+        <Text style={styles.buttonText}>Main Menu</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 };
@@ -85,50 +98,63 @@ const styles = StyleSheet.create({
   box: {
     backgroundColor: 'white',
     padding: 20,
-    borderRadius: 20,
-    marginTop: 20,
-    marginBottom: 20,
-    alignItems: 'center', // Center horizontally
-    justifyContent: 'center', // Center vertically
+    borderRadius: 15,
+    marginVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 5,
+    marginTop: 80
   },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginTop: 50,
-    marginBottom: 20,
     color: '#E74A3B',
     textAlign: 'center',
   },
   subheader: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 5,
-    color: 'black',
+    marginTop: 30,
+    marginBottom: 15,
+    color: 'white',
     textAlign: 'left',
   },
   content: {
     fontSize: 18,
     marginTop: 5,
-    marginBottom: 30,
-    color: 'black',
+    marginBottom: 20,
+    color: 'white',
     textAlign: 'justify',
+    lineHeight: 24,
   },
   imageContainer: {
-    flexDirection: 'row', // Display images horizontally
-    justifyContent: 'center', // Space them evenly
-    alignItems: 'center', // Align them vertically
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginVertical: 20,
   },
   image: {
-    width: 120,
-    height: 120,
+    width: 100,
+    height: 100,
+  },
+  button: {
+    backgroundColor: '#FFFFFF',
+    padding: 15,
+    borderRadius: 10,
     marginTop: 20,
-    marginBottom: 20,
-    marginRight: 30,
-    marginLeft: 30,
+    width: '80%',
+    alignSelf: 'center',
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#E74A3B',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 
 export default AboutUs;
-
-

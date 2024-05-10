@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#E74A3B', // Orange background for the inner container
         paddingTop: 50, // Reduced top padding to push children slightly lower
         paddingBottom: 20, // Balance padding at the bottom
-        paddingHorizontal: 20, // Horizontal padding remains the same
+        paddingHorizontal: 40, // Horizontal padding remains the same
         borderRadius: 85,
         width: '120%', // Adjust width as needed
         height: '85%',

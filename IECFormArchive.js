@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import styles from './styles/Archive';
 import Modal from 'react-native-modal';
 import axios from 'axios';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const IECFormArchive = () => {
 
@@ -24,6 +25,12 @@ const IECFormArchive = () => {
 
   const [currentPage, setCurrentPage] = useState(1); // State to manage current page
   const itemsPerPage = 5; // Number of items per page
+
+  const [deletableItem, setDeletableItem] = useState(null); // State to store item to be deleted
+  const [isDeleteModalVisible, setDeleteModalVisible] = useState(false); // State to manage delete modal visibility
+
+  const [isNotificationModalVisible, setNotificationModalVisible] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
 
   const navigateToVetArchiveMenu = () => {
     navigation.navigate('VetArchiveMenu');
@@ -120,6 +127,45 @@ const handlePreviousPage = () => {
   setCurrentPage(currentPage - 1);
 };
 
+ // Function to handle deletion of item
+ const handleDeletePress = (item) => {
+  setDeletableItem(item); // Store the item to be deleted
+  toggleDeleteModal(); // Open the delete confirmation modal
+};
+
+// Function to toggle delete confirmation modal visibility
+const toggleDeleteModal = () => {
+  setDeleteModalVisible(!isDeleteModalVisible);
+};
+
+const deleteItem = () => {
+  if (!deletableItem) return; // Ensure there is an item to delete
+
+  setIsLoading(true); // Start loading indicator
+  axios.delete(`${apiURL}/deleteIECForm/${deletableItem.id}`)
+    .then(response => {
+      if (response.data.success) {
+        setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
+        setNotificationMessage('Entry deleted successfully!');
+      } else {
+        setNotificationMessage('Failed to delete entry. ' + response.data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error deleting item:', error);
+      setNotificationMessage('An error occurred while deleting the entry.');
+    })
+    .finally(() => {
+      setIsLoading(false); // Stop loading indicator
+      toggleDeleteModal(false); // Close the delete confirmation modal
+      toggleNotificationModal(); // Show notification modal
+      setDeletableItem(null); // Clear the deletable item state
+    });
+};
+
+const toggleNotificationModal = () => {
+  setNotificationModalVisible(!isNotificationModalVisible);
+};
 
 if (isLoading) {
   return (
@@ -132,15 +178,20 @@ if (isLoading) {
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContainer}>
       <View style={styles.container}>
-        <Text style={styles.header}>SEMINARS/TRAININGS/IEC Archive </Text>
-        <TextInput
-          style={styles.searchBar}
-          placeholder="Search by owner, pet name, or date..."
-          value={searchTerm}
-          onChangeText={setSearchTerm}
-          returnKeyType="search"
-          onSubmitEditing={handleSearchSubmit} // Updated to use the new search submit handler
-        />
+      <View style={styles.headerContainer}>
+          <Text style={styles.header}>SEMINARS/TRAININGS/IEC Archive</Text>
+        </View>
+        <View style={styles.searchContainer}>
+          <Icon name="search" size={20} color="#000" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchBar}
+            placeholder="Search by owner, pet name, or date..."
+            value={searchTerm}
+            onChangeText={setSearchTerm}
+            returnKeyType="search"
+            onSubmitEditing={handleSearchSubmit}
+          />
+        </View>
         <View style={styles.divider} />
          {isLoading ? (
           <ActivityIndicator size="large" color="#0000ff" />
@@ -151,20 +202,25 @@ if (isLoading) {
           //data={filteredForms}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <View>
-              <Text>Email: {item.username}</Text>
-              <Text>Date: {addOneDayToDate(item.date)}</Text>
-              <Text>Title: {item.title}</Text>
-              <Text>District: {item.district}</Text>
-              <Text>Barangay: {item.barangay}</Text>
-              <Text>Purok: {item.purok} </Text>
-              <Text>No. of Participants: {item.participants}</Text>
-              <Text>Brochure(Kind): {item.brochure}</Text>
-              <Text>No. of Materials: {item.materials}</Text>
-              
-              <TouchableOpacity style={styles.editButton} onPress={() => handleEditPress(item)}>
-                <Text style={styles.modalButtonText}>Edit</Text>
-              </TouchableOpacity>
+            <View style={styles.itemContainer}>
+              <Text style={styles.itemText}>Email: <Text style={styles.itemDataText}>{item.username}</Text></Text>
+              <Text style={styles.itemText}>Date: <Text style={styles.itemDataText}>{addOneDayToDate(item.date.split('T')[0])}</Text></Text>
+              <Text style={styles.itemText}>Title: <Text style={styles.itemDataText}>{item.title}</Text></Text>
+              <Text style={styles.itemText}>District: <Text style={styles.itemDataText}>{item.district}</Text></Text>
+              <Text style={styles.itemText}t>Barangay: <Text style={styles.itemDataText}>{item.barangay}</Text></Text>
+              <Text style={styles.itemText}>Purok: <Text style={styles.itemDataText}>{item.purok}</Text></Text>
+              <Text style={styles.itemText}>No. of Participants: <Text style={styles.itemDataText}>{item.participants}</Text></Text>
+              <Text style={styles.itemText}>Brochure(Kind): <Text style={styles.itemDataText}>{item.brochure}</Text></Text>
+              <Text style={styles.itemText}>No. of Materials: <Text style={styles.itemDataText}>{item.materials}</Text></Text>
+
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity style={styles.editButton} onPress={() => handleEditPress(item)}>
+                  <Text style={styles.modalButtonText}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeletePress(item)}>
+                  <Text style={styles.modalButtonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
               <View style={styles.divider} />
             </View>
           )}
@@ -202,6 +258,29 @@ if (isLoading) {
               </TouchableOpacity>
             </View>
           </View>
+        </Modal>
+
+        <Modal isVisible={isDeleteModalVisible}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalText}>Are you sure you want to delete this entry?</Text>
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity style={styles.modalButton} onPress={deleteItem}>
+                <Text style={styles.modalButtonText}>Yes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalButton} onPress={toggleDeleteModal}>
+                <Text style={styles.modalButtonText}>No</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        <Modal isVisible={isNotificationModalVisible}>
+                <View style={styles.modalContainer}>
+                    <Text style={styles.modalText}>{notificationMessage}</Text>
+                    <TouchableOpacity style={styles.modalButton} onPress={toggleNotificationModal}>
+                        <Text style={styles.modalButtonText}>OK</Text>
+                    </TouchableOpacity>
+                </View>
         </Modal>
       </View>
     </ScrollView>

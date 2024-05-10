@@ -1494,6 +1494,139 @@ app.get('/getRabiesExposureForms', async (req, res) => {
   }
 });
 
+// DELETE endpoint for Vaccination Forms
+app.delete('/deleteVaccinationForm/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const deleteQuery = 'DELETE FROM vaccination_form WHERE id = ?';
+
+  try {
+    await queryDatabase(deleteQuery, [id]);
+    console.log(`Vaccination form with ID ${id} deleted successfully`);
+    res.json({ success: true, message: 'Vaccination form deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting vaccination form:', error);
+    res.status(500).json({ success: false, message: 'An error occurred while deleting the vaccination form' });
+  }
+});
+
+// DELETE endpoint for Neuter Forms
+app.delete('/deleteNeuterForm/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const deleteQuery = 'DELETE FROM consent_form WHERE id = ?';
+
+  try {
+    await queryDatabase(deleteQuery, [id]);
+    console.log(`Neuter form with ID ${id} deleted successfully`);
+    res.json({ success: true, message: 'Neuter form deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting neuter form:', error);
+    res.status(500).json({ success: false, message: 'An error occurred while deleting the neuter form' });
+  }
+});
+
+// DELETE endpoint for Rabies Sample Forms
+app.delete('/deleteRabiesSampleForm/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const deleteQuery = 'DELETE FROM bite_form WHERE id = ?';
+
+  try {
+    await queryDatabase(deleteQuery, [id]);
+    console.log(`Rabies Sample form with ID ${id} deleted successfully`);
+    res.json({ success: true, message: 'Rabies Sample form deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting rabies sample form:', error);
+    res.status(500).json({ success: false, message: 'An error occurred while deleting the rabies sample form' });
+  }
+});
+
+// DELETE endpoint for Budget Forms
+app.delete('/deleteBudgetForm/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const deleteQuery = 'DELETE FROM budget_form WHERE id = ?';
+
+  try {
+    const result = await queryDatabase(deleteQuery, [id]);
+    if (result.affectedRows > 0) {
+      console.log(`Budget form with ID ${id} deleted successfully`);
+      res.json({ success: true, message: 'Budget form deleted successfully' });
+    } else {
+      console.error(`No Budget form found with ID ${id}`);
+      res.status(404).json({ success: false, message: 'No Budget form found with the given ID' });
+    }
+  } catch (error) {
+    console.error('Error deleting budget form:', error);
+    res.status(500).json({ success: false, message: 'An error occurred while deleting the budget form' });
+  }
+});
+
+// DELETE endpoint for Schedule Forms
+app.delete('/deleteScheduleForm/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const deleteQuery = 'DELETE FROM schedule_form WHERE id = ?';
+
+  try {
+    await queryDatabase(deleteQuery, [id]);
+    console.log(`Schedule form with ID ${id} deleted successfully`);
+    res.json({ success: true, message: 'Schedule form deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting schedule form:', error);
+    res.status(500).json({ success: false, message: 'An error occurred while deleting the schedule form' });
+  }
+});
+
+// DELETE endpoint for IEC Forms
+app.delete('/deleteIECForm/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const deleteQuery = 'DELETE FROM iec_form WHERE id = ?';
+
+  try {
+    await queryDatabase(deleteQuery, [id]);
+    console.log(`IEC form with ID ${id} deleted successfully`);
+    res.json({ success: true, message: 'IEC form deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting IEC form:', error);
+    res.status(500).json({ success: false, message: 'An error occurred while deleting the IEC form' });
+  }
+});
+
+// DELETE endpoint for Animal Control Forms
+app.delete('/deleteAnimalControlForm/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const deleteQuery = 'DELETE FROM control_form WHERE id = ?';
+
+  try {
+    await queryDatabase(deleteQuery, [id]);
+    console.log(`Animal Control form with ID ${id} deleted successfully`);
+    res.json({ success: true, message: 'Animal Control form deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting animal control form:', error);
+    res.status(500).json({ success: false, message: 'An error occurred while deleting the animal control form' });
+  }
+});
+
+// DELETE endpoint for Rabies Exposure Forms
+app.delete('/deleteRabiesExposureForm/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const deleteQuery = 'DELETE FROM exposure_form WHERE id = ?';
+
+  try {
+    await queryDatabase(deleteQuery, [id]);
+    console.log(`Rabies Exposure form with ID ${id} deleted successfully`);
+    res.json({ success: true, message: 'Rabies Exposure form deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting rabies exposure form:', error);
+    res.status(500).json({ success: false, message: 'An error occurred while deleting the rabies exposure form' });
+  }
+});
+
 // Serve static files from a directory
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 

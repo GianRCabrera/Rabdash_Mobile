@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import styles from './styles/Archive';
 import Modal from 'react-native-modal';
 import axios from 'axios';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const AnimalControlArchives = () => {
   const [user, setUser] = useState(null);
@@ -17,6 +18,12 @@ const AnimalControlArchives = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredForms, setFilteredForms] = useState([]);
   const flatListRef = useRef(); // Add this ref for the FlatList
+
+  const [deletableItem, setDeletableItem] = useState(null); // State to store item to be deleted
+  const [isDeleteModalVisible, setDeleteModalVisible] = useState(false); // State to manage delete modal visibility
+
+  const [isNotificationModalVisible, setNotificationModalVisible] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
 
   const navigation = useNavigation();
 
@@ -99,6 +106,47 @@ const submitForm = () => {
   }
 };
 
+// Function to handle deletion of item
+const handleDeletePress = (item) => {
+  setDeletableItem(item); // Store the item to be deleted
+  toggleDeleteModal(); // Open the delete confirmation modal
+};
+
+// Function to toggle delete confirmation modal visibility
+const toggleDeleteModal = () => {
+  setDeleteModalVisible(!isDeleteModalVisible);
+};
+
+const deleteItem = () => {
+  if (!deletableItem) return; // Ensure there is an item to delete
+
+  setIsLoading(true); // Start loading indicator
+  axios.delete(`${apiURL}/deleteAnimalControlForm/${deletableItem.id}`)
+    .then(response => {
+      if (response.data.success) {
+        setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
+        setNotificationMessage('Entry deleted successfully!');
+      } else {
+        setNotificationMessage('Failed to delete entry. ' + response.data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error deleting item:', error);
+      setNotificationMessage('An error occurred while deleting the entry.');
+    })
+    .finally(() => {
+      setIsLoading(false); // Stop loading indicator
+      toggleDeleteModal(false); // Close the delete confirmation modal
+      toggleNotificationModal(); // Show notification modal
+      setDeletableItem(null); // Clear the deletable item state
+    });
+};
+
+const toggleNotificationModal = () => {
+  setNotificationModalVisible(!isNotificationModalVisible);
+};
+
+
 // Function to add one day to the date
 const addOneDayToDate = (dateStr) => {
   const date = new Date(dateStr);
@@ -127,50 +175,60 @@ if (isLoading) {
     </View>
   );
 }
-  
+
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContainer}>
       <View style={styles.container}>
-        <Text style={styles.header}>Animal Control and Rehabilitation Section Daily Report Form Archive </Text>
-        <TextInput
-          style={styles.searchBar}
-          placeholder="Search by owner, pet name, or date..."
-          value={searchTerm}
-          onChangeText={setSearchTerm}
-          returnKeyType="search"
-          onSubmitEditing={handleSearchSubmit} // Updated to use the new search submit handler
-        />
+        <View style={styles.headerContainer}>
+          <Text style={styles.header}>Animal Control and Rehabilitation Section Daily Report Form Archive </Text>
+        </View>
+        <View style={styles.searchContainer}>
+          <Icon name="search" size={20} color="#000" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchBar}
+            placeholder="Search by owner, pet name, or date..."
+            value={searchTerm}
+            onChangeText={setSearchTerm}
+            returnKeyType="search"
+            onSubmitEditing={handleSearchSubmit}
+          />
+        </View>
         <View style={styles.divider} />
          {isLoading ? (
           <ActivityIndicator size="large" color="#0000ff" />
         ) : (
         <FlatList
           ref={flatListRef} // Assign the ref to FlatList
-          data={filteredForms} 
-          //data={vaccinationForms}
+          data={filteredForms.slice(startIndex, endIndex)}
+          //data={filteredForms} 
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <View>
-              <Text>Email: {item.username}</Text>
-              <Text>Date: {addOneDayToDate(item.date1)}</Text>
-              <Text>Cage Number: {item.cageNum}</Text>
+            <View style={styles.itemContainer}>
+              <Text style={styles.itemText}>Email: <Text style={styles.itemDataText}>{item.username}</Text></Text>
+              <Text style={styles.itemText}>Date: <Text style={styles.itemDataText}>{addOneDayToDate(item.date1.split('T')[0])}</Text></Text>
+              <Text style={styles.itemText}>Cage Number: <Text style={styles.itemDataText}>{item.cageNum}</Text></Text>
               
-              <Text>Impounded</Text>
-              <Text>No. of Heads: {item.impHeads}</Text>
-              <Text>Date: {addOneDayToDate(item.date2)}</Text>
+              <Text style={styles.itemText}>Impounded</Text>
+              <Text style={styles.itemText}>No. of Heads: <Text style={styles.itemDataText}>{item.impHeads}</Text></Text>
+              <Text style={styles.itemText}>Date: <Text style={styles.itemDataText}>{addOneDayToDate(item.date2.split('T')[0])}</Text></Text>
               
-              <Text>Claimed</Text>
-              <Text>No. of Heads: {item.claimedHeads} </Text>
-              <Text>Date: {addOneDayToDate(item.date3)}</Text>
+              <Text style={styles.itemText}>Claimed</Text>
+              <Text style={styles.itemText}>No. of Heads: <Text style={styles.itemDataText}>{item.claimedHeads}</Text></Text>
+              <Text style={styles.itemText}>Date: <Text style={styles.itemDataText}>{addOneDayToDate(item.date3.split('T')[0])}</Text></Text>
               
-              <Text>Euthanized</Text>
-              <Text>No. of Heads: {item.euthHeads}</Text>
-              <Text>Date: {addOneDayToDate(item.date4)}</Text>
-              <Text>Chief of Operation/Team Leader: {item.chief}</Text>
+              <Text style={styles.itemText}>Euthanized</Text>
+              <Text style={styles.itemText}>No. of Heads: <Text style={styles.itemDataText}>{item.euthHeads}</Text></Text>
+              <Text style={styles.itemText}>Date: <Text style={styles.itemDataText}>{addOneDayToDate(item.date4.split('T')[0])}</Text></Text>
+              <Text style={styles.itemText}>Chief of Operation/Team Leader: <Text style={styles.itemDataText}>{item.chief}</Text></Text>
 
-              <TouchableOpacity style={styles.editButton} onPress={() => handleEditPress(item)}>
-                <Text style={styles.modalButtonText}>Edit</Text>
-              </TouchableOpacity>
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity style={styles.editButton} onPress={() => handleEditPress(item)}>
+                  <Text style={styles.modalButtonText}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeletePress(item)}>
+                  <Text style={styles.modalButtonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
               <View style={styles.divider} />
             </View>
           )}
@@ -209,6 +267,29 @@ if (isLoading) {
               </TouchableOpacity>
             </View>
           </View>
+        </Modal>
+
+        <Modal isVisible={isDeleteModalVisible}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalText}>Are you sure you want to delete this entry?</Text>
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity style={styles.modalButton} onPress={deleteItem}>
+                <Text style={styles.modalButtonText}>Yes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalButton} onPress={toggleDeleteModal}>
+                <Text style={styles.modalButtonText}>No</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        <Modal isVisible={isNotificationModalVisible}>
+                <View style={styles.modalContainer}>
+                    <Text style={styles.modalText}>{notificationMessage}</Text>
+                    <TouchableOpacity style={styles.modalButton} onPress={toggleNotificationModal}>
+                        <Text style={styles.modalButtonText}>OK</Text>
+                    </TouchableOpacity>
+                </View>
         </Modal>
       </View>
     </ScrollView>

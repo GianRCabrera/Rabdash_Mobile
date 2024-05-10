@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import styles from './styles/Archive';
 import Modal from 'react-native-modal';
 import axios from 'axios';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const Rabies_Exposure_Form_Archive = () => {
 
@@ -18,6 +19,12 @@ const Rabies_Exposure_Form_Archive = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredForms, setFilteredForms] = useState([]);
   const flatListRef = useRef(); // Add this ref for the FlatList
+
+  const [deletableItem, setDeletableItem] = useState(null); // State to store item to be deleted
+  const [isDeleteModalVisible, setDeleteModalVisible] = useState(false); // State to manage delete modal visibility
+
+  const [isNotificationModalVisible, setNotificationModalVisible] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
 
   const navigation = useNavigation();
 
@@ -129,6 +136,51 @@ const formatDateTime = (dateStr) => {
   return date.toLocaleString('en-US', options);
 };
 
+// Function to handle deletion of item
+const handleDeletePress = (item) => {
+  setDeletableItem(item); // Store the item to be deleted
+  toggleDeleteModal(); // Open the delete confirmation modal
+};
+
+// Function to toggle delete confirmation modal visibility
+const toggleDeleteModal = () => {
+  setDeleteModalVisible(!isDeleteModalVisible);
+};
+
+const deleteItem = () => {
+  if (!deletableItem) return; // Ensure there is an item to delete
+
+  setIsLoading(true); // Start loading indicator
+  axios.delete(`${apiURL}/deleteRabiesExposureForm/${deletableItem.id}`)
+    .then(response => {
+      if (response.data.success) {
+        setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
+        setNotificationMessage('Entry deleted successfully!');
+      } else {
+        setNotificationMessage('Failed to delete entry. ' + response.data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error deleting item:', error);
+      setNotificationMessage('An error occurred while deleting the entry.');
+    })
+    .finally(() => {
+      setIsLoading(false); // Stop loading indicator
+      toggleDeleteModal(false); // Close the delete confirmation modal
+      toggleNotificationModal(); // Show notification modal
+      setDeletableItem(null); // Clear the deletable item state
+    });
+};
+
+const toggleNotificationModal = () => {
+  setNotificationModalVisible(!isNotificationModalVisible);
+};
+
+const addOneDay = (dateStr) => {
+  const date = new Date(dateStr);
+  return date.toISOString().split('T')[0]; // Format back to YYYY-MM-DD
+};
+
 // Function to handle next page button press
 const handleNextPage = () => {
   setCurrentPage(currentPage + 1);
@@ -153,15 +205,20 @@ if (isLoading) {
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContainer}>
       <View style={styles.container}>
-        <Text style={styles.header}>Rabies Exposure Form Archive Archive </Text>
-        <TextInput
-          style={styles.searchBar}
-          placeholder="Search by owner, pet name, or date..."
-          value={searchTerm}
-          onChangeText={setSearchTerm}
-          returnKeyType="search"
-          onSubmitEditing={handleSearchSubmit} // Updated to use the new search submit handler
-        />
+      <View style={styles.headerContainer}>
+          <Text style={styles.header}>Rabies Exposure Form Archive Archive</Text>
+        </View>
+        <View style={styles.searchContainer}>
+          <Icon name="search" size={20} color="#000" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchBar}
+            placeholder="Search by owner, pet name, or date..."
+            value={searchTerm}
+            onChangeText={setSearchTerm}
+            returnKeyType="search"
+            onSubmitEditing={handleSearchSubmit}
+          />
+        </View>
         <View style={styles.divider} />
         {isLoading ? (
           <ActivityIndicator size="large" color="#0000ff" />
@@ -172,43 +229,48 @@ if (isLoading) {
           //data={filteredForms} 
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <View>
-              <Text>Email: {item.username}</Text>
-              <Text>Registration</Text>
-              <Text>No: {item.regNo}</Text>
-              <Text>Date: {formatDateTime(item.regDate)}</Text>
-              <Text>Name of Patient: {item.name}</Text>
-              <Text>Address: {item.address}</Text>
+            <View style={styles.itemContainer}>
+              <Text style={styles.itemText}>Email: <Text style={styles.itemDataText}>{item.username}</Text></Text>
+              <Text style={styles.itemText}>Registration</Text>
+              <Text style={styles.itemText}>No: <Text style={styles.itemDataText}>{item.regNo}</Text></Text>
+              <Text style={styles.itemText}>Date: <Text style={styles.itemDataText}>{addOneDay(item.regDate.split('T')[0])}</Text></Text>
+              <Text style={styles.itemText}>Name of Patient: <Text style={styles.itemDataText}>{item.name}</Text></Text>
+              <Text style={styles.itemText}>Address: <Text style={styles.itemDataText}>{item.address}</Text></Text>
 
-              <Text>History of Exposure</Text>
-              <Text>Age: {item.age}</Text>
-              <Text>Sex: {item.sex}</Text>
-              <Text>Date: {formatDateTime(item.expDate)}</Text>
-              <Text>Place (Where biting occured): {item.place}</Text>
-              <Text>Type of Animal: {item.typeAnimal}</Text>
-              <Text>Type (B/NB): {item.typeBNB}</Text>
-              <Text>Site (body parts): {item.site}</Text>
+              <Text style={styles.itemText}>History of Exposure</Text>
+              <Text style={styles.itemText}>Age: <Text style={styles.itemDataText}>{item.age}</Text></Text>
+              <Text style={styles.itemText}>Sex: <Text style={styles.itemDataText}>{item.sex}</Text></Text>
+              <Text style={styles.itemText}>Date: <Text style={styles.itemDataText}>{formatDateTime(item.expDate)}</Text></Text>
+              <Text style={styles.itemText}>Place (Where biting occured): <Text style={styles.itemDataText}>{item.place}</Text></Text>
+              <Text style={styles.itemText}>Type of Animal: <Text style={styles.itemDataText}>{item.typeAnimal}</Text></Text>
+              <Text style={styles.itemText}>Type (B/NB):<Text style={styles.itemDataText}>{item.typeBNB}</Text></Text>
+              <Text style={styles.itemText}>Site (body parts): <Text style={styles.itemDataText}>{item.site}</Text></Text>
 
-              <Text>Post Exposure Prophylaxis (PEP)</Text>
-              <Text>Category (1,2, and 3): {item.category}</Text>
-              <Text>Washing of Bite: {item.washing}</Text>
-              <Text>RIG Data Given: {formatDateTime(item.RIG)}</Text>
+              <Text style={styles.itemText}>Post Exposure Prophylaxis (PEP)</Text>
+              <Text style={styles.itemText}>Category (1,2, and 3): <Text style={styles.itemDataText}>{item.category}</Text></Text>
+              <Text style={styles.itemText}>Washing of Bite: <Text style={styles.itemDataText}>{item.washing}</Text></Text>
+              <Text style={styles.itemText}>RIG Data Given: <Text style={styles.itemDataText}>{formatDateTime(item.RIG)}</Text></Text>
 
-              <Text>Tissue Culture Vaccine (Date Given)</Text>
-              <Text>Route: {item.route}</Text>
-              <Text>D0: {formatDateTime(item.d0)}</Text>
-              <Text>D3: {formatDateTime(item.d3)}</Text>
-              <Text>D7: {formatDateTime(item.d7)}</Text>
-              <Text>D14: {formatDateTime(item.d14)}</Text>
-              <Text>D28: {formatDateTime(item.d28)}</Text>
-              <Text>Brand Name: {item.brand}</Text>
-              <Text>Outcome (C/Inc/N/D): {item.outcome}</Text>
-              <Text>Biting Animal Status (after 14 days) (Alive/Dead/Lost): {item.bitingStatus}</Text>
-              <Text>Remarks: {item.remarks}</Text>
+              <Text style={styles.itemText}>Tissue Culture Vaccine (Date Given)</Text>
+              <Text style={styles.itemText}>Route: <Text style={styles.itemDataText}>{item.route}</Text></Text>
+              <Text style={styles.itemText}>D0: <Text style={styles.itemDataText}>{formatDateTime(item.d0)}</Text></Text>
+              <Text style={styles.itemText}>D3: <Text style={styles.itemDataText}>{formatDateTime(item.d3)}</Text></Text>
+              <Text style={styles.itemText}>D7: <Text style={styles.itemDataText}>{formatDateTime(item.d7)}</Text></Text>
+              <Text style={styles.itemText}>D14: <Text style={styles.itemDataText}>{formatDateTime(item.d14)}</Text></Text>
+              <Text style={styles.itemText}>D28: <Text style={styles.itemDataText}>{formatDateTime(item.d28)}</Text></Text>
+              <Text style={styles.itemText}>Brand Name: <Text style={styles.itemDataText}>{item.brand}</Text></Text>
+              <Text style={styles.itemText}>Outcome (C/Inc/N/D): <Text style={styles.itemDataText}>{item.outcome}</Text></Text>
+              <Text style={styles.itemText}>Biting Animal Status (after 14 days) (Alive/Dead/Lost): <Text style={styles.itemDataText}>{item.bitingStatus}</Text></Text>
+              <Text style={styles.itemText}>Remarks: <Text style={styles.itemDataText}>{item.remarks}</Text></Text>
 
-              <TouchableOpacity style={styles.editButton} onPress={() => handleEditPress(item)}>
-                <Text style={styles.modalButtonText}>Edit</Text>
-              </TouchableOpacity>
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity style={styles.editButton} onPress={() => handleEditPress(item)}>
+                  <Text style={styles.modalButtonText}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeletePress(item)}>
+                  <Text style={styles.modalButtonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
               <View style={styles.divider} />
             </View>
           )}
@@ -246,6 +308,29 @@ if (isLoading) {
               </TouchableOpacity>
             </View>
           </View>
+        </Modal>
+
+        <Modal isVisible={isDeleteModalVisible}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalText}>Are you sure you want to delete this entry?</Text>
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity style={styles.modalButton} onPress={deleteItem}>
+                <Text style={styles.modalButtonText}>Yes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalButton} onPress={toggleDeleteModal}>
+                <Text style={styles.modalButtonText}>No</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        <Modal isVisible={isNotificationModalVisible}>
+                <View style={styles.modalContainer}>
+                    <Text style={styles.modalText}>{notificationMessage}</Text>
+                    <TouchableOpacity style={styles.modalButton} onPress={toggleNotificationModal}>
+                        <Text style={styles.modalButtonText}>OK</Text>
+                    </TouchableOpacity>
+                </View>
         </Modal>
       </View>
     </ScrollView>

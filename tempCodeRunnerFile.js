@@ -1,0 +1,1 @@
+<Text style={styles.itemDataText}>{item.name
