@@ -287,8 +287,10 @@ const navigateAfterSubmit = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Welcome To Neuter Form (Part 2) </Text>
-  
+      <View style={styles.headerContainerneut}>
+          <Text style={styles.header}>Neuter Form (Part 2)</Text>
+      </View>
+
       {/* White Container */}
       <View style={styles.whiteContainer}>
         <ScrollView
@@ -306,20 +308,22 @@ const navigateAfterSubmit = () => {
           <Text style={styles.headerText}>Pet Owner</Text>
         </View>
   
-        {/* Container for Barangay and Purok */}
         <View style={styles.rowContainer2}>
-          {/* Barangay Container */}
+          {/* Patient's name Container */}
           <View style={styles.labelContainer}>
             <Text style={[styles.labelText, { textAlign: 'left' }]}>Patient's Name</Text>
             <TextInput
-              style={styles.textBox}
+              style={styles.textBox2}
               placeholder="Name"
               value={name}
               onChangeText={handleNameChange}  // Handle text changes
               // Additional TextInput props can be added as needed
             />
           </View>
-          
+        </View>
+
+        {/* Container for Barangay and Purok */}
+        <View style={styles.rowContainer2}>
           {/* Purok Container */}
           <View style={styles.labelContainer}>
             <Text style={styles.labelText}>Species</Text>

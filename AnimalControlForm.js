@@ -273,7 +273,9 @@ const navigateAfterSubmit = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Animal Control & Rehab. Section</Text>
+      <View style={styles.headerContaineranimal}>
+          <Text style={styles.header}>Animal Control & Rehababilitation</Text>
+      </View>
   
       {/* White Container */}
       <View style={styles.whiteContainer}>
@@ -424,7 +426,7 @@ const navigateAfterSubmit = () => {
             <View style={styles.labelContainer}>  
               <Text style={styles.labelText}>Chief of Operation/Team Leader*</Text>
               <TextInput
-                style={styles.textBox}
+                style={styles.textBox2}
                 placeholder=""
                 value={chiefValue}  // Set the value from the state
                 onChangeText={handleChiefChange}  // Handle text changes

@@ -159,7 +159,9 @@ const navigateAfterSubmit = () => {
 
     return (
     <View style={styles.container}>
-      <Text style={styles.header}>Budget Form</Text>
+      <View style={styles.headerContainer}>
+          <Text style={styles.header}>Budget Form</Text>
+      </View>
 
        {/* White Container */}
     <View style={styles.whiteContainer}>

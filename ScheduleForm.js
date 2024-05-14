@@ -175,7 +175,9 @@ const navigateAfterSubmit = () => {
 
     return (
     <View style={styles.container}>
-      <Text style={styles.header}>Schedule Form</Text>
+      <View style={styles.headerContainersched}>
+          <Text style={styles.header}>Schedule Form</Text>
+      </View>
 
        {/* White Container */}
     <View style={styles.whiteContainer}>

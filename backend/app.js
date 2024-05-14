@@ -132,6 +132,46 @@
     }
   });
 
+  // Configure Nodemailer with Hostinger SMTP
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.hostinger.com', // Replace with your Hostinger SMTP server
+    port: 465, // Typically 587 or 465
+    secure: true, // true for 465, false for other ports
+    auth: {
+      user: 'admin@rabdash.com', // Your email address
+      pass: 'Forrabdash1!', // Your email password
+    },
+  });
+
+// Endpoint to handle password reset requests
+app.post('/resetpass', async (req, res) => {
+  const { email } = req.body;
+  const resetLink = `Rabdash_Mobile://reset-password?email=${encodeURIComponent(email)}`; // Custom URL scheme
+
+  const mailOptions = {
+    from: 'admin@rabdash.com', // Sender address
+    to: email, // Receiver email
+    subject: 'Password Reset Notification',
+    html: `
+      <p>Hello!</p>
+      <p>You are receiving this email because we received a password reset request for your account.</p>
+      <p><a href="${resetLink}" style="background-color: #4285F4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a></p>
+      <p>This password reset link will expire in 60 minutes.</p>
+      <p>If you did not request a password reset, no further action is required.</p>
+      <p>Regards,<br>RabDash</p>
+    `, // HTML content with reset link
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    res.json({ success: true, message: 'Password reset link sent successfully.' });
+  } catch (error) {
+    console.error('Error sending email:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to send password reset link.' });
+  }
+});
+
+//Forms
 app.post('/submitVaccinationForm', async (req, res) => {
   const { user } = req.session;
   const username = user.email;

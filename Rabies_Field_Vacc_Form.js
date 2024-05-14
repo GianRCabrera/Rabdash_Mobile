@@ -253,8 +253,10 @@ const Rabies_Field_Vacc_Form = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Rabies Field Vaccination Form</Text>
-  
+      <View style={styles.headerContainer}>
+          <Text style={styles.header}>Rabies Field Vaccination Form</Text>
+      </View>
+
       {/* White Container */}
       <View style={styles.whiteContainer}>
       <ScrollView
@@ -339,19 +341,21 @@ const Rabies_Field_Vacc_Form = () => {
           </View>
         </View>
   
-        {/* Container for Vaccinator and Time */}
         <View style={styles.rowContainer2}>
           <View style={styles.labelContainer}>
-            <Text style={styles.labelText}>Vaccinator/s</Text>
-            <TextInput
-              style={styles.textBox}
-              placeholder="Juan Dela Cruz"
-              value={vaccinatorValue}  // Set the value from the state
-              onChangeText={handleVaccinatorChange}  // Handle text changes
-              // Additional TextInput props can be added as needed
-            />
+              <Text style={styles.labelText}>Vaccinator/s</Text>
+              <TextInput
+                style={styles.textBox2}
+                placeholder="Juan Dela Cruz"
+                value={vaccinatorValue}  // Set the value from the state
+                onChangeText={handleVaccinatorChange}  // Handle text changes
+                // Additional TextInput props can be added as needed
+              />
+            </View>
           </View>
-  
+
+        {/* Container for Time */}
+        <View style={styles.rowContainer2}>
           <View style={styles.labelContainer}>
             <Text style={styles.labelText}>Time Started:</Text>
             <TouchableOpacity onPress={showTimePicker}>
@@ -373,25 +377,27 @@ const Rabies_Field_Vacc_Form = () => {
         <View style={styles.rowContainer2}>
           <Text style={styles.headerText}>Owner's Profile</Text>
         </View>
-
+        
         <View style={styles.rowContainer2}>
-        {/* Name Label and Text */}
+          {/* Name Label and Text */}
           <View style={styles.labelContainer}>
-              <Text style={styles.labelText}>Name</Text>
-              <TextInput
-                style={styles.textBox}
-                placeholder="John Cena"
-                value={owner_nameValue}  // Set the value from the state
-                onChangeText={handleOwner_nameChange}  // Handle text changes
-                // Additional TextInput props can be added as needed
-              />
-            </View>
-          
+            <Text style={styles.labelText}>Name</Text>
+            <TextInput
+              style={styles.textBox2}
+              placeholder="John Cena"
+              value={owner_nameValue}  // Set the value from the state
+              onChangeText={handleOwner_nameChange}  // Handle text changes
+              // Additional TextInput props can be added as needed
+            />
+          </View>
+        </View>
+        
+        <View style={styles.rowContainer2}>
             {/* Adress Label Text */}
             <View style={styles.labelContainer}>  
               <Text style={styles.labelText}>Address</Text>
               <TextInput
-                style={styles.textBox}
+                style={styles.textBox2}
                 placeholder="Mintal, Davao City"
                 value={addressValue}  // Set the value from the state
                 onChangeText={handleAddressChange}  // Handle text changes

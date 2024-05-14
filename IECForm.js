@@ -208,8 +208,9 @@ const navigateAfterSubmit = () => {
 
     return (
     <View style={styles.container}>
-      <Text style={styles.header}>Budget Form</Text>
-
+    <View style={styles.headerContainerIEC}>
+          <Text style={styles.header}>IEC Form</Text>
+    </View>
        {/* White Container */}
     <View style={styles.whiteContainer}>
     <ScrollView
@@ -340,7 +341,7 @@ const navigateAfterSubmit = () => {
         <View style={styles.rowContainer2}>
              {/* Materials Container */}
           <View style={styles.labelContainer}>
-            <Text style={[styles.labelText, { textAlign: 'left' }]}>NO. of Materials</Text>
+            <Text style={[styles.labelText, { textAlign: 'left' }]}>No. of Materials</Text>
             <TextInput
               style={styles.textBox}
               placeholder="12"

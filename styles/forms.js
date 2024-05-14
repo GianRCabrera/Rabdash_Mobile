@@ -9,8 +9,69 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#E74A3B',
     padding: 20,
-
   },
+
+  headerContainer: {
+    backgroundColor: 'white', // Set a contrasting background
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    marginVertical: 10,
+    borderRadius: 20,
+    shadowColor: '#000', // Optional shadow for better depth
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5, // For Android shadow
+    marginBottom: 30,
+    marginTop: 40
+  },
+
+  headerContainerexp: {
+    backgroundColor: 'white', // Set a contrasting background
+    paddingVertical: 10,
+    paddingHorizontal: 60,
+    marginVertical: 10,
+    borderRadius: 20,
+    shadowColor: '#000', // Optional shadow for better depth
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5, // For Android shadow
+    marginBottom: 30,
+    marginTop: 40
+  },
+
+  headerContainerneut: {
+    backgroundColor: 'white', // Set a contrasting background
+    paddingVertical: 10,
+    paddingHorizontal: 105,
+    marginVertical: 10,
+    borderRadius: 20,
+    shadowColor: '#000', // Optional shadow for better depth
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5, // For Android shadow
+    marginBottom: 30,
+    marginTop: 40
+  },
+
+  headerContainersample: {
+    backgroundColor: 'white', // Set a contrasting background
+    paddingVertical: 10,
+    paddingHorizontal: 40,
+    marginVertical: 10,
+    borderRadius: 20,
+    shadowColor: '#000', // Optional shadow for better depth
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5, // For Android shadow
+    marginBottom: 30,
+    marginTop: 40
+  },
+
+
   header: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -18,11 +79,12 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     textAlign: 'center',
     justifyContent: 'center',
-    marginTop: 80,
+    marginTop: 30,
     marginBottom: 30,
     paddingHorizontal: 20, // Add horizontal padding for better text alignment
-    
+    color: '#E74A3B', // Adjusted for better readability
   },
+
   whiteContainer: {
     backgroundColor: 'white',
     flex: 10,
@@ -92,6 +154,16 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginTop: 5,
   },
+
+  textBox2: {
+    backgroundColor: '#F2F2F2',
+    width: '190%',
+    height: 40,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginTop: 5,
+  },
+  
   button: {
     backgroundColor: '#E74A3B',
     width: '48%',

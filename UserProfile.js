@@ -5,34 +5,41 @@ import axios from 'axios';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const UserProfile = () => {
-  const [user, setUser] = useState(null);
   const navigation = useNavigation();
   const apiURL = process.env.EXPO_PUBLIC_URL || 'http://localhost:3000'; // Ensure a fallback URL
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Fetch user profile data from the backend
     axios.get(`${apiURL}/userProfile`)
       .then(response => {
         setUser(response.data);
       })
       .catch(error => {
         console.error('Error fetching user profile:', error);
-        // Optionally, navigate to login screen or show an error message
       });
-  }, []);
+  }, [apiURL]);
 
   const handleBackToMainMenu = () => {
     if (user && user.position) {
-      if (user.position === 'CVO' || user.position === 'Rabdash') {
-        navigation.navigate('VetMenu');
-      } else if (user.position === 'Private Veterinarian') {
-        navigation.navigate('MainMenu');
-      } else {
-        console.warn('Unknown user position:', user.position);
+      switch (user.position) {
+        case 'CVO':
+        case 'Rabdash':
+          navigation.navigate('VetMenu');
+          break;
+        case 'Private Veterinarian':
+          navigation.navigate('MainMenu');
+          break;
+        default:
+          console.warn('Unknown user position:', user.position);
+          break;
       }
     } else {
       console.warn('User position is undefined');
     }
+  };
+
+  const handleResetPassword = () => {
+    navigation.navigate('ResetPasswordPage');
   };
 
   return (
@@ -71,6 +78,10 @@ const UserProfile = () => {
             <Text style={styles.text}>{user.position || 'N/A'}</Text>
           </View>
 
+          <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
+            <Text style={styles.buttonText}>Reset Password</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.button} onPress={handleBackToMainMenu}>
             <Text style={styles.buttonText}>Main Menu</Text>
           </TouchableOpacity>
@@ -96,12 +107,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     width: '100%',
     justifyContent: 'center',
-    position: 'relative', // To position the back button absolutely
+    position: 'relative',
   },
   backButton: {
     position: 'absolute',
-    left: 0,
-    top: -140, // Aligns the button to the top
+    left: 20,
+    top: 20,
   },
   header: {
     fontSize: 24,
@@ -114,11 +125,11 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     elevation: 3,
-    alignItems: 'center', // Center the image
-    width: '100%',
+    alignItems: 'center',
+    width: '90%',
   },
   profileImage: {
-    width: 100, // Adjust the size as needed
+    width: 100,
     height: 100,
     borderRadius: 50,
     marginBottom: 15,
@@ -142,11 +153,11 @@ const styles = StyleSheet.create({
     color: '#34495e',
   },
   button: {
-    backgroundColor: '#E74A3B',
+    backgroundColor: '#3498db',
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 15,
     marginTop: 20,
-    width: '100%',
+    width: '60%',
     alignItems: 'center',
   },
   buttonText: {

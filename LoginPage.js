@@ -106,7 +106,7 @@ const LoginPage = () => {
   const handleForgotPassword = () => {
     // Handle forgot password logic here
     console.log('Forgot Password link pressed!');
-    navigation.navigate('ResetPassword');
+    navigation.navigate('ForgotPassword');
   };
 
   const handleRegister = () => {

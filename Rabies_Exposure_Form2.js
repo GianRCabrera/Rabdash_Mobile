@@ -184,7 +184,8 @@ const Rabies_Exposure_Form2 = () => {
     setIsBitingStatusOpen(!isBitingStatusOpen);
     setIsOutcomeOpen(false);
     setIsWashingOpen(false);
-    setIsCategoryOpen(false);  };
+    setIsCategoryOpen(false);  
+  };
 
   const handleCategoryChange = (value) => {
     setCategoryValue(value);
@@ -453,8 +454,10 @@ const navigateAfterSubmit = () => {
 };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Rabies Exposure Form (Part 2) </Text>
+    <View style={styles.expcontainer}>
+      <View style={styles.headerContainer}>
+          <Text style={styles.header}>Rabies Exposure Form (Part 2)</Text>
+      </View>
   
       {/* White Container */}
       <View style={styles.whiteContainer}>
@@ -488,11 +491,14 @@ const navigateAfterSubmit = () => {
                     setOpen={handleCategoryOpen}
                     setValue={handleCategoryChange}
                     listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
+                    zIndex={isCategoryOpen ? 3000 : 1000}
                 />
           </View>
-
-          {/* Category Container */}
-          <View style={styles.labelContainer}>
+        </View>
+  
+        <View style={styles.rowContainer2}>
+        {/* Category Container */}
+        <View style={styles.labelContainer}>
             <Text style={styles.labelText}>Washing of Bite</Text>
                 <DropDownPicker
                     open={isWashingOpen}
@@ -505,10 +511,11 @@ const navigateAfterSubmit = () => {
                     setOpen={handleWashingOpen}
                     setValue={handleWashingChange}
                     listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
+                    zIndex={isWashingOpen ? 3000 : 1000}
                 />
           </View>
         </View>
-  
+
         {/* Container for Procedure*/}
         <View style={styles.rowContainer2}>
           {/* Date Container */}
@@ -519,6 +526,7 @@ const navigateAfterSubmit = () => {
             {selectedDateTime ? `${selectedDateTime.toLocaleDateString()} ${selectedDateTime.toLocaleTimeString()}`: 'Select Date and Time'} </Text>
           </TouchableOpacity>
            <DateTimePickerModal
+           style={styles.dropdownContainer}
             isVisible={isDateTimePickerVisible}
             mode="datetime"
             onConfirm={handleDateTimeConfirm}
@@ -661,11 +669,11 @@ const navigateAfterSubmit = () => {
             </View>
           </View>
 
-          <View syle ={styles.rowContainer2}>
+          <View style ={styles.rowContainer2}>
             {/* Biting Animal Status Dropdown */}
             <View style={styles.labelContainer}>
             <Text style={styles.labelText}>Biting Animal Status (Alive/Dead/Lost)</Text>
-            <DropDownPicker
+            <DropDownPicker 
               open={isBitingStatusOpen}
               value={bitingStatusValue}
               items={[
@@ -680,29 +688,29 @@ const navigateAfterSubmit = () => {
             zIndex={3000} // Adjust zIndex to ensure dropdown appears above other components
             zIndexInverse={1000}
           />
+          </View>
         </View>
 
             {/* Remarks Container */}
-            <View style={styles.labelContainer}>  
-              <Text style={styles.labelText}>Remarks</Text>
-              <TextInput
-                style={styles.textBox}
-                placeholder=""
-                value={remarks}
-                onChangeText={handleRemarksChange}  // Handle text changes
-                // Additional TextInput props can be added as needed
-              />
+            <View style ={styles.rowContainer2}>
+              <View style={styles.labelContainer}>  
+                <Text style={styles.labelText}>Remarks</Text>
+                <TextInput
+                  style={styles.textBox}
+                  placeholder=""
+                  value={remarks}
+                  onChangeText={handleRemarksChange}  // Handle text changes
+                  // Additional TextInput props can be added as needed
+                />
+              </View>
             </View>
-          </View>
-
+            
           {/* Container for Back and Next Number */}
           <View style={styles.rowContainer2}>
             {/* Back Button */}
             <TouchableOpacity
-              style={styles.button}
+              style={styles.buttonexp}
               onPress={() => {
-                // Handle back button press
-                // You can navigate to the previous screen or perform any other action
                 navigation.navigate('Rabies_Exposure_Form1');
               }}
             >
@@ -711,12 +719,13 @@ const navigateAfterSubmit = () => {
 
             {/* Next Button */}
             <TouchableOpacity
-              style={styles.button}
+              style={styles.buttonexp}
               onPress={handleSubmitPress}
             >
               <Text style={styles.buttonText}>Submit</Text>
             </TouchableOpacity>
           </View>
+
           {/* Modal to check if all fields are inputted */}
           <Modal isVisible={isModalVisible}>
             <View style={styles.modalContainer}>

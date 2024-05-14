@@ -227,7 +227,9 @@ const Neuter_Form = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Neuter Form</Text>
+      <View style={styles.headerContainerneut}>
+          <Text style={styles.header}>Neuter Form</Text>
+      </View>
   
       {/* White Container */}
       <View style={styles.whiteContainer}>
@@ -332,23 +334,25 @@ const Neuter_Form = () => {
         </View>
   
         <View style={styles.rowContainer2}>
-        {/* Name Label and Text */}
+          {/* Name Label and Text */}
           <View style={styles.labelContainer}>
               <Text style={styles.labelText}>Client</Text>
               <TextInput
-                style={styles.textBox}
+                style={styles.textBox2}
                 placeholder="Name"
                 value={clientValue}  // Set the value from the state
                 onChangeText={handleClientChange}  // Handle text changes
                 // Additional TextInput props can be added as needed
               />
             </View>
-          
+        </View>
+
+        <View style={styles.rowContainer2}>
             {/* Adress Label Text */}
             <View style={styles.labelContainer}>  
               <Text style={styles.labelText}>Address</Text>
               <TextInput
-                style={styles.textBox}
+                style={styles.textBox2}
                 placeholder="Mintal, Davao City"
                 value={addressValue}  // Set the value from the state
                 onChangeText={handleAddressChange}  // Handle text changes

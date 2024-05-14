@@ -346,7 +346,9 @@ const navigateAfterSubmit = () => {
 
   return (
     <View style={styles.container}>
-        <Text style={styles.header}>Rabies Field Vaccination Form (Part 2)</Text>
+      <View style={styles.headerContainer}>
+          <Text style={styles.header}>Rabies Field Vaccination Form (Part 2)</Text>
+      </View>
 
          {/* White Container */}
       <View style={styles.whiteContainer}>
@@ -362,19 +364,21 @@ const navigateAfterSubmit = () => {
             <Text style={styles.headerText}>Animal Information</Text>
           </View>
 
-          {/* Container for Name and Age */}
           <View style={styles.rowContainer2}>
-              <View style={styles.labelContainer}>
+            <View style={styles.labelContainer}>
                 <Text style={styles.labelText}>Name</Text>
                 <TextInput
-                  style={styles.textBox}
+                  style={styles.textBox2}
                   placeholder="Browny"
                   value={petName}
                   onChangeText={handlepetNameChange}  // Handle text changes
                   // Additional TextInput props can be added as needed
                 />
               </View>
+          </View>
 
+          {/* Container Age */}
+          <View style={styles.rowContainer2}>
               <View style={styles.labelContainer}>
                 <Text style={styles.labelText}>Age</Text>
                 <TextInput
@@ -455,7 +459,7 @@ const navigateAfterSubmit = () => {
           {/* Container for Vaccine Used/Lot Number and Source of Vaccine */}
           <View style={styles.rowContainer2}>
               <View style={styles.labelContainer}>
-                <Text style={styles.labelText}>Vaccine/Lot Number </Text>
+                <Text style={styles.labelText}>Vaccine/Lot No. </Text>
                 <TextInput
                   style={styles.textBox}
                   placeholder=" "

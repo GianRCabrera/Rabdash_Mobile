@@ -7,17 +7,63 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#E74A3B',
       },
+      headerContainer: {
+        backgroundColor: 'white',
+        paddingVertical: 5,
+        paddingHorizontal: 100,
+        marginVertical: 10,
+        borderRadius: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+        marginBottom: 30,
+        marginTop: 60,
+        marginHorizontal: '5%', // Added for equal horizontal margin
+      },
+      headerContainersched: {
+        backgroundColor: 'white',
+        paddingVertical: 5,
+        paddingHorizontal: 90,
+        marginVertical: 10,
+        borderRadius: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+        marginBottom: 30,
+        marginTop: 60,
+        marginHorizontal: '5%', // Added for equal horizontal margin
+      },
+      headerContainerIEC: {
+        backgroundColor: 'white',
+        paddingVertical: 5,
+        paddingHorizontal: 120,
+        marginVertical: 10,
+        borderRadius: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+        marginBottom: 30,
+        marginTop: 60,
+        marginHorizontal: '5%', // Added for equal horizontal margin
+      },
       whiteContainer: {
         backgroundColor: 'white',
         flex: 10,
-        width: '95%', // Take the full width
+        width: '90%',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 20, // Adjust the padding as needed
-        borderBottomWidth: 30, // Add borderBottomWidth to create a border at the bottom
-        borderBottomColor: 'white', // Specify the color of the border
+        padding: 20,
+        borderBottomWidth: 30,
+        borderBottomColor: 'white',
         borderRadius: 15,
         marginBottom: 25,
+        marginHorizontal: '5%', // Added for equal horizont
       },
       greenContainer: {
         backgroundColor: 'green',
@@ -66,11 +112,12 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: 'white',
         alignItems: 'center',
-        justifyContent: 'center',
         textAlign: 'center',
-        marginTop: 80,
+        justifyContent: 'center',
+        marginTop: 30,
         marginBottom: 30,
-        paddingHorizontal: 20, 
+        paddingHorizontal: 20,
+        color: '#E74A3B',
       },
       headerText: {
         fontSize: 16,

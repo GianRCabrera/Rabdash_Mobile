@@ -1,189 +1,148 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  ScrollView,
   Alert,
-  } from 'react-native';
-  import Modal from 'react-native-modal';
-  import axios from 'axios';
-  import { useNavigation } from '@react-navigation/native';
-
-
-//const NETWORK_URL = 'http://192.168.1.7:3000/resetpass ';
+} from 'react-native';
+import Modal from 'react-native-modal';
+import axios from 'axios';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const ResetPasswordPage = () => {
   const [email, setEmail] = useState('');
-  const [successModalVisible, setSuccessModalVisible] = useState(false);
-  const [errorModalVisible, setErrorModalVisible] = useState(false);
-  const [FillallfieldsModalVisible, setFillallfieldsModalVisible] = useState(false)
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const navigation = useNavigation();
-  const apiURL = process.env.EXPO_PUBLIC_URL;
-
-  const showFillallfieldsModal= () => {
-    setFillallfieldsModalVisible(true);
-  };
-
-  const hideFillallfieldsModal = () => {
-    setFillallfieldsModalVisible(false);
-  };
-
-  const showSuccessModal = () => {
-    setSuccessModalVisible(true);
-  };
-
-  const hideSuccessModal = () => {
-    setSuccessModalVisible(false);
-  };
-
-  const showErrorModal = (message) => {
-    //responseMessage(message);
-    setErrorModalVisible(true);
-  };
-
-  const hideErrorModal = () => {
-    setErrorModalVisible(false);
-  };
+  const apiURL = process.env.EXPO_PUBLIC_URL || 'http://localhost:3000';
 
   const handleResetPassword = async () => {
-    console.log('Reset Password button pressed for email:', email);
+    // Your password reset logic here
+  };
 
-    if (email.trim() === '') {
-      console.log('Please fill in all required fields.');
-      showFillallfieldsModal();
-      return;
-    }
-
-    const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-    if (!emailPattern.test(email)) {
-    console.log('Invalid email format');
-    showErrorModal();
-    return;
-    }
-
-    try {
-      const response = await axios.post(`${apiURL}/resetpass`, {
-        email,
-      });
-
-      if (response.data.success) {
-        Alert.alert('Password Reset', 'Password reset instructions sent to your email.');
-        navigation.navigate('Login'); // Navigate to the login screen
-      } else {
-        Alert.alert('Error', response.data.message);
-      }
-    } catch (error) {
-      console.error('Error during password reset:', error);
-      Alert.alert('Error', 'An error occurred during password reset.');
-    }
-   };
+  const handleBackToProfile = () => {
+    navigation.goBack(); // Assuming the user profile screen is the previous one
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Reset Password</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        onChangeText={(text) => setEmail(text)}
-        value={email}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
-        <Text style={styles.buttonText}>Reset Password</Text>
-      </TouchableOpacity>
-
-      <Modal isVisible={errorModalVisible}>
-        <View style={styles.modalContainer}>
-          <Text style={styles.modalText}>Email format is wrong.</Text>
-          <TouchableOpacity style={styles.modalButton} onPress={hideErrorModal}>
-            <Text style={styles.modalButtonText}>OK</Text>
-          </TouchableOpacity>
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.card}>
+        <Text style={styles.header}>Reset Password</Text>
+        
+        <View style={styles.inputGroup}>
+          <Icon name="email-outline" size={24} style={styles.icon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
         </View>
-      </Modal>
-
-      <Modal isVisible={successModalVisible}>
-        <View style={styles.modalContainer}>
-          <Text style={styles.modalText}>The verification is sent to your email.</Text>
-          <TouchableOpacity style={styles.modalButton} onPress={() => {
-            setSuccessModalVisible(false);
-            resetInputFields();
-          }}>
-            <Text style={styles.modalButtonText}>OK</Text>
-          </TouchableOpacity>
+        
+        <View style={styles.inputGroup}>
+          <Icon name="lock-outline" size={24} style={styles.icon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Old Password"
+            secureTextEntry={true}
+            onChangeText={setOldPassword}
+            value={oldPassword}
+          />
         </View>
-      </Modal>
-      <Modal isVisible={FillallfieldsModalVisible}>
-        <View style={styles.modalContainer}>
-          <Text style={styles.modalText}>Please fill in all required fields</Text>
-          <TouchableOpacity style={styles.modalButton} onPress={() => {
-            setFillallfieldsModalVisible(false);
-          }}>
-            <Text style={styles.modalButtonText}>OK</Text>
-          </TouchableOpacity>
-          </View>
-      </Modal>
-    </View>
+
+        <View style={styles.inputGroup}>
+          <Icon name="lock-reset" size={24} style={styles.icon} />
+          <TextInput
+            style={styles.input}
+            placeholder="New Password"
+            secureTextEntry={true}
+            onChangeText={setNewPassword}
+            value={newPassword}
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Icon name="lock-check-outline" size={24} style={styles.icon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Confirm Password"
+            secureTextEntry={true}
+            onChangeText={setConfirmPassword}
+            value={confirmPassword}
+          />
+        </View>
+
+        <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
+          <Text style={styles.buttonText}>Change Password</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.button} onPress={handleBackToProfile}>
+          <Text style={styles.buttonText}>Back to Profile</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#E74A3B',
+    padding: 20,
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
   },
   header: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
+    color: '#333',
     marginBottom: 20,
-    color: 'white',
+    textAlign: 'center',
+  },
+  inputGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  icon: {
+    marginRight: 10,
   },
   input: {
-    width: '80%',
+    flex: 1,
     height: 40,
-    borderColor: 'gray',
+    borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 10,
-    marginBottom: 10,
-    backgroundColor: 'white',
   },
   button: {
-    backgroundColor: 'white',
-    width: '80%',
-    height: 40,
-    borderRadius: 5,
+    backgroundColor: '#3498db',
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    height: 40,
     marginTop: 20,
   },
   buttonText: {
-    color: '#E74A3B',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  modalContainer: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  modalText: {
-    fontSize: 18,
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  modalButton: {
-    backgroundColor: '#E74A3B',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 5,
-  },
-  modalButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',

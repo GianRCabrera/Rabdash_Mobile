@@ -236,7 +236,9 @@ const Rabies_Sample_Information_Form = () => {
 
   return (
       <View style={styles.container}>
-      <Text style={styles.header}>Rabies Sample Information</Text>
+      <View style={styles.headerContainersample}>
+        <Text style={styles.header}>Rabies Sample Information</Text>
+      </View>
 
        {/* White Container */}
     <View style={styles.whiteContainer}>
@@ -253,19 +255,21 @@ const Rabies_Sample_Information_Form = () => {
         <Text style={styles.headerText}>Owner's Profile</Text>
       </View>
 
-      {/* Container for Name and Sex */}
       <View style={styles.rowContainer2}>
-          <View style={styles.labelContainer}>
+        <View style={styles.labelContainer}>
             <Text style={styles.labelText}>Name</Text>
             <TextInput
-              style={styles.textBox}
+              style={styles.textBox2}
               placeholder="Name"
               value={name}  // Set the value from the state
               onChangeText={handleNameChange}  // Handle text changes
               // Additional TextInput props can be added as needed
             />
-          </View>
+        </View>
+      </View>
 
+      {/* Container for Name and Sex */}
+      <View style={styles.rowContainer2}>
           <View style={styles.dropdownContainer}>
             <Text style={styles.labelText}>Sex</Text>
                 <DropDownPicker
@@ -283,19 +287,21 @@ const Rabies_Sample_Information_Form = () => {
           </View>
       </View>
 
+      <View style={styles.rowContainer2}>
+        <View style={styles.dropdownContainer}>
+          <Text style={styles.labelText}>Address</Text>
+          <TextInput
+            style={styles.textBox2}
+            placeholder="Complete Address"
+            value={address}  // Set the value from the state
+            onChangeText={handleAddressChange}  // Handle text changes
+            // Additional TextInput props can be added as needed
+          />
+        </View>
+      </View>
+
       {/* Container for Address and Contact Number */}
       <View style={styles.rowContainer2}>
-          <View style={styles.dropdownContainer}>
-              <Text style={styles.labelText}>Address</Text>
-              <TextInput
-              style={styles.textBox}
-              placeholder="Complete Address"
-              value={address}  // Set the value from the state
-              onChangeText={handleAddressChange}  // Handle text changes
-              // Additional TextInput props can be added as needed
-            />
-          </View>
-
           <View style={styles.dropdownContainer}>
             <Text style={styles.labelText}>Contact Number</Text>
             <TextInput
@@ -307,11 +313,8 @@ const Rabies_Sample_Information_Form = () => {
               maxLength={11}  // Set maximum length to 11
             />
           </View>
-      </View>
 
-      {/* Container for District and Barangay*/}
-      <View style={styles.rowContainer2}>
-           {/* District Container */}
+          {/* District Container */}
           <View style={styles.dropdownContainer}>
             <Text style={styles.labelText}>District:</Text>
             <DropDownPicker
@@ -334,8 +337,14 @@ const Rabies_Sample_Information_Form = () => {
               setOpen={handleDistrictOpen}
               setValue={handleDistrictChange}
               listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
+              zIndex={3000} // High zIndex when this picker is active
+              zIndexInverse={1000} // Lower zIndex when this picker is inactive
             />
           </View>
+      </View>
+
+      {/* Container for District and Barangay*/}
+      <View style={styles.rowContainer2}>
 
           <View style={styles.labelContainer}>
             <Text style={styles.labelText}>Barangay</Text>
@@ -384,6 +393,8 @@ const Rabies_Sample_Information_Form = () => {
               setOpen={handleSpeciesOpen}
               setValue={handleSpeciesChange}
               listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
+              zIndex={isDistrictOpen ? 1000 : 3000} // Higher zIndex only when district dropdown is not open
+              zIndexInverse={3000} // Higher zIndex when inactive if other dropdowns need to appear over this one
               />
           </View>
       </View>

@@ -253,10 +253,12 @@ const handleBackPress = () => {
   navigateBack();
 };
 
-
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Rabies Exposure Form </Text>
+      <View style={styles.headerContainerexp}>
+          <Text style={styles.header}>Rabies Exposure Form</Text>
+      </View>
+
       {/* White Container */}
       <View style={styles.whiteContainer}>
       <ScrollView
@@ -302,27 +304,27 @@ const handleBackPress = () => {
           /> 
           </View>
         </View>
-  
-        {/* Container for Name and Address */}
         <View style={styles.rowContainer2}>
 
-          {/* Purok Container */}
-          <View style={styles.labelContainer}>
-            <Text style={[styles.labelText, { textAlign: 'left' }]}>Name of Patient</Text>
-            <TextInput
-              style={styles.textBox}
-              placeholder=""
-              value={nameValue}  // Set the value from the state
-              onChangeText={handleNameChange}  // Handle text changes
-              // Additional TextInput props can be added as needed
-            />
+        {/* Name Container */}
+        <View style={styles.labelContainer}>
+          <Text style={[styles.labelText, { textAlign: 'left' }]}>Name of Patient</Text>
+          <TextInput
+            style={styles.textBox2}
+            placeholder=""
+            value={nameValue}  // Set the value from the state
+            onChangeText={handleNameChange}  // Handle text changes
+            // Additional TextInput props can be added as needed
+          />
           </View>
-
+        </View>
+        {/* Container for Name and Address */}
+        <View style={styles.rowContainer2}>
           {/* Adress Label Text */}
           <View style={styles.labelContainer}>  
               <Text style={styles.labelText}>Address</Text>
               <TextInput
-                style={styles.textBox}
+                style={styles.textBox2}
                 placeholder=""
                 value={addressValue}  // Set the value from the state
                 onChangeText={handleAddressChange}  // Handle text changes

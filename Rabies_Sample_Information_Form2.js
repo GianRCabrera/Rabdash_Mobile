@@ -492,7 +492,9 @@ const navigateAfterSubmit = () => {
 
     return (
       <View style={styles.container}>
-      <Text style={styles.header}>Rabies Sample Information(Part 2)</Text>
+      <View style={styles.headerContaineranimal}>
+        <Text style={styles.header}>Rabies Sample Information (Part 2)</Text>
+      </View>
 
        {/* White Container */}
     <View style={styles.whiteContainer}>
