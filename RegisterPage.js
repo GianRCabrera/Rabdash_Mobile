@@ -31,14 +31,14 @@ const RegisterPage = () => {
 
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
-  const [FillallfieldsModalVisible, setFillallfieldsModalVisible] = useState(false)
-  const [PasswordModalVisible, setPasswordModalVisible] = useState(false)
+  const [fillAllFieldsModalVisible, setFillAllFieldsModalVisible] = useState(false);
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
 
   const navigation = useNavigation();
   const { register } = useAuth();  // Use the useAuth hook
   const apiURL = process.env.EXPO_PUBLIC_URL;
 
-  const showPasswordModal= () => {
+  const showPasswordModal = () => {
     setPasswordModalVisible(true);
   };
 
@@ -46,12 +46,12 @@ const RegisterPage = () => {
     setPasswordModalVisible(false);
   };
 
-  const showFillallfieldsModal= () => {
-    setFillallfieldsModalVisible(true);
+  const showFillAllFieldsModal = () => {
+    setFillAllFieldsModalVisible(true);
   };
 
-  const hideFillallfieldsModal = () => {
-    setFillallfieldsModalVisible(false);
+  const hideFillAllFieldsModal = () => {
+    setFillAllFieldsModalVisible(false);
   };
 
   const showSuccessModal = () => {
@@ -90,7 +90,7 @@ const RegisterPage = () => {
       confirmPassword.trim() === ''
     ) {
       console.log('Please fill in all required fields.');
-      showFillallfieldsModal();
+      showFillAllFieldsModal();
       return;
     }
 
@@ -102,18 +102,24 @@ const RegisterPage = () => {
 
     console.log('Registration button pressed');
 
-    const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-    if (!emailPattern.test(email)) {
-    console.log('Invalid email format');
-    showErrorModal();
-    return;
+    // Trim the email to remove leading/trailing whitespace
+    const trimmedEmail = email.trim();
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailIsValid = emailPattern.test(trimmedEmail);
+
+    console.log(`Email validation result: ${emailIsValid} for email: ${trimmedEmail}`);
+    
+    if (!emailIsValid) {
+      console.log('Invalid email format');
+      showErrorModal('Invalid email format');
+      return;
     }
 
     try {
-      const response = await axios.post(`${apiURL}/register`, {
+      const response = await axios.post(`${apiURL}/registerotp`, {
         name,
         last_name,
-        email,
+        email: trimmedEmail,
         position,
         password,
       });
@@ -122,7 +128,10 @@ const RegisterPage = () => {
       console.log('Registration success');
       showSuccessModal(); // Show the success modal
       resetInputFields(); // Clear input fields
-      showSuccessModal(); // Show the success modal only
+
+      // Navigate to OTP screen after successful registration
+      navigation.navigate('OTPRegistration', { name, last_name, email: trimmedEmail, position, password  });
+
     } catch (error) {
       const errorMessage =
         error.response && error.response.data
@@ -132,8 +141,7 @@ const RegisterPage = () => {
     }
   };
 
-  const handleLogin= () => {
-    // Handle forgot password logic here
+  const handleLogin = () => {
     console.log('Login Page pressed!');
     navigation.navigate('Login');
   };
@@ -144,7 +152,7 @@ const RegisterPage = () => {
 
   const toggleConfirmPasswordVisibility = () => {
     setShowConfirmPassword(!showConfirmPassword); // This should toggle showConfirmPassword
-  }; 
+  };
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
@@ -192,8 +200,7 @@ const RegisterPage = () => {
           value={password}
           secureTextEntry={!showPassword} // Should depend on showPassword
         />
-
-      <TouchableOpacity onPress={togglePasswordVisibility} style={styles.visibilityButton}>
+        <TouchableOpacity onPress={togglePasswordVisibility} style={styles.visibilityButton}>
           {showPassword ? (
             // SVG for "Hide" (Eye Slash Icon)
             <Svg viewBox="0 0 640 512" width="24" height="24" fill="#f00000">
@@ -224,7 +231,7 @@ const RegisterPage = () => {
             <Svg viewBox="0 0 576 512" width="24" height="24" fill="#333333">
               <Path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM144 256a144 144 0 1 1 288 0 144 144 0 1 1 -288 0zm144-64c0 35.3-28.7 64-64 64c-7.1 0-13.9-1.2-20.3-3.3c-5.5-1.8-11.9 1.6-11.7 7.4c.3 6.9 1.3 13.8 3.2 20.7c13.7 51.2 66.4 81.6 117.6 67.9s81.6-66.4 67.9-117.6c-11.1-41.5-47.8-69.4-88.6-71.1c-5.8-.2-9.2 6.1-7.4 11.7c2.1 6.4 3.3 13.2 3.3 20.3z" fill="#333333" />
             </Svg>
-            )}
+          )}
         </TouchableOpacity>
       </View>
 
@@ -240,7 +247,7 @@ const RegisterPage = () => {
 
       <Modal isVisible={errorModalVisible}>
         <View style={styles.modalContainer}>
-          <Text style={styles.modalText}>An error occurred during registration.</Text>
+          <Text style={styles.modalText}>{responseMessage}</Text>
           <TouchableOpacity style={styles.modalButton} onPress={hideErrorModal}>
             <Text style={styles.modalButtonText}>OK</Text>
           </TouchableOpacity>
@@ -255,7 +262,7 @@ const RegisterPage = () => {
             onPress={() => {
               setSuccessModalVisible(false);
               resetInputFields();
-              navigation.navigate('Login'); // Navigate here after clicking OK
+              navigation.navigate('OTP', { email }); // Navigate to OTP screen after registration
             }}
           >
             <Text style={styles.modalButtonText}>OK</Text>
@@ -263,17 +270,18 @@ const RegisterPage = () => {
         </View>
       </Modal>
 
-      <Modal isVisible={FillallfieldsModalVisible}>
+      <Modal isVisible={fillAllFieldsModalVisible}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalText}>Please fill in all required fields</Text>
           <TouchableOpacity style={styles.modalButton} onPress={() => {
-            setFillallfieldsModalVisible(false);
+            setFillAllFieldsModalVisible(false);
           }}>
             <Text style={styles.modalButtonText}>OK</Text>
           </TouchableOpacity>
           </View>
       </Modal>
-      <Modal isVisible={PasswordModalVisible}>
+
+      <Modal isVisible={passwordModalVisible}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalText}>The password doesn't match</Text>
           <TouchableOpacity style={styles.modalButton} onPress={() => {

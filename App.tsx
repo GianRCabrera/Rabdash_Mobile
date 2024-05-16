@@ -11,6 +11,9 @@ import MainMenu from './MainMenu';
 import VetMenu from './VetMenu';
 import ForgotPassword from './ForgotPassword';
 import ResetPasswordPage from './ResetPasswordPage';
+import OTP from './OTP';
+import OTPRegistration from './OTPRegistration';
+
 import RegisterPage from './RegisterPage';
 import AboutUs from './AboutUs';
 import UserProfile from './UserProfile';
@@ -82,6 +85,9 @@ type RootStackParamList = {
   WeatherFormArchive: undefined;
   DownloadableForms: undefined;
   DownloadableFormsPrivVet: undefined;
+  OTP: undefined
+  OTPRegistration: undefined
+
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -119,6 +125,8 @@ const App = () => {
           <Stack.Screen name="Landing_page" component={Landing_page} options={{ headerShown: false }} />
           <Stack.Screen name="Login" component={LoginPage} options={{ headerShown: false }} />
           <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false }} />
+          <Stack.Screen name="OTP" component={OTP} options={{ headerShown: false }} />
+          <Stack.Screen name="OTPRegistration" component={OTPRegistration} options={{ headerShown: false }} />
           <Stack.Screen name="MainMenu" component={MainMenu} options={{ headerShown: false }} />
           <Stack.Screen name="VetMenu" component={VetMenu} options={{ headerShown: false }} />
           <Stack.Screen name="ResetPasswordPage" component={ResetPasswordPage} options={{ headerShown: false }} />

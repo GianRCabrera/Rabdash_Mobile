@@ -6,6 +6,8 @@
   const crypto = require('crypto');
   const moment = require('moment-timezone');
   const nodemailer = require('nodemailer'); // For sending reset password emails
+  const bcrypt = require('bcrypt'); // Import bcrypt for password hashing
+  const saltRounds = 21; // You can adjust the number of salt rounds as needed
 
   const app = express();
   const path = require('path');
@@ -50,13 +52,17 @@
     const createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
     const updatedAt = createdAt;
 
+    try {
+    //HASH PART
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
     const query = `
       INSERT INTO users (name, last_name, email, position, password, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
-    try {
-      await queryDatabase(query, [name, last_name, email, position, password, createdAt, updatedAt]);
+    
+      await queryDatabase(query, [name, last_name, email, position, hashedPassword, createdAt, updatedAt]);
       console.log('User registered successfully');
       return true;
     } catch (error) {
@@ -70,19 +76,26 @@
       const userRegistered = await registerUser(req.body);
       if (userRegistered) {
         req.session.user = req.body;
-        res.json({ Message: 'User has been registered successfully' });
+        res.json({ success: true, Message: 'User has been registered successfully' });
       }
     } catch (error) {
-      res.json({ Message: 'An error occurred during registration.' });
+      res.json({ success: false, Message: 'An error occurred during registration.' });
     }
   });
 
   const LogIn = async (user) => {
     const { email, password } = user;
-    const query = 'SELECT * FROM users WHERE email = ? AND password = ?';
+    const query = 'SELECT * FROM users WHERE email = ?';
     try {
-      const results = await queryDatabase(query, [email, password]);
-      return results.length > 0 ? results[0] : null;
+      const results = await queryDatabase(query, [email]);
+      if (results.length > 0) {
+        const user = results[0];
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (passwordMatch) {
+          return user;
+        }
+      }
+      return null;
     } catch (error) {
       throw error;
     }
@@ -143,31 +156,153 @@
     },
   });
 
-// Endpoint to handle password reset requests
-app.post('/resetpass', async (req, res) => {
-  const { email } = req.body;
-  const resetLink = `Rabdash_Mobile://reset-password?email=${encodeURIComponent(email)}`; // Custom URL scheme
-
-  const mailOptions = {
-    from: 'admin@rabdash.com', // Sender address
-    to: email, // Receiver email
-    subject: 'Password Reset Notification',
-    html: `
-      <p>Hello!</p>
-      <p>You are receiving this email because we received a password reset request for your account.</p>
-      <p><a href="${resetLink}" style="background-color: #4285F4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a></p>
-      <p>This password reset link will expire in 60 minutes.</p>
-      <p>If you did not request a password reset, no further action is required.</p>
-      <p>Regards,<br>RabDash</p>
-    `, // HTML content with reset link
+  const generateOTP = () => {
+    return crypto.randomInt(100000, 999999).toString();
   };
+  
+  const otpStore = {};
+  
+  //OTP for reset Password
+  app.post('/resetpass', async (req, res) => {
+    const { email } = req.body;
+    const otp = generateOTP();
+  
+    otpStore[email] = {
+      otp,
+      expiry: Date.now() + 3600000, // OTP expires in 1 hour
+    };
+  
+    const mailOptions = {
+      from: 'admin@rabdash.com',
+      to: email,
+      subject: 'Password Reset Notification',
+      html: `
+        <p>Hello!</p>
+        <p>You are receiving this email because we received a password reset request for your account.</p>
+        <p>Your OTP is: <b>${otp}</b></p>
+        <p>This password reset one-time pin (OTP) will expire in 60 minutes.</p>
+        <p>If you did not request a password reset, no further action is required.</p>
+        <p>Regards,<br>RabDash</p>
+      `,
+    };
+  
+    try {
+      await transporter.sendMail(mailOptions);
+      res.json({ success: true, message: 'Password reset link sent successfully.', otp });
+    } catch (error) {
+      console.error('Error sending email:', error.message);
+      res.status(500).json({ success: false, message: 'Failed to send password reset link.' });
+    }
+  });
+
+  // Register route with OTP generation and email sending
+app.post('/registerotp', async (req, res) => {
+  const { name, last_name, email, position, password } = req.body;
+
+  try {  
+    // Generate OTP
+    const otp = generateOTP();
+    otpStore[email] = {
+      otp,
+      expiry: Date.now() + 3600000, // OTP expires in 1 hour
+    };
+
+    // Send OTP email
+    const mailOptions = {
+      from: 'admin@rabdash.com',
+      to: email,
+      subject: 'Email Verification OTP',
+      html: `
+        <p>Hello ${name} ${last_name},</p>
+        <p>Thank you for registering. Your OTP for email verification is: <b>${otp}</b></p>
+        <p>This OTP will expire in 60 minutes.</p>
+        <p>Regards,<br>RabDash</p>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.json({ success: true, message: 'OTP sent to your email.' });
+  } catch (error) {
+    console.error('Error during registration or sending OTP email:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to send OTP email.' });
+  }
+});
+  
+  app.post('/validate-otp', async (req, res) => {
+    const { email, otp } = req.body;
+    const storedOtp = otpStore[email];
+  
+    console.log(`Validating OTP for ${email}: received ${otp}, stored ${storedOtp ? storedOtp.otp : 'none'}`);
+  
+    if (storedOtp && storedOtp.otp === otp && storedOtp.expiry > Date.now()) {
+      res.json({ success: true, message: 'OTP is valid.' });
+    } else {
+      res.status(400).json({ success: false, message: 'Invalid or expired OTP.' });
+    }
+  });
+
+  app.post('/validate-otp-reg', async (req, res) => {
+    const { email, otp } = req.body;
+    const storedOtp = otpStore[email];
+  
+    console.log(`Validating OTP for ${email}: received ${otp}, stored ${storedOtp ? storedOtp.otp : 'none'}`);
+  
+    if (storedOtp && storedOtp.otp === otp && storedOtp.expiry > Date.now()) {
+      
+      res.json({ success: true, message: 'OTP is valid.' });
+    } else {
+      res.status(400).json({ success: false, message: 'Invalid or expired OTP.' });
+    }
+  });
+
+// Reset Password Functionality
+app.post('/reset-password', async (req, res) => {
+  const { email, oldPassword, newPassword } = req.body;
+
+  console.log('Received reset password request:', { email, oldPassword, newPassword });
+
+  if (!email || !oldPassword || !newPassword) {
+    console.log('Missing fields:', { email, oldPassword, newPassword });
+    return res.status(400).json({ success: false, message: 'All fields are required.' });
+  }
 
   try {
-    await transporter.sendMail(mailOptions);
-    res.json({ success: true, message: 'Password reset link sent successfully.' });
+    console.log('Querying database for user with email:', email);
+    const results = await queryDatabase('SELECT * FROM users WHERE email = ?', [email]);
+
+    if (results.length === 0) {
+      console.log('User not found for email:', email);
+      return res.status(400).json({ success: false, message: 'User not found.' });
+    }
+
+    const user = results[0];
+    console.log('User found:', user);
+
+    console.log('Stored password:', user.password);
+
+    console.log('Comparing old password...');
+    const passwordMatch = await bcrypt.compare(oldPassword, user.password);
+
+    console.log('Password match result:', passwordMatch);
+
+    if (!passwordMatch) {
+      console.log('Old password is incorrect for user:', email);
+      return res.status(400).json({ success: false, message: 'Old password is incorrect.' });
+    }
+
+    console.log('Old password matched.');
+
+    // Hash the new password
+    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    console.log('Updating user password in database...');
+    await queryDatabase('UPDATE users SET password = ? WHERE email = ?', [hashedNewPassword, email]);
+    console.log('Password updated successfully for user:', email);
+
+    res.json({ success: true, message: 'Password changed successfully.' });
   } catch (error) {
-    console.error('Error sending email:', error.message);
-    res.status(500).json({ success: false, message: 'Failed to send password reset link.' });
+    console.error('Error during password reset:', error.message);
+    res.status(500).json({ success: false, message: 'Database error.' });
   }
 });
 

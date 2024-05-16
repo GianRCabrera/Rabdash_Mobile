@@ -11,15 +11,16 @@ import {
 import Modal from 'react-native-modal';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; // Import Icon from vector-icons
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [fillAllFieldsModalVisible, setFillAllFieldsModalVisible] = useState(false);
+  const [otp, setOtp] = useState('');
   const navigation = useNavigation();
-  const apiURL = process.env.EXPO_PUBLIC_URL || 'http://localhost:3000'; // Ensure a fallback URL
+  const apiURL = process.env.EXPO_PUBLIC_URL;
 
   const handleResetPassword = async () => {
     if (!email) {
@@ -36,6 +37,7 @@ const ForgotPassword = () => {
     try {
       const response = await axios.post(`${apiURL}/resetpass`, { email });
       if (response.data.success) {
+        setOtp(response.data.otp); // Save the OTP to state
         setSuccessModalVisible(true);
       } else {
         Alert.alert('Error', response.data.message);
@@ -46,12 +48,17 @@ const ForgotPassword = () => {
     }
   };
 
+  const handleSuccessModalOkPress = () => {
+    setSuccessModalVisible(false);
+    navigation.navigate('OTP', { email, otp }); // Navigate to OTPScreen with email and OTP
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.card}>
         <Text style={styles.header}>Forgot Password</Text>
         <View style={styles.inputGroup}>
-          <Icon name="email-outline" size={24} color="#E74A3B" /> 
+          <Icon name="email-outline" size={24} color="#E74A3B" />
           <TextInput
             style={styles.input}
             placeholder="E-Mail Address"
@@ -87,7 +94,7 @@ const ForgotPassword = () => {
       <Modal isVisible={successModalVisible}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalText}>Password reset link sent successfully.</Text>
-          <TouchableOpacity style={styles.modalButton} onPress={() => setSuccessModalVisible(false)}>
+          <TouchableOpacity style={styles.modalButton} onPress={handleSuccessModalOkPress}>
             <Text style={styles.modalButtonText}>OK</Text>
           </TouchableOpacity>
         </View>

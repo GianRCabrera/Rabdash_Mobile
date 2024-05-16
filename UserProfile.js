@@ -39,7 +39,7 @@ const UserProfile = () => {
   };
 
   const handleResetPassword = () => {
-    navigation.navigate('ResetPasswordPage');
+    navigation.navigate('ResetPasswordPage', { email: user.email, previousScreen: 'UserProfile' });
   };
 
   return (
