@@ -53,6 +53,10 @@ const ForgotPassword = () => {
     navigation.navigate('OTP', { email, otp }); // Navigate to OTPScreen with email and OTP
   };
 
+  const handleBackPress = () => {
+    navigation.navigate('Login');
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.card}>
@@ -70,6 +74,9 @@ const ForgotPassword = () => {
         </View>
         <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
           <Text style={styles.buttonText}>Send Password Reset Link</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.button, styles.backButton]} onPress={handleBackPress}>
+          <Text style={styles.buttonText}>Back to Login</Text>
         </TouchableOpacity>
       </View>
 
@@ -142,7 +149,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 10,
-    marginLeft: 10, // Ensure spacing between the icon and input
+    marginLeft: 10,
   },
   button: {
     backgroundColor: '#3498db',
@@ -151,6 +158,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
+    marginBottom: 10,
+  },
+  backButton: {
+    backgroundColor: '#3498db',
   },
   buttonText: {
     color: 'white',

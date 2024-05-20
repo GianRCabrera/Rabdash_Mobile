@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, Alert
 } from 'react-native';
@@ -6,10 +6,10 @@ import axios from 'axios';
 import Modal from 'react-native-modal';
 
 const OTP = ({ route, navigation }) => {
-  const { email, purpose } = route.params; // added purpose parameter to differentiate OTP use case
+  const { email, purpose } = route.params;
   const [userOtp, setUserOtp] = useState('');
-  const [otpSentModalVisible, setOtpSentModalVisible] = useState(true);  // Modal for OTP sent notification
-  const [otpSuccessModalVisible, setOtpSuccessModalVisible] = useState(false); // Modal for OTP validation success
+  const [otpSentModalVisible, setOtpSentModalVisible] = useState(true);
+  const [otpSuccessModalVisible, setOtpSuccessModalVisible] = useState(false);
   const apiURL = process.env.EXPO_PUBLIC_URL;
 
   const validateOTP = async () => {
@@ -32,11 +32,7 @@ const OTP = ({ route, navigation }) => {
 
   const handleOtpSuccessModalClose = () => {
     setOtpSuccessModalVisible(false);
-    if (purpose === 'registration') {
-      navigation.navigate('Login');
-    } else if (purpose === 'resetPassword') {
-      navigation.navigate('ResetPasswordPage', { email, previousScreen: 'OTP' });
-    }
+    navigation.navigate('ResetPasswordPage', { email, previousScreen: 'OTP' });
   };
 
   return (

@@ -1,28 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, Alert
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import axios from 'axios';
 import Modal from 'react-native-modal';
 
 const OTPRegistration = ({ route, navigation }) => {
-  const { email, position, password, name, last_name} = route.params;
+  const { email, position, password, name, last_name } = route.params;
   const [userOtp, setUserOtp] = useState('');
-  const [otpSentModalVisible, setOtpSentModalVisible] = useState(true);  // Modal for OTP sent notification
-  const [otpSuccessModalVisible, setOtpSuccessModalVisible] = useState(false); // Modal for OTP validation success
+  const [otpSentModalVisible, setOtpSentModalVisible] = useState(true);
+  const [otpSuccessModalVisible, setOtpSuccessModalVisible] = useState(false);
+  const [registrationSuccessModalVisible, setRegistrationSuccessModalVisible] = useState(false);
   const apiURL = process.env.EXPO_PUBLIC_URL;
 
   const validateOTP = async () => {
+    console.log(`Validating OTP for email: ${email} with OTP: ${userOtp}`);
     try {
       const response = await axios.post(`${apiURL}/validate-otp-reg`, { email, otp: userOtp });
+      console.log('OTP Validation Response:', response.data);
       if (response.data.success) {
-        const response = await axios.post(`${apiURL}/register`,{name, last_name, email, position, password})
-        if (response.data.success) {
-            setOtpSuccessModalVisible(true);
-            
+        const registerResponse = await axios.post(`${apiURL}/register`, { name, last_name, email, position, password });
+        console.log('Register Response:', registerResponse.data);
+        if (registerResponse.data.success) {
+          setRegistrationSuccessModalVisible(true);
+        } else {
+          Alert.alert('Error', registerResponse.data.message || 'Registration failed.');
         }
       } else {
-        Alert.alert('Error', 'Invalid OTP!');
+        Alert.alert('Error', response.data.message || 'Invalid OTP!');
       }
     } catch (error) {
       console.error('Error validating OTP:', error.message);
@@ -37,6 +40,11 @@ const OTPRegistration = ({ route, navigation }) => {
   const handleOtpSuccessModalClose = () => {
     setOtpSuccessModalVisible(false);
     navigation.navigate('Login');
+  };
+
+  const handleRegistrationSuccessModalClose = () => {
+    setRegistrationSuccessModalVisible(false);
+    setOtpSuccessModalVisible(true);
   };
 
   return (
@@ -71,6 +79,15 @@ const OTPRegistration = ({ route, navigation }) => {
         <View style={styles.modalContent}>
           <Text style={styles.modalText}>OTP verified successfully!</Text>
           <TouchableOpacity style={styles.modalButton} onPress={handleOtpSuccessModalClose}>
+            <Text style={styles.modalButtonText}>OK</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
+      <Modal isVisible={registrationSuccessModalVisible}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalText}>Registration successful!</Text>
+          <TouchableOpacity style={styles.modalButton} onPress={handleRegistrationSuccessModalClose}>
             <Text style={styles.modalButtonText}>OK</Text>
           </TouchableOpacity>
         </View>

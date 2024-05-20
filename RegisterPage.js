@@ -126,7 +126,6 @@ const RegisterPage = () => {
 
       setResponseMessage(response.data.Message);
       console.log('Registration success');
-      showSuccessModal(); // Show the success modal
       resetInputFields(); // Clear input fields
 
       // Navigate to OTP screen after successful registration
@@ -260,9 +259,8 @@ const RegisterPage = () => {
           <TouchableOpacity
             style={styles.modalButton}
             onPress={() => {
-              setSuccessModalVisible(false);
               resetInputFields();
-              navigation.navigate('OTP', { email }); // Navigate to OTP screen after registration
+              //navigation.navigate('OTP', { email }); // Navigate to OTP screen after registration
             }}
           >
             <Text style={styles.modalButtonText}>OK</Text>
