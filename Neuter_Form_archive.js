@@ -245,7 +245,7 @@ const Neuter_Form_archive = () => {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.itemContainer}>
-              <Text style={styles.itemText}>Email: <Text style={styles.itemDataText}>{item.username}</Text></Text>
+              <Text style={styles.itemText}>Username: <Text style={styles.itemDataText}>{item.username}</Text></Text>
               <Text style={styles.itemText}>Date: <Text style={styles.itemDataText}>{addOneDayToDate(item.date.split('T')[0])}</Text></Text>
               <Text style={styles.itemText}>District: <Text style={styles.itemDataText}>{item.district}</Text></Text>
               <Text style={styles.itemText}>Barangay: <Text style={styles.itemDataText}>{item.barangay}</Text></Text>

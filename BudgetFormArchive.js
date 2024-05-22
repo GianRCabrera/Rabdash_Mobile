@@ -198,7 +198,7 @@ const BudgetFormArchive = () => {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.itemContainer}>
-              <Text style={styles.itemText}>Email: <Text style={styles.itemDataText}>{item.username}</Text></Text>
+              <Text style={styles.itemText}>Budget: <Text style={styles.itemDataText}>{item.username}</Text></Text>
               <Text style={styles.itemText}>Period: <Text style={styles.itemDataText}>{item.year}</Text></Text>
               <Text style={styles.itemText}>Annual Budget: <Text style={styles.itemDataText}>{item.budget}</Text></Text>
               <Text style={styles.itemText}>Annual Cost of Vaccine: <Text style={styles.itemDataText}>{item.costvax}</Text></Text>
@@ -238,7 +238,7 @@ const BudgetFormArchive = () => {
         {/* Modal to check if all fields are inputted */}
         <Modal isVisible={isConfirmModalVisible}>
           <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>Do you want to proceed editing the Neuter Form?</Text>
+            <Text style={styles.modalText}>Do you want to proceed editing the Budget Form?</Text>
             <View style={styles.modalButtonContainer}>
               <TouchableOpacity style={styles.modalButton} onPress={() => submitForm(editableItem)}>
                 <Text style={styles.modalButtonText}>Yes</Text>

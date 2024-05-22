@@ -177,7 +177,7 @@ if (isLoading) {
 }
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollViewContainer}>
+    <ScrollView contentContainerSFtyle={styles.scrollViewContainer}>
       <View style={styles.container}>
         <View style={styles.headerContainer}>
           <Text style={styles.header}>Animal Control and Rehabilitation Section Daily Report Form Archive </Text>
@@ -204,7 +204,7 @@ if (isLoading) {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.itemContainer}>
-              <Text style={styles.itemText}>Email: <Text style={styles.itemDataText}>{item.username}</Text></Text>
+              <Text style={styles.itemText}>Username: <Text style={styles.itemDataText}>{item.username}</Text></Text>
               <Text style={styles.itemText}>Date: <Text style={styles.itemDataText}>{addOneDayToDate(item.date1.split('T')[0])}</Text></Text>
               <Text style={styles.itemText}>Cage Number: <Text style={styles.itemDataText}>{item.cageNum}</Text></Text>
               

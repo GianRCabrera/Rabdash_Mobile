@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,30 +8,26 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useAuth } from './AuthContext';  // Import the useAuth hook
 import Modal from 'react-native-modal';
 import axios from 'axios';
-import Svg, { Path } from 'react-native-svg';  // Import Svg and Path
+import Svg, { Path } from 'react-native-svg';
 import styles from './styles/login';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [passwordError, setPasswordError] = useState(false);
   const [loginError, setLoginError] = useState('');
   const navigation = useNavigation();
   const [responseMessage, setResponseMessage] = useState('');
 
   const [errorModalVisible, setErrorModalVisible] = useState(false);
-  const [invalidModalVisible, setInvalidModalVisible] = useState(false)
-  const [FillallfieldsModalVisible, setFillallfieldsModalVisible] = useState(false)
-
-  const { login } = useAuth();  // Use the useAuth hook
+  const [invalidModalVisible, setInvalidModalVisible] = useState(false);
+  const [FillallfieldsModalVisible, setFillallfieldsModalVisible] = useState(false);
 
   const apiURL = process.env.EXPO_PUBLIC_URL;
 
-  const showFillallfieldsModal= () => {
+  const showFillallfieldsModal = () => {
     setFillallfieldsModalVisible(true);
   };
 
@@ -65,22 +61,19 @@ const LoginPage = () => {
 
     const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
     if (!emailPattern.test(email)) {
-    console.log('Invalid email format');
-    showInvalidModal();
-    return;
-  }
+      console.log('Invalid email format');
+      showInvalidModal();
+      return;
+    }
 
     try {
-      // Your login logic here
       console.log('Login button pressed!');
       console.log('Request Payload:', { email, password });
 
       const response = await axios.post(`${apiURL}/login`, { email, password });
-      console.log('Request Payload:', response.data);
+      console.log('Response Payload:', response.data);
       if (response.data.success) {
         console.log('Login successful');
-        navigation.navigate('MainMenu');
-        
         const position = response.data.position;
 
         if (position === 'CVO' || position === 'Rabdash') {
@@ -95,7 +88,7 @@ const LoginPage = () => {
         setEmail('');
         setPassword('');
       } else {
-        showInvalidModal();  //Invalid email or password (hulaan mo saan)
+        showInvalidModal();  // Invalid email or password
       }
     } catch (error) {
       console.error('An error occurred during login:', error);
@@ -104,17 +97,14 @@ const LoginPage = () => {
   };
 
   const handleForgotPassword = () => {
-    // Handle forgot password logic here
     console.log('Forgot Password link pressed!');
     navigation.navigate('ForgotPassword');
   };
 
   const handleRegister = () => {
-    // Navigate to the RegisterPage
     navigation.navigate('Register');
   };
 
-  // Function to toggle password visibility
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -122,7 +112,7 @@ const LoginPage = () => {
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
       <Image
-        source={require('./assets/logo.png')} // Replace with your image file path
+        source={require('./assets/logo.png')}
         style={styles.image}
       />
       <Text style={styles.header}>Rabdash DC</Text>
@@ -140,8 +130,8 @@ const LoginPage = () => {
           placeholder="Password"
           onChangeText={setPassword}
           value={password}
-          secureTextEntry={!showPassword} // This controls whether the password is visible
-          />
+          secureTextEntry={!showPassword}
+        />
 
         <TouchableOpacity onPress={togglePasswordVisibility} style={styles.visibilityButton}>
           {showPassword ? (
@@ -182,13 +172,13 @@ const LoginPage = () => {
 
       <Modal isVisible={invalidModalVisible}>
         <View style={styles.modalContainer}>
-          <Text style={styles.modalText}>Invalid email or password (hulaan mo saan)</Text>
+          <Text style={styles.modalText}>Invalid email or password</Text>
           <TouchableOpacity style={styles.modalButton} onPress={() => {
             setInvalidModalVisible(false);
           }}>
             <Text style={styles.modalButtonText}>OK</Text>
           </TouchableOpacity>
-          </View>
+        </View>
       </Modal>
 
       <Modal isVisible={FillallfieldsModalVisible}>
@@ -199,7 +189,7 @@ const LoginPage = () => {
           }}>
             <Text style={styles.modalButtonText}>OK</Text>
           </TouchableOpacity>
-          </View>
+        </View>
       </Modal>
     </KeyboardAvoidingView>
   );

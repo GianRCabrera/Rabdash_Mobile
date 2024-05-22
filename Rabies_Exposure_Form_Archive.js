@@ -230,7 +230,7 @@ if (isLoading) {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.itemContainer}>
-              <Text style={styles.itemText}>Email: <Text style={styles.itemDataText}>{item.username}</Text></Text>
+              <Text style={styles.itemText}>Username: <Text style={styles.itemDataText}>{item.username}</Text></Text>
               <Text style={styles.itemText}>Registration</Text>
               <Text style={styles.itemText}>No: <Text style={styles.itemDataText}>{item.regNo}</Text></Text>
               <Text style={styles.itemText}>Date: <Text style={styles.itemDataText}>{addOneDay(item.regDate.split('T')[0])}</Text></Text>
