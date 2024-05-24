@@ -208,7 +208,7 @@ const Neuter_Form = () => {
         case 'InputMenu':
           const position = user.position;
 
-          if (position === 'CVO' || position === 'Rabdash') {
+          if (position === 'CVO' || position === 'RabDash') {
             navigation.navigate('VetInputForms');
           } else if (position === 'Private Veterinarian') {
             navigation.navigate('InputForms');

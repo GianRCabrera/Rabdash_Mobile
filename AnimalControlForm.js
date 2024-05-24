@@ -274,7 +274,7 @@ const navigateAfterSubmit = () => {
   return (
     <View style={styles.container}>
       <View style={styles.headerContaineranimal}>
-          <Text style={styles.header}>Animal Control & Rehababilitation</Text>
+          <Text style={styles.header}>Animal Control & Rehabilitation</Text>
       </View>
   
       {/* White Container */}

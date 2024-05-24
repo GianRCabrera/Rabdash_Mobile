@@ -91,7 +91,7 @@ const VetArchiveMenu = () => {
                 <Text style={styles.buttonText}>Budget Form</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.button} onPress={navigateToRabiesExposureFormarchive}>
-                <Text style={styles.buttonText}>Rabies Exposure</Text>
+                <Text style={styles.buttonText}>Human Rabies Exposure</Text>
               </TouchableOpacity>
               {/* <TouchableOpacity style={styles.button} onPress={navigateToWeatherFormarchive}>
                 <Text style={styles.buttonText}>Weather Archives</Text>

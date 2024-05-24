@@ -237,7 +237,7 @@ const Rabies_Sample_Information_Form2 = () => {
     if (isEdit) {
       navigation.navigate('Sample_form_archive');
     } else {
-      if (position === 'CVO' || position === 'Rabdash') {
+      if (position === 'CVO' || position === 'RabDash') {
         navigation.navigate('VetInputForms');
       } else if (position === 'Private Veterinarian') {
         navigation.navigate('InputForms');
@@ -393,8 +393,8 @@ const Rabies_Sample_Information_Form2 = () => {
                 placeholder="Please select first"
                 setOpen={handleChangesOpen}
                 setValue={handleChangesChange}
-                listMode="MODAL"
-                maxHeight={200}
+                listMode="SCROLLVIEW"
+                maxHeight={500}
                 dropDownDirection="AUTO"
                 scrollViewProps={{
                   nestedScrollEnabled: true,

@@ -23,7 +23,7 @@ const UserProfile = () => {
     if (user && user.position) {
       switch (user.position) {
         case 'CVO':
-        case 'Rabdash':
+        case 'RabDash':
           navigation.navigate('VetMenu');
           break;
         case 'Private Veterinarian':

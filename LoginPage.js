@@ -76,23 +76,29 @@ const LoginPage = () => {
         console.log('Login successful');
         const position = response.data.position;
 
-        if (position === 'CVO' || position === 'Rabdash') {
-          navigation.navigate('VetMenu');
-        } else if (position === 'Private Veterinarian') {
-          navigation.navigate('MainMenu');
-        } else {
-          console.warn('Unknown user position:', position);
+        // Handle navigation based on the user position
+        switch (position) {
+          case 'CVO':
+          case 'RabDash':
+            navigation.navigate('VetMenu');
+            break;
+          case 'Private Veterinarian':
+            navigation.navigate('MainMenu');
+            break;
+          default:
+            console.warn('Unknown user position:', position);
         }
 
         // Clear the email and password fields
         setEmail('');
         setPassword('');
       } else {
+        console.log('Invalid email or password received from server');
         showInvalidModal();  // Invalid email or password
       }
     } catch (error) {
       console.error('An error occurred during login:', error);
-      showErrorModal();
+      showErrorModal('An error occurred during login. Please try again.');
     }
   };
 
@@ -163,7 +169,7 @@ const LoginPage = () => {
 
       <Modal isVisible={errorModalVisible}>
         <View style={styles.modalContainer}>
-          <Text style={styles.modalText}>An error occurred during logging in.</Text>
+          <Text style={styles.modalText}>{responseMessage}</Text>
           <TouchableOpacity style={styles.modalButton} onPress={hideErrorModal}>
             <Text style={styles.modalButtonText}>OK</Text>
           </TouchableOpacity>
@@ -173,9 +179,7 @@ const LoginPage = () => {
       <Modal isVisible={invalidModalVisible}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalText}>Invalid email or password</Text>
-          <TouchableOpacity style={styles.modalButton} onPress={() => {
-            setInvalidModalVisible(false);
-          }}>
+          <TouchableOpacity style={styles.modalButton} onPress={hideInvalidModal}>
             <Text style={styles.modalButtonText}>OK</Text>
           </TouchableOpacity>
         </View>
@@ -184,9 +188,7 @@ const LoginPage = () => {
       <Modal isVisible={FillallfieldsModalVisible}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalText}>Please fill in all required fields</Text>
-          <TouchableOpacity style={styles.modalButton} onPress={() => {
-            setFillallfieldsModalVisible(false);
-          }}>
+          <TouchableOpacity style={styles.modalButton} onPress={hideFillallfieldsModal}>
             <Text style={styles.modalButtonText}>OK</Text>
           </TouchableOpacity>
         </View>

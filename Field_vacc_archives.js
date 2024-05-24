@@ -39,7 +39,7 @@ const Field_vacc_archives = () => {
         setUser(response.data);
 
         let formsResponse;
-        if (response.data.position === 'CVO' || response.data.position === 'Rabdash') {
+        if (response.data.position === 'CVO' || response.data.position === 'RabDash') {
           formsResponse = await axios.get(`${apiURL}/getVaccinationFormsCVO`, {
             params: { page: 1, limit: itemsPerPage },
             withCredentials: true,
@@ -119,7 +119,7 @@ const Field_vacc_archives = () => {
 
   const handleBackPress = () => {
     const position = user?.position;
-    if (position === 'CVO' || position === 'Rabdash') {
+    if (position === 'CVO' || position === 'RabDash') {
       navigation.navigate('VetArchiveMenu');
     } else if (position === 'Private Veterinarian') {
       navigation.navigate('ClientDatabase');

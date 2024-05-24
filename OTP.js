@@ -32,7 +32,7 @@ const OTP = ({ route, navigation }) => {
 
   const handleOtpSuccessModalClose = () => {
     setOtpSuccessModalVisible(false);
-    navigation.navigate('ResetPasswordPage', { email, previousScreen: 'OTP' });
+    navigation.navigate('ResetforgotPass', { email, previousScreen: 'OTP' });
   };
 
   return (

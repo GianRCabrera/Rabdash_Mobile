@@ -184,7 +184,7 @@ const RegisterPage = () => {
           items={[
             { label: 'Private Veterinarian', value: 'Private Veterinarian' },
             { label: 'CVO', value: 'CVO' },
-            { label: 'Rabdash', value: 'Rabdash' },
+            { label: 'RabDash', value: 'RabDash' },
           ]}
           placeholder="Position" // Set the default placeholder text to "Position"
           setOpen={setOpen}

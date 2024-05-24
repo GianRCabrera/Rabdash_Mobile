@@ -13,6 +13,7 @@ import ForgotPassword from './ForgotPassword';
 import ResetPasswordPage from './ResetPasswordPage';
 import OTP from './OTP';
 import OTPRegistration from './OTPRegistration';
+import ResetforgotPass from './ResetforgotPass'; // Correct path
 
 import RegisterPage from './RegisterPage';
 import AboutUs from './AboutUs';
@@ -87,6 +88,7 @@ type RootStackParamList = {
   DownloadableFormsPrivVet: undefined;
   OTP: undefined
   OTPRegistration: undefined
+  ResetforgotPass: undefined
 
 };
 
@@ -130,6 +132,7 @@ const App = () => {
           <Stack.Screen name="MainMenu" component={MainMenu} options={{ headerShown: false }} />
           <Stack.Screen name="VetMenu" component={VetMenu} options={{ headerShown: false }} />
           <Stack.Screen name="ResetPasswordPage" component={ResetPasswordPage} options={{ headerShown: false }} />
+          <Stack.Screen name="ResetforgotPass" component={ResetforgotPass} options={{ headerShown: false }} />
           <Stack.Screen name="Register" component={RegisterPage} options={{ headerShown: false }} />
           <Stack.Screen name="AboutUs" component={AboutUs} options={{ headerShown: false }} />
           <Stack.Screen name="UserProfile" component={UserProfile} options={{ headerShown: false }} />

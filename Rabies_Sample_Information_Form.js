@@ -204,7 +204,7 @@ const Rabies_Sample_Information_Form = () => {
         navigation.navigate('Sample_form_archives');
         break;
       case 'InputMenu':
-        if (user.position === 'CVO' || user.position === 'Rabdash') {
+        if (user.position === 'CVO' || user.position === 'RabDash') {
           navigation.navigate('VetInputForms');
         } else if (user.position === 'Private Veterinarian') {
           navigation.navigate('InputForms');
@@ -249,7 +249,7 @@ const Rabies_Sample_Information_Form = () => {
             </View>
           </View>
 
-          <View style={styles.rowContainer2}>
+          <View style={[styles.rowContainer2, { zIndex: isSexOpen ? 2 : 1 }]}>
             <View style={styles.dropdownContainer}>
               <Text style={styles.labelText}>Sex</Text>
               <DropDownPicker
@@ -263,8 +263,8 @@ const Rabies_Sample_Information_Form = () => {
                 setOpen={handleSexOpen}
                 setValue={handleSexChange}
                 listMode="SCROLLVIEW"
-                zIndex={3000}
-                zIndexInverse={1000}
+                zIndex={isSexOpen ? 5000 : 1}
+                zIndexInverse={isSexOpen ? 5000 : 1}
               />
             </View>
           </View>
@@ -294,7 +294,7 @@ const Rabies_Sample_Information_Form = () => {
               />
             </View>
 
-            <View style={styles.dropdownContainer}>
+            <View style={[styles.dropdownContainer, { zIndex: isDistrictOpen ? 2 : 1 }]}>
               <Text style={styles.labelText}>District</Text>
               <DropDownPicker
                 open={isDistrictOpen}
@@ -316,8 +316,8 @@ const Rabies_Sample_Information_Form = () => {
                 setOpen={handleDistrictOpen}
                 setValue={handleDistrictChange}
                 listMode="SCROLLVIEW"
-                zIndex={3000}
-                zIndexInverse={1000}
+                zIndex={isDistrictOpen ? 5000 : 1}
+                zIndexInverse={isDistrictOpen ? 5000 : 1}
               />
             </View>
           </View>
@@ -354,7 +354,7 @@ const Rabies_Sample_Information_Form = () => {
               />
             </View>
 
-            <View style={styles.dropdownContainer}>
+            <View style={[styles.dropdownContainer, { zIndex: isSpeciesOpen ? 2 : 1 }]}>
               <Text style={styles.labelText}>Species</Text>
               <DropDownPicker
                 open={isSpeciesOpen}
@@ -367,8 +367,8 @@ const Rabies_Sample_Information_Form = () => {
                 setOpen={handleSpeciesOpen}
                 setValue={handleSpeciesChange}
                 listMode="SCROLLVIEW"
-                zIndex={3000}
-                zIndexInverse={1000}
+                zIndex={isSpeciesOpen ? 5000 : 1}
+                zIndexInverse={isSpeciesOpen ? 5000 : 1}
               />
             </View>
           </View>

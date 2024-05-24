@@ -90,7 +90,7 @@ const VetInputForms = () => {
                 <Text style={styles.buttonText}>Seminar/Trainings/IEC</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.button} onPress={navigateToRabies_Exposure_Form1}>
-                <Text style={styles.buttonText}>Rabies Exposure</Text>
+                <Text style={styles.buttonText}>Human Rabies Exposure</Text>
               </TouchableOpacity>
             </View>
 

@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  ScrollView,
-  ActivityIndicator,
-  TextInput  } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, ScrollView, ActivityIndicator, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import styles from './styles/Archive';
 import Modal from 'react-native-modal';
@@ -13,67 +7,49 @@ import axios from 'axios';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const Sample_form_archive = () => {
-  
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Add loading state
+  const [isLoading, setIsLoading] = useState(true);
   const [vaccinationForms, setVaccinationForms] = useState([]);
-  
   const [isConfirmModalVisible, setConfirmModalVisible] = useState(false);
-
-  const [editableItem, setEditableItem] = useState(null); // Initialize
-
+  const [editableItem, setEditableItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredForms, setFilteredForms] = useState([]);
-  const flatListRef = useRef(); // Add this ref for the FlatList
-
-  const [deletableItem, setDeletableItem] = useState(null); // State to store item to be deleted
-  const [isDeleteModalVisible, setDeleteModalVisible] = useState(false); // State to manage delete modal visibility
-
+  const flatListRef = useRef();
+  const [deletableItem, setDeletableItem] = useState(null);
+  const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
   const [isNotificationModalVisible, setNotificationModalVisible] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
-
   const navigation = useNavigation();
-
   const apiURL = process.env.EXPO_PUBLIC_URL;
-
-  const [currentPage, setCurrentPage] = useState(1); // State to manage current page
-  const itemsPerPage = 5; // Number of items per page
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const toggleConfirmModal = () => {
     setConfirmModalVisible(!isConfirmModalVisible);
   };
 
-  //const NETWORK_URL1 = 'http://192.168.1.211:3000/Position';
-  //const NETWORK_URL1 = 'http://192.168.1.7:3000/Position';
-
-  //const NETWORK_URL2 = 'http://192.168.1.211:3000/getRabiesSampleFormsCVO';
-  //const NETWORK_URL2 = 'http://192.168.1.7:3000/getRabiesSampleFormsCVO';
-
-  //const NETWORK_URL3 = 'http://192.168.1.211:3000/getRabiesSampleForms';
-  //const NETWORK_URL3 = 'http://192.168.1.7:3000/getRabiesSampleForms';
-
   useEffect(() => {
     const fetchUserAndForms = async () => {
-      setIsLoading(true); // Start loading
+      setIsLoading(true);
       try {
         const response = await axios.get(`${apiURL}/Position`);
         setUser(response.data);
 
         let formsResponse;
-        if (response.data.position === 'CVO' || response.data.position === 'Rabdash') {
+        if (response.data.position === 'CVO' || response.data.position === 'RabDash') {
           formsResponse = await axios.get(`${apiURL}/getRabiesSampleFormsCVO`);
         } else if (response.data.position === 'Private Veterinarian') {
           formsResponse = await axios.get(`${apiURL}/getRabiesSampleForms`);
         } else {
           console.warn('Unknown user position:', response.data.position);
-          setIsLoading(false); // Stop loading if position is unrecognized
+          setIsLoading(false);
           return;
         }
         setVaccinationForms(formsResponse.data);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
-        setIsLoading(false); // Stop loading
+        setIsLoading(false);
       }
     };
 
@@ -92,8 +68,7 @@ const Sample_form_archive = () => {
     form.date?.includes(searchTerm) ||
     form.species?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     form.breed?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    form.age?.toString().includes(searchTerm) || // Assuming petAge is a number, convert it to string
-
+    form.age?.toString().includes(searchTerm) || 
     form.sampleSex?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     form.specimen?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     form.ownership?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -103,48 +78,43 @@ const Sample_form_archive = () => {
     form.death?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     form.changes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     form.otherillness?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    form.fatcount?.toLowerCase().includes(searchTerm.toLowerCase()) 
-    )
+    form.fatcount?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
     if (filtered.length > 0) {
       setFilteredForms(filtered);
     } else {
       console.log('No match found');
-      setFilteredForms(vaccinationForms); // Show all items if no match or empty search
+      setFilteredForms(vaccinationForms);
     }
   }, [searchTerm, vaccinationForms]);
 
-  // Function to find the first matched item index and scroll to it
   const handleSearchSubmit = () => {
     if (filteredForms.length > 0) {
-      // If there are filtered forms, attempt to scroll to the top of the list
       flatListRef.current?.scrollToIndex({ animated: true, index: 0 });
     } else {
       console.log('No filtered items to scroll to');
     }
   };
 
-  // Function to open modal and set the item to be edited
   const handleEditPress = (item) => {
-    setEditableItem(item); // Store the item to be edited
+    setEditableItem(item);
     toggleConfirmModal();
   };
 
   const submitForm = () => {
     if (editableItem) {
       navigation.navigate('Rabies_Sample_Information_Form', {
-        item: editableItem, // Correctly pass the editableItem here
-        fromArchive: true // Flag to indicate navigation came from archives
+        item: editableItem,
+        fromArchive: true
       });
-      setEditableItem(null); // Reset editableItem after navigation
-      toggleConfirmModal(); // Close the modal
+      setEditableItem(null);
+      toggleConfirmModal();
     }
   };
 
   const handleBackPress = () => {
-    const position = user?.position; // Use optional chaining
-
-    if (position === 'CVO' || position === 'Rabdash') {
+    const position = user?.position;
+    if (position === 'CVO' || position === 'RabDash') {
       navigation.navigate('VetArchiveMenu');
     } else if (position === 'Private Veterinarian') {
       navigation.navigate('ClientDatabase');
@@ -153,21 +123,19 @@ const Sample_form_archive = () => {
     }
   };
 
-  // Function to handle deletion of item
   const handleDeletePress = (item) => {
-    setDeletableItem(item); // Store the item to be deleted
-    toggleDeleteModal(); // Open the delete confirmation modal
+    setDeletableItem(item);
+    toggleDeleteModal();
   };
 
-  // Function to toggle delete confirmation modal visibility
   const toggleDeleteModal = () => {
     setDeleteModalVisible(!isDeleteModalVisible);
   };
 
   const deleteItem = () => {
-    if (!deletableItem) return; // Ensure there is an item to delete
-  
-    setIsLoading(true); // Start loading indicator
+    if (!deletableItem) return;
+
+    setIsLoading(true);
     axios.delete(`${apiURL}/deleteRabiesSampleForm/${deletableItem.id}`)
       .then(response => {
         if (response.data.success) {
@@ -182,10 +150,10 @@ const Sample_form_archive = () => {
         setNotificationMessage('An error occurred while deleting the entry.');
       })
       .finally(() => {
-        setIsLoading(false); // Stop loading indicator
-        toggleDeleteModal(false); // Close the delete confirmation modal
-        toggleNotificationModal(); // Show notification modal
-        setDeletableItem(null); // Clear the deletable item state
+        setIsLoading(false);
+        toggleDeleteModal(false);
+        toggleNotificationModal();
+        setDeletableItem(null);
       });
   };
 
@@ -193,27 +161,22 @@ const Sample_form_archive = () => {
     setNotificationModalVisible(!isNotificationModalVisible);
   };
 
-  // Function to add one day to the date
   const addOneDayToDate = (dateStr) => {
     const date = new Date(dateStr);
     date.setDate(date.getDate() + 1);
-    return date.toISOString().split('T')[0]; // Return the date in YYYY-MM-DD format
+    return date.toISOString().split('T')[0];
   };
 
-   // Function to handle next page button press
-   const handleNextPage = () => {
+  const handleNextPage = () => {
     setCurrentPage(currentPage + 1);
   };
 
-  // Calculate the slice range based on currentPage and itemsPerPage
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
 
-  // Function to handle previous page button press
   const handlePreviousPage = () => {
     setCurrentPage(currentPage - 1);
   };
-
 
   if (isLoading) {
     return (
@@ -223,8 +186,8 @@ const Sample_form_archive = () => {
     );
   }
 
-    return (
-       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
+  return (
+    <ScrollView contentContainerStyle={styles.scrollViewContainer}>
       <View style={styles.container}>
         <View style={styles.headerContainer}>
           <Text style={styles.header}>Rabies Sample Form Archive</Text>
@@ -245,9 +208,8 @@ const Sample_form_archive = () => {
           <ActivityIndicator size="large" color="#0000ff" />
         ) : (
         <FlatList
-          ref={flatListRef} // Assign the ref to FlatList
-          data={filteredForms.slice(startIndex, endIndex)} // Render only the data within the current page range
-          //data={filteredForms}
+          ref={flatListRef}
+          data={filteredForms.slice(startIndex, endIndex)}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.itemContainer}>
@@ -306,10 +268,9 @@ const Sample_form_archive = () => {
           <Text style={styles.buttonText}>Archives Menu</Text>
         </TouchableOpacity>
 
-         {/* Modal to check if all fields are inputted */}
-         <Modal isVisible={isConfirmModalVisible}>
+        <Modal isVisible={isConfirmModalVisible}>
           <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>Do you want to proceed editing the Neuter Form?</Text>
+            <Text style={styles.modalText}>Do you want to proceed editing the Rabies Sample Form?</Text>
             <View style={styles.modalButtonContainer}>
               <TouchableOpacity style={styles.modalButton} onPress={() => submitForm(editableItem)}>
                 <Text style={styles.modalButtonText}>Yes</Text>
@@ -336,16 +297,16 @@ const Sample_form_archive = () => {
         </Modal>
 
         <Modal isVisible={isNotificationModalVisible}>
-                <View style={styles.modalContainer}>
-                    <Text style={styles.modalText}>{notificationMessage}</Text>
-                    <TouchableOpacity style={styles.modalButton} onPress={toggleNotificationModal}>
-                        <Text style={styles.modalButtonText}>OK</Text>
-                    </TouchableOpacity>
-                </View>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalText}>{notificationMessage}</Text>
+            <TouchableOpacity style={styles.modalButton} onPress={toggleNotificationModal}>
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
         </Modal>
       </View>
     </ScrollView>
   );
 };
 
-  export default Sample_form_archive;
+export default Sample_form_archive;

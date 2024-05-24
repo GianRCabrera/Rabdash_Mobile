@@ -118,43 +118,44 @@ const Rabies_Field_Vacc_Form = () => {
   //const NETWORK_URL = 'http://192.168.1.211:3000/Position';
   //const NETWORK_URL = 'http://192.168.1.7:3000/Position';
 
-  useEffect(() => {
-    // Fetch user profile data from the backend
-    axios.get(`${apiURL}/Position`)
-      .then(response => {
-        setUser(response.data);
-      })
-      .catch(error => {
-        console.error('Error fetching position:', error);
-        // Handle error, e.g., navigate to login screen
-      });
+  
+useEffect(() => {
+  // Fetch user profile data from the backend
+  axios.get(`${apiURL}/Position`)
+    .then(response => {
+      setUser(response.data);
+    })
+    .catch(error => {
+      console.error('Error fetching position:', error);
+      // Handle error, e.g., navigate to login screen
+    });
 
-    // Conditional Autofill based on 'fromArchive' flag
-    const { item, fromArchive } = route.params || {};
-    if (fromArchive && item) {
-      const adjustedDate = new Date(item.date);
-      adjustedDate.setDate(adjustedDate.getDate() + 1);
+  // Conditional Autofill based on 'fromArchive' flag
+  const { item, fromArchive } = route.params || {};
+  if (fromArchive && item) {
+    const adjustedDate = new Date(item.date);
+    adjustedDate.setDate(adjustedDate.getDate() + 1);
 
-      // Autofill fields if coming from archives
-      setSelectedDate(adjustedDate);
-      setDistrictValue(item.district);
-      setBarangayValue(item.barangay);
-      setPurokValue(item.purok);
-      setVaccinatorValue(item.vaccinator);
-      setSelectedTime(item.timeStart ? new Date(`1970-01-01T${item.timeStart}Z`) : null);
-      setOwner_nameValue(item.ownerName);
-      setAddressValue(item.address);
-      setSexValue(item.sex);
-      setContactValue(item.contactNo);
-    }
+    // Autofill fields if coming from archives
+    setSelectedDate(adjustedDate);
+    setDistrictValue(item.district);
+    setBarangayValue(item.barangay);
+    setPurokValue(item.purok);
+    setVaccinatorValue(item.vaccinator);
+    setSelectedTime(item.timeStart ? new Date(`1970-01-01T${item.timeStart}Z`) : null);
+    setOwner_nameValue(item.ownerName);
+    setAddressValue(item.address);
+    setSexValue(item.sex);
+    setContactValue(item.contactNo);
+  }
 
-    // Additional logic to handle editable item from archives
-    if (route.params?.fromArchive && route.params?.item) {
-      // Set editableItem state to the item passed from archives
-      setEditableItem(route.params.item);
-    }
+  // Additional logic to handle editable item from archives
+  if (route.params?.fromArchive && route.params?.item) {
+    // Set editableItem state to the item passed from archives
+    setEditableItem(route.params.item);
+  }
 
-  }, [route.params]);
+}, [route.params, apiURL]);
 
   const handleNextPress = () => {
     // Check if all fields are filled
@@ -234,7 +235,7 @@ const Rabies_Field_Vacc_Form = () => {
         case 'InputMenu':
           const position = user.position;
 
-          if (position === 'CVO' || position === 'Rabdash') {
+          if (position === 'CVO' || position === 'RabDash') {
             navigation.navigate('VetInputForms');
           } else if (position === 'Private Veterinarian') {
             navigation.navigate('InputForms');

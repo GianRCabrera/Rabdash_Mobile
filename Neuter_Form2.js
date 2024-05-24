@@ -4,13 +4,13 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,  
-  KeyboardAvoidingView,  // Add this import
-  Platform,  // Add this import
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Modal from 'react-native-modal';
-import DropDownPicker from 'react-native-dropdown-picker'; // Add this import
+import DropDownPicker from 'react-native-dropdown-picker';
 import axios from 'axios';
 import styles from './styles/submitform';
 
@@ -57,8 +57,8 @@ const Neuter_Form2 = () => {
   };
 
   const handleSexOpen = () => {
-        setIsSexOpen(!isSexOpen);
-        setIsSpeciesOpen(false);
+    setIsSexOpen(!isSexOpen);
+    setIsSpeciesOpen(false);
   };
 
   const handleSpeciesChange = (value) => {
@@ -86,20 +86,14 @@ const Neuter_Form2 = () => {
   };
 
   useEffect(() => {
-    //const NETWORK_URL1 = 'http://192.168.1.211:3000/Position';
-    //const NETWORK_URL1 = 'http://192.168.1.7:3000/Position';
-   
-      // Fetch user profile data from the backend
     axios.get(`${apiURL}/Position`)
     .then(response => {
       setUser(response.data);
     })
     .catch(error => {
       console.error('Error fetching position:', error);
-      // Handle error, e.g., navigate to login screen
     });
 
-    // Check if route.params exists before accessing its properties
     if (route.params) {
       const {
         date,
@@ -112,7 +106,6 @@ const Neuter_Form2 = () => {
         contactNo,
       } = route.params;
 
-      // Print the data in the console
       console.log('Date:', date);
       console.log('District:', district);
       console.log('Barangay:', barangay);
@@ -125,11 +118,7 @@ const Neuter_Form2 = () => {
 
     }
 
-   //Editing Version path
-   // Ensure formData exists and then access its properties
-    // Extract data from the first form if editing
     if (route.params?.formData) {
-      // Assuming formData contains all the necessary fields from the first form
       const {
         id,
         date,
@@ -152,7 +141,7 @@ const Neuter_Form2 = () => {
       console.log('Address:', address);
       console.log('Contact Number:', contactNo);
     }
-    // Ensure autofill functionality
+
     const { petData } = route.params || {};
 
     if (petData) {
@@ -161,15 +150,13 @@ const Neuter_Form2 = () => {
     setSexValue(petData.sex || null);
     setBreed(petData.breed || '');
     setAge(petData.age || '');
-    // Convert integer to string for TextInput
     setPets(petData.pets !== undefined ? petData.pets.toString() : '');
     setCat(petData.cat !== undefined ? petData.cat.toString() : '');
   }
   }, [route.params]);
 
   const handleSubmitPress = () => {
-    // Check if all fields are filled
-   if (
+    if (
     name === '' ||
     speciesValue === null ||
     sexValue === null ||
@@ -188,22 +175,17 @@ const Neuter_Form2 = () => {
  };
 
  const submitForm = () => {
-
-  // Extract initial data passed to Neuter_Form2
   const formData = route.params?.formData || {};
   const isEdit = Boolean(formData?.id);
 
-  // Ensure formData fields are correctly populated
   console.log("Form data for submission:", formData);
   
-  // Prepare submission data for both new entries and edits
   let submissionData = {};
 
   if (isEdit) {
-    // For edits, merge formData from the previous screen with updates from the current form
     const formData = route.params?.formData;
     submissionData = {
-      id: formData.id, // Make sure 'id' is included in the submission data for edits
+      id: formData.id,
       date: formData.date,
       district: formData.district,
       barangay: formData.barangay,
@@ -222,7 +204,6 @@ const Neuter_Form2 = () => {
       cat: cat.toString(),
     };
   } else {
-    // For new entries, use both the data from the previous screen and the current form
     submissionData = {
       date: route.params?.date,
       district: route.params?.district,
@@ -246,19 +227,17 @@ const Neuter_Form2 = () => {
   const endpoint = isEdit ? `${apiURL}/editNeuterForm` : `${apiURL}/submitNeuterForm`;
 
   if (isEdit) {
-    // If editing, include the ID in the formData
     formData.id = route.params.formData.id;
   }
 
- // Perform the POST request to the server
  axios.post(endpoint, submissionData)
  .then(response => {
   if (response.data.success) {
     console.log(isEdit ? "Neuter Form updated successfully." : "Neuter Form submitted successfully.");
     if (isEdit) {
-      setUpdateSuccessModalVisible(true); // Show update success modal for edits
+      setUpdateSuccessModalVisible(true);
     } else {
-      setSuccessModalVisible(true); // Show success modal for new entries
+      setSuccessModalVisible(true);
     }
   }
 })
@@ -267,15 +246,12 @@ const Neuter_Form2 = () => {
  });
 };
 
-// Function to handle navigation after form submission
 const navigateAfterSubmit = () => {
   const position = user.position;
   if (isEdit) {
-    // If it's an edit, navigate to Neuter_Form_archive for both positions
     navigation.navigate('Neuter_Form_archive');
   } else {
-    // If it's a new entry, navigate based on the user's position
-    if (position === 'CVO' || position === 'Rabdash') {
+    if (position === 'CVO' || position === 'RabDash') {
       navigation.navigate('VetInputForms');
     } else if (position === 'Private Veterinarian') {
       navigation.navigate('InputForms');
@@ -317,13 +293,12 @@ const navigateAfterSubmit = () => {
               placeholder="Name"
               value={name}
               onChangeText={handleNameChange}  // Handle text changes
-              // Additional TextInput props can be added as needed
             />
           </View>
         </View>
 
         {/* Container for Barangay and Purok */}
-        <View style={styles.rowContainer2}>
+        <View style={[styles.rowContainer2, { zIndex: isSpeciesOpen ? 2 : 1 }]}>
           {/* Purok Container */}
           <View style={styles.labelContainer}>
             <Text style={styles.labelText}>Species</Text>
@@ -337,13 +312,18 @@ const navigateAfterSubmit = () => {
                     placeholder="Please select first"
                     setOpen={handleSpeciesOpen}
                     setValue={handleSpeciesChange}
-                    listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
+                    listMode="SCROLLVIEW"
+                    zIndex={isSpeciesOpen ? 5000 : 1} // Ensure dropdown has higher zIndex
+                    zIndexInverse={isSpeciesOpen ? 5000 : 1}
+                    modalProps={{
+                      animationType: 'fade',
+                    }}
                 />
           </View>
         </View>
   
         {/* Container for Procedure*/}
-        <View style={styles.rowContainer2}>
+        <View style={[styles.rowContainer2, { zIndex: isSexOpen ? 2 : 1 }]}>
           <View style={styles.dropdownContainer}>
           <Text style={styles.labelText}>Sex</Text>
                 <DropDownPicker
@@ -356,7 +336,12 @@ const navigateAfterSubmit = () => {
                     placeholder="Please select first"
                     setOpen={handleSexOpen}
                     setValue={handleSexChange}
-                    listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
+                    listMode="SCROLLVIEW"
+                    zIndex={isSexOpen ? 5000 : 1} // Ensure dropdown has higher zIndex
+                    zIndexInverse={isSexOpen ? 5000 : 1}
+                    modalProps={{
+                      animationType: 'fade',
+                    }}
                 />
           </View>
 
@@ -368,7 +353,6 @@ const navigateAfterSubmit = () => {
                     placeholder="Breed"
                     value={breed}
                     onChangeText={handleBreedChange}  // Handle text changes
-                    // Additional TextInput props can be added as needed
             />
           </View>
         </View>
@@ -382,7 +366,6 @@ const navigateAfterSubmit = () => {
                 placeholder="8 months old"
                 value={age}
                 onChangeText={handleAgeChange}  // Handle text changes
-                // Additional TextInput props can be added as needed
               />
             </View>
           
@@ -394,8 +377,7 @@ const navigateAfterSubmit = () => {
                 placeholder="8"
                 value={pets}
                 onChangeText={handlePetsChange}  // Handle text changes
-                keyboardType="numeric" // Restricts input to numeric characters
-                // Additional TextInput props can be added as needed
+                keyboardType="numeric"
               />
             </View>
           </View>
@@ -410,8 +392,7 @@ const navigateAfterSubmit = () => {
                 placeholder="0"
                 value={cat}
                 onChangeText={handleCatChange}  // Handle text changes
-                keyboardType="numeric" // Restricts input to numeric characters
-                // Additional TextInput props can be added as needed
+                keyboardType="numeric"
               />
             </View>
           </View>
@@ -422,8 +403,6 @@ const navigateAfterSubmit = () => {
             <TouchableOpacity
               style={styles.button}
               onPress={() => {
-                // Handle back button press
-                // You can navigate to the previous screen or perform any other action
                 navigation.navigate('Neuter_Form');
               }}
             >
@@ -456,15 +435,15 @@ const navigateAfterSubmit = () => {
               <TouchableOpacity
                 style={styles.modalButton}
                 onPress={() => {
-                  toggleConfirmModal(); // Close the modal
-                  submitForm(); // Submit the form
+                  toggleConfirmModal();
+                  submitForm();
                 }}
               >
                 <Text style={styles.modalButtonText}>Yes</Text>
               </TouchableOpacity>
               <TouchableOpacity
                   style={styles.modalButton}
-                  onPress={toggleConfirmModal} // Close the modal
+                  onPress={toggleConfirmModal}
                 >
                 <Text style={styles.modalButtonText}>No</Text>
               </TouchableOpacity>
@@ -479,8 +458,8 @@ const navigateAfterSubmit = () => {
               <TouchableOpacity
                 style={styles.modalButton}
                 onPress={() => {
-                  setSuccessModalVisible(false); // Close the modal
-                  navigateAfterSubmit(); // Navigate after the modal is closed
+                  setSuccessModalVisible(false);
+                  navigateAfterSubmit();
                 }}>
                 <Text style={styles.modalButtonText}>OK</Text>
               </TouchableOpacity>
@@ -494,8 +473,8 @@ const navigateAfterSubmit = () => {
               <TouchableOpacity
                 style={styles.modalButton}
                 onPress={() => {
-                  setUpdateSuccessModalVisible(false); // Close the modal
-                  navigateAfterSubmit(); // Navigate after the modal is closed
+                  setUpdateSuccessModalVisible(false);
+                  navigateAfterSubmit();
                 }}>
                 <Text style={styles.modalButtonText}>OK</Text>
               </TouchableOpacity>
@@ -505,7 +484,6 @@ const navigateAfterSubmit = () => {
       </View>
     </View>
   );
-  
 };
 
 export default Neuter_Form2;

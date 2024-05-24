@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "rabdash-mobile",
+    "name": "RabDash Mobile",
     "slug": "rabdash-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -29,6 +29,9 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "EXPO_PUBLIC_URL": "https://rabdash-mobile-backend.onrender.com"
     }
   }
 }

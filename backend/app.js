@@ -1,13 +1,15 @@
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
 const mysql = require('mysql');
 const cors = require('cors');
 const crypto = require('crypto');
-const moment = require('moment-timezone');
 const nodemailer = require('nodemailer'); // For sending reset password emails
 const bcrypt = require('bcrypt'); // Import bcrypt for password hashing
-const saltRounds = 8; // You can adjust the number of salt rounds as needed
+const argon2 = require('argon2'); // Import argon2 for password hashing
+const moment = require('moment'); // Import moment for date formatting
+const saltRounds = 10; // Match the rounds used in your PHP application
 
 const app = express();
 const path = require('path');
@@ -26,10 +28,10 @@ app.use(session({
 }));
 
 const dbConfig = {
-  host: 'srv615.hstgr.io',
-  user: 'u365573988_mobile321',
-  password: 'Rabdogs123',
-  database: 'u365573988_rabdash_mobile',
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
   connectionLimit: 10,
   acquireTimeout: 30000,
   waitForConnections: true,
@@ -37,18 +39,18 @@ const dbConfig = {
 };
 
 const webDbConfig = {
-  host: 'srv615.hstgr.io',
-  user: 'u365573988_rabdash',
-  password: 'Forrabdash1',
-  database: 'u365573988_rabdashdb',
+  host: process.env.WEB_DB_HOST,
+  user: process.env.WEB_DB_USER,
+  password: process.env.WEB_DB_PASSWORD,
+  database: process.env.WEB_DB_DATABASE,
   connectionLimit: 10,
   acquireTimeout: 30000,
   waitForConnections: true,
   queueLimit: 0
 };
 
-const pool = mysql.createPool(dbConfig);        //Pool for mobile application
-const webPool = mysql.createPool(webDbConfig);  //Pool for web application 
+const pool = mysql.createPool(dbConfig);        // Pool for mobile application
+const webPool = mysql.createPool(webDbConfig);  // Pool for web application 
 
 function handleDisconnect(pool) {
   pool.getConnection((err, connection) => {
@@ -85,13 +87,43 @@ const queryDatabase = (pool, query, values) => {
   });
 };
 
+const verifyPassword = async (password, hash) => {
+  try {
+    // Log the hash format and provided password for debugging
+    console.log('Stored password hash:', hash);
+    console.log('Password provided by user:', password);
+
+    if (hash.startsWith('$2y$')) {
+      // Convert $2y$ to $2b$ for bcrypt verification
+      hash = hash.replace('$2y$', '$2b$');
+    }
+
+    if (hash.startsWith('$2b$') || hash.startsWith('$2a$')) {
+      // Use bcrypt for verification
+      console.log('Using bcrypt for password verification');
+      return await bcrypt.compare(password, hash);
+    } else if (hash.startsWith('$argon2i$') || hash.startsWith('$argon2id$')) {
+      // Use Argon2 for verification
+      console.log('Using Argon2 for password verification');
+      return await argon2.verify(hash, password);
+    } else {
+      console.error('Unknown hash format:', hash);
+      throw new Error('Unknown hash format');
+    }
+  } catch (error) {
+    console.error('Error verifying password:', error);
+    throw error;
+  }
+};
+
+
 const registerUser = async (user, pool) => {
   const { name, last_name, email, position, password } = user;
   const createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
   const updatedAt = createdAt;
 
   try {
-    //HASH PART
+    // HASH PART
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const query = `
@@ -120,37 +152,62 @@ app.post('/register', async (req, res) => {
   }
 });
 
-const logInUser = async (user, pool) => {
+const logInUserFromPool = async (user, pool) => {
   const { email, password } = user;
   const query = 'SELECT * FROM users WHERE email = ?';
   try {
+    console.log(`Querying ${pool.config.connectionConfig.database} for user: ${email}`);
     const results = await queryDatabase(pool, query, [email]);
+    console.log(`Results from ${pool.config.connectionConfig.database}:`, results);
     if (results.length > 0) {
       const user = results[0];
-      const passwordMatch = await bcrypt.compare(password, user.password);
+      console.log('User found:', user);
+      console.log('Stored password hash:', user.password);
+      console.log('Password provided by user:', password);
+
+      const passwordMatch = await verifyPassword(password, user.password);
+      console.log(`Password match result: ${passwordMatch}`);
       if (passwordMatch) {
+        console.log('Password matches for user:', email);
         return user;
+      } else {
+        console.log('Password does not match for user:', email);
       }
+    } else {
+      console.log('No user found in database:', pool.config.connectionConfig.database);
     }
     return null;
   } catch (error) {
+    console.error(`Error querying ${pool.config.connectionConfig.database}:`, error);
     throw error;
   }
 };
 
+const logInUser = async (user) => {
+  console.log('Attempting to log in user:', user.email);
+  let loggedInUser = await logInUserFromPool(user, pool);
+  if (!loggedInUser) {
+    console.log('User not found in mobile database, querying web database...');
+    loggedInUser = await logInUserFromPool(user, webPool);
+  }
+  if (loggedInUser) {
+    console.log('User successfully logged in:', loggedInUser.email);
+  } else {
+    console.log('Login failed for user:', user.email);
+  }
+  return loggedInUser;
+};
+
 app.post('/login', async (req, res) => {
   try {
-    let user = await logInUser(req.body, pool);
-
-    if (!user) {
-      user = await logInUser(req.body, webPool);
-    }
+    const user = await logInUser(req.body);
 
     if (user && user.position) {
       req.session.user = { email: user.email, position: user.position };
       console.log('Session set:', req.session.user); // Log the session data
       res.json({ success: true, message: 'Login successful', position: user.position });
     } else {
+      console.log('Invalid email or password for user:', req.body.email);
       res.json({ success: false, message: 'Invalid email or password' });
     }
   } catch (error) {
@@ -158,6 +215,7 @@ app.post('/login', async (req, res) => {
     res.json({ success: false, message: 'An error occurred during login' });
   }
 });
+
 app.get('/userProfile', async (req, res) => {
   const { user } = req.session;
 
@@ -166,23 +224,27 @@ app.get('/userProfile', async (req, res) => {
   }
 
   const { email } = user;
-  console.log('Fetching user profile for authenticated user:', email);
-
   const query = 'SELECT * FROM users WHERE email = ?';
+  
   try {
-    const results = await queryDatabase(pool, query, [email]);
-
+    // First, check the mobile app database
+    let results = await queryDatabase(pool, query, [email]);
     if (results.length === 1) {
       const userProfile = results[0];
-      console.log('User Profile:', userProfile);
-      res.json(userProfile);
+      return res.json(userProfile);
+    } 
+    
+    // If not found, check the website database
+    results = await queryDatabase(webPool, query, [email]);
+    if (results.length === 1) {
+      const userProfile = results[0];
+      return res.json(userProfile);
     } else {
-      console.error('User not found in the database');
-      res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
     console.error('Error retrieving user profile:', error);
-    res.status(500).json({ message: 'An error occurred while retrieving user profile' });
+    return res.status(500).json({ message: 'An error occurred while retrieving user profile' });
   }
 });
 
@@ -203,7 +265,7 @@ const generateOTP = () => {
 
 const otpStore = {};
 
-//OTP for reset Password
+// OTP for reset Password
 app.post('/resetpass', async (req, res) => {
   const { email } = req.body;
   
@@ -240,7 +302,6 @@ app.post('/resetpass', async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to send password reset OTP.' });
   }
 });
-
 
 // Register route with OTP generation and email sending
 app.post('/registerotp', async (req, res) => {
@@ -329,7 +390,7 @@ app.post('/reset-password', async (req, res) => {
     console.log('Stored password:', user.password);
 
     console.log('Comparing old password...');
-    const passwordMatch = await bcrypt.compare(oldPassword, user.password);
+    const passwordMatch = await verifyPassword(oldPassword, user.password);
 
     console.log('Password match result:', passwordMatch);
 
@@ -353,6 +414,44 @@ app.post('/reset-password', async (req, res) => {
     res.status(500).json({ success: false, message: 'Database error.' });
   }
 });
+
+// Reset Forgotten Password Functionality
+app.post('/reset-forgotten-password', async (req, res) => {
+  const { email, newPassword } = req.body;
+
+  console.log('Received reset forgotten password request:', { email, newPassword });
+
+  if (!email || !newPassword) {
+    console.log('Missing fields:', { email, newPassword });
+    return res.status(400).json({ success: false, message: 'All fields are required.' });
+  }
+
+  try {
+    console.log('Querying database for user with email:', email);
+    const results = await queryDatabase(pool, 'SELECT * FROM users WHERE email = ?', [email]);
+
+    if (results.length === 0) {
+      console.log('User not found for email:', email);
+      return res.status(400).json({ success: false, message: 'User not found.' });
+    }
+
+    const user = results[0];
+    console.log('User found:', user);
+
+    // Hash the new password
+    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    console.log('Updating user password in database...');
+    await queryDatabase(pool, 'UPDATE users SET password = ? WHERE email = ?', [hashedNewPassword, email]);
+    console.log('Password updated successfully for user:', email);
+
+    res.json({ success: true, message: 'Password changed successfully.' });
+  } catch (error) {
+    console.error('Error during password reset:', error.message);
+    res.status(500).json({ success: false, message: 'Database error.' });
+  }
+});
+
 
 //Forms
 app.post('/submitVaccinationForm', async (req, res) => {
@@ -805,10 +904,12 @@ app.get('/getVaccinationForms', async (req, res) => {
       // Adjust each date in the results
       const adjustedResults = results.map(result => {
         if (result.date) {
-          result.date = moment(result.date).tz('UTC').format('YYYY-MM-DD');
+          const dateObj = new Date(result.date);
+          result.date = dateObj.toISOString().split('T')[0];
         }
         if (result.dateVaccinated) {
-          result.dateVaccinated = moment(result.dateVaccinated).tz('UTC').format('YYYY-MM-DD');
+          const dateVaccinatedObj = new Date(result.dateVaccinated);
+          result.dateVaccinated = dateVaccinatedObj.toISOString().split('T')[0];
         }
         return result;
       });
@@ -874,7 +975,8 @@ app.get('/getNeuterForms', async (req, res) => {
     if (results.length > 0) {
       const adjustedResults = results.map(result => {
         if (result.date) {
-          result.date = moment(result.date).tz('UTC').format('YYYY-MM-DD');
+          const dateObj = new Date(result.date);
+          result.date = dateObj.toISOString().split('T')[0];
         }
         return result;
       });
@@ -923,32 +1025,38 @@ app.get('/getNeuterFormsCVO', async (req, res) => {
 
 // Add a new endpoint to fetch rabies sample form data
 app.get('/getRabiesSampleForms', async (req, res) => {
-const { user } = req.session;
+  const { user } = req.session;
 
-if (!user) {
-  return res.status(401).json({ message: 'User not authenticated' });
-}
-
-const username = user.email; // Use the user's email as the username
-console.log('Username:', username);
-
-const query = 'SELECT * FROM bite_form WHERE username = ?';
-
-try {
-  const results = await queryDatabase(query, [username]);
-
-  if (results.length > 0) {
-    const RabiesSampleForms = results;
-    console.log('Rabies Sample Forms:', RabiesSampleForms);
-    res.json(RabiesSampleForms);
-  } else {
-    console.error('No rabies sample forms found in the database');
-    res.status(404).json({ message: 'No rabies sample forms found' });
+  if (!user) {
+    return res.status(401).json({ message: 'User not authenticated' });
   }
-} catch (error) {
-  console.error('Error retrieving rabies sample forms:', error);
-  res.status(500).json({ message: 'An error occurred while retrieving rabies sample forms' });
-}
+
+  const username = user.email; // Use the user's email as the username
+  console.log('Username:', username);
+
+  const query = 'SELECT * FROM bite_form WHERE username = ?';
+
+  try {
+    const results = await queryDatabase(pool, query, [username]);
+
+    if (results.length > 0) {
+      const adjustedResults = results.map(result => {
+        if (result.date) {
+          const dateObj = new Date(result.date);
+          result.date = dateObj.toISOString().split('T')[0];
+        }
+        return result;
+      });
+      console.log('Rabies Sample Forms:', adjustedResults);
+      res.json(adjustedResults);
+    } else {
+      console.error('No rabies sample forms found in the database');
+      res.status(404).json({ message: 'No rabies sample forms found' });
+    }
+  } catch (error) {
+    console.error('Error retrieving rabies sample forms:', error);
+    res.status(500).json({ message: 'An error occurred while retrieving rabies sample forms' });
+  }
 });
 
 // Add a new endpoint to fetch rabies sample form data from both mobile and web databases
@@ -1616,7 +1724,7 @@ app.post('/editRabiesExposureForm', async (req, res) => {
   }
 });
 
-//Position Endpoint
+// Add this route to your backend code
 app.get('/Position', async (req, res) => {
   const { user } = req.session;
 
@@ -1625,26 +1733,25 @@ app.get('/Position', async (req, res) => {
   }
 
   const { email } = user;
-  console.log('Fetching user profile for authenticated user:', email);
-
   const query = 'SELECT position FROM users WHERE email = ?';
   try {
-    const results = await queryDatabase(pool, query, [email]);
-
+    let results = await queryDatabase(pool, query, [email]);
     if (results.length === 1) {
-      const { position } = results[0];
-      console.log('User Position:', position);
-      res.json({ position });
-    } else {
-      console.error('User not found in the database');
-      res.status(404).json({ message: 'User not found' });
+      return res.json(results[0]);
     }
+
+    // Check the website database if not found in mobile database
+    results = await queryDatabase(webPool, query, [email]);
+    if (results.length === 1) {
+      return res.json(results[0]);
+    }
+
+    return res.status(404).json({ message: 'User not found' });
   } catch (error) {
     console.error('Error retrieving user position:', error);
-    res.status(500).json({ message: 'An error occurred while retrieving user position' });
+    return res.status(500).json({ message: 'An error occurred while retrieving user position' });
   }
 });
-
 
 const startServer = (port) => {
   app.listen(port, () => {

@@ -334,7 +334,7 @@ const navigateAfterSubmit = () => {
     navigation.navigate('Field_vacc_archives');
   } else {
     // If it's a new entry, navigate based on the user's position
-    if (position === 'CVO' || position === 'Rabdash') {
+    if (position === 'CVO' || position === 'RabDash') {
       navigation.navigate('VetInputForms');
     } else if (position === 'Private Veterinarian') {
       navigation.navigate('InputForms');

@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  ScrollView,
-  ActivityIndicator,
-  TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, ScrollView, ActivityIndicator, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import styles from './styles/Archive';
 import Modal from 'react-native-modal';
@@ -43,15 +37,6 @@ const Neuter_Form_archive = () => {
     setConfirmModalVisible(!isConfirmModalVisible);
   };
 
-  //const NETWORK_URL1 = 'http://192.168.1.211:3000/Position';
-  //const NETWORK_URL1 = 'http://192.168.1.7:3000/Position';
-
-  //const NETWORK_URL2 = 'http://192.168.1.211:3000/getNeuterFormsCVO';
-  //const NETWORK_URL2 = 'http://192.168.1.7:3000/getNeuterFormsCVO';
-
-  //const NETWORK_URL4 = 'http://192.168.1.211:3000/getNeuterForms';
-  //const NETWORK_URL4 = 'http://192.168.1.7:3000/getNeuterForms';
-
   useEffect(() => {
     const fetchUserAndForms = async () => {
       setIsLoading(true); // Start loading
@@ -60,7 +45,7 @@ const Neuter_Form_archive = () => {
         setUser(response.data);
 
         let formsResponse;
-        if (response.data.position === 'CVO' || response.data.position === 'Rabdash') {
+        if (response.data.position === 'CVO' || response.data.position === 'RabDash') {
           formsResponse = await axios.get(`${apiURL}/getNeuterFormsCVO`);
         } else if (response.data.position === 'Private Veterinarian') {
           formsResponse = await axios.get(`${apiURL}/getNeuterForms`);
@@ -97,8 +82,8 @@ const Neuter_Form_archive = () => {
     form.sex?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     form.breed?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     form.age?.toString().includes(searchTerm) || // Assuming petAge is a number, convert it to string
-    form.pets?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    form.cat?.toLowerCase().includes(searchTerm.toLowerCase()) 
+    form.pets?.toString().toLowerCase().includes(searchTerm.toLowerCase()) || // Convert to string before calling toLowerCase()
+    form.cat?.toString().toLowerCase().includes(searchTerm.toLowerCase()) // Convert to string before calling toLowerCase()
     )
   );
     if (filtered.length > 0) {
@@ -139,7 +124,7 @@ const Neuter_Form_archive = () => {
   const handleBackPress = () => {
     const position = user?.position; // Use optional chaining
 
-    if (position === 'CVO' || position === 'Rabdash') {
+    if (position === 'CVO' || position === 'RabDash') {
       navigation.navigate('VetArchiveMenu');
     } else if (position === 'Private Veterinarian') {
       navigation.navigate('ClientDatabase');
@@ -241,7 +226,6 @@ const Neuter_Form_archive = () => {
         <FlatList
           ref={flatListRef} // Assign the ref to FlatList
           data={filteredForms.slice(startIndex, endIndex)} // Render only the data within the current page range
-          //data={filteredForms}  
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.itemContainer}>
@@ -336,4 +320,4 @@ const Neuter_Form_archive = () => {
   );
 };
 
-  export default Neuter_Form_archive;
+export default Neuter_Form_archive;
