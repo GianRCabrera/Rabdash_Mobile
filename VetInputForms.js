@@ -57,7 +57,7 @@ const VetInputForms = () => {
             style={styles.backgroundImage} // Custom styles for the image
           />
           <Text style={styles.header}>Forms</Text>
-          <View style={styles.contentContainer}> 
+          <View style={styles.contentContainer}>
             <View style={styles.buttonContainer}>
               <TouchableOpacity style={styles.button} onPress={navigateToRabies_Field_Vacc_Form}>
                 <Text style={styles.buttonText}>Rabies Field Vaccination </Text>

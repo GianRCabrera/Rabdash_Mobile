@@ -895,7 +895,7 @@ app.get('/getVaccinationForms', async (req, res) => {
   const username = user.email; // Use the user's email as the username
   console.log('Username:', username);
 
-  const query = 'SELECT * FROM vaccination_form WHERE username = ?';
+  const query = 'SELECT * FROM vaccination_form WHERE username = ? ORDER BY created_at DESC';
 
   try {
     const results = await queryDatabase(pool, query, [username]);
@@ -935,7 +935,7 @@ app.get('/getVaccinationFormsCVO', async (req, res) => {
 
   const { page = 1, limit = 10 } = req.query;
   const offset = (page - 1) * limit;
-  const query = 'SELECT * FROM vaccination_form LIMIT ? OFFSET ?';
+  const query = 'SELECT * FROM vaccination_form ORDER BY created_at DESC LIMIT ? OFFSET ?';
 
   try {
     const mobileResults = await queryDatabase(pool, query, [parseInt(limit), parseInt(offset)]);
@@ -967,7 +967,7 @@ app.get('/getNeuterForms', async (req, res) => {
   const username = user.email;
   console.log('Username:', username);
 
-  const query = 'SELECT * FROM consent_form WHERE username = ?';
+  const query = 'SELECT * FROM consent_form WHERE username = ? ORDER BY created_at DESC';
 
   try {
     const results = await queryDatabase(pool, query, [username]);
@@ -1002,7 +1002,7 @@ app.get('/getNeuterFormsCVO', async (req, res) => {
 
   const { page = 1, limit = 10 } = req.query;
   const offset = (page - 1) * limit;
-  const query = 'SELECT * FROM consent_form LIMIT ? OFFSET ?';
+  const query = 'SELECT * FROM consent_form ORDER BY created_at DESC LIMIT ? OFFSET ?';
 
   try {
     const mobileResults = await queryDatabase(pool, query, [parseInt(limit), parseInt(offset)]);
@@ -1023,6 +1023,7 @@ app.get('/getNeuterFormsCVO', async (req, res) => {
   }
 });
 
+
 // Add a new endpoint to fetch rabies sample form data
 app.get('/getRabiesSampleForms', async (req, res) => {
   const { user } = req.session;
@@ -1034,7 +1035,7 @@ app.get('/getRabiesSampleForms', async (req, res) => {
   const username = user.email; // Use the user's email as the username
   console.log('Username:', username);
 
-  const query = 'SELECT * FROM bite_form WHERE username = ?';
+  const query = 'SELECT * FROM bite_form WHERE username = ? ORDER BY created_at DESC';
 
   try {
     const results = await queryDatabase(pool, query, [username]);
@@ -1069,7 +1070,7 @@ app.get('/getRabiesSampleFormsCVO', async (req, res) => {
 
   const { page = 1, limit = 10 } = req.query;
   const offset = (page - 1) * limit;
-  const query = 'SELECT * FROM bite_form LIMIT ? OFFSET ?';
+  const query = 'SELECT * FROM bite_form ORDER BY created_at DESC LIMIT ? OFFSET ?';
 
   try {
     const mobileResults = await queryDatabase(pool, query, [parseInt(limit), parseInt(offset)]);
@@ -1761,7 +1762,7 @@ const startServer = (port) => {
 
 // New endpoint to fetch control_form data from both mobile and web databases
 app.get('/getAnimalControlForms', async (req, res) => {
-  const query = 'SELECT * FROM control_form';
+  const query = 'SELECT * FROM control_form ORDER BY created_at DESC';
 
   try {
     const mobileResults = await queryDatabase(pool, query);
@@ -1784,7 +1785,7 @@ app.get('/getAnimalControlForms', async (req, res) => {
 
 // New endpoint to fetch IEC forms data from both mobile and web databases
 app.get('/getIECForms', async (req, res) => {
-  const query = 'SELECT * FROM iec_form';
+  const query = 'SELECT * FROM iec_form ORDER BY created_at DESC';
 
   try {
     const mobileResults = await queryDatabase(pool, query);
@@ -1807,7 +1808,7 @@ app.get('/getIECForms', async (req, res) => {
 
 // New endpoint to fetch Schedule forms data from both mobile and web databases
 app.get('/getScheduleForms', async (req, res) => {
-  const query = 'SELECT * FROM schedule_form';
+  const query = 'SELECT * FROM schedule_form ORDER BY created_at DESC';
 
   try {
     const mobileResults = await queryDatabase(pool, query);
@@ -1830,7 +1831,7 @@ app.get('/getScheduleForms', async (req, res) => {
 
 // New endpoint to fetch Budget forms data from both mobile and web databases
 app.get('/getBudgetForms', async (req, res) => {
-  const query = 'SELECT * FROM budget_form';
+  const query = 'SELECT * FROM budget_form ORDER BY created_at DESC';
 
   try {
     const mobileResults = await queryDatabase(pool, query);
@@ -1851,30 +1852,30 @@ app.get('/getBudgetForms', async (req, res) => {
   }
 });
 
-// Add a new endpoint to fetch vaccination form data
+// Add a new endpoint to fetch weather form data
 app.get('/getWeatherForms', async (req, res) => {
-const query = 'SELECT * FROM weather_form';
+  const query = 'SELECT * FROM weather_form ORDER BY created_at DESC';
 
-try {
-  const results = await queryDatabase(query);
+  try {
+    const results = await queryDatabase(pool, query);
 
-  if (results.length > 0) {
-    const vaccinationForms = results;
-    console.log('Weather Forms:', vaccinationForms);
-    res.json(vaccinationForms);
-  } else {
-    console.error('No Weather forms found in the database');
-    res.status(404).json({ message: 'No Weather Report forms found' });
+    if (results.length > 0) {
+      const weatherForms = results;
+      console.log('Weather Forms:', weatherForms);
+      res.json(weatherForms);
+    } else {
+      console.error('No Weather forms found in the database');
+      res.status(404).json({ message: 'No Weather Report forms found' });
+    }
+  } catch (error) {
+    console.error('Error retrieving Weather Report forms:', error);
+    res.status(500).json({ message: 'An error occurred while retrieving Weather Report forms' });
   }
-} catch (error) {
-  console.error('Error retrieving Weather Report forms:', error);
-  res.status(500).json({ message: 'An error occurred while retrieving Weather Report forms' });
-}
 });
 
 // New endpoint to fetch exposure_form data from both mobile and web databases
 app.get('/getRabiesExposureForms', async (req, res) => {
-  const query = 'SELECT * FROM exposure_form';
+  const query = 'SELECT * FROM exposure_form ORDER BY created_at DESC';
 
   try {
     const mobileResults = await queryDatabase(pool, query);

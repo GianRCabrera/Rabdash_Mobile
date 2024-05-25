@@ -84,7 +84,7 @@ const ResetPasswordPage = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.header}>Reset Password</Text>
+        <Text style={styles.header}>Change Password</Text>
 
         <View style={styles.inputGroup}>
           <Icon name="lock-outline" size={24} style={styles.icon} />

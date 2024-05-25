@@ -1,11 +1,6 @@
 import React from 'react';
-import { View,
-  Text,
-  TouchableOpacity,
-  Image
-} from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-//import { createStackNavigator } from '@react-navigation/stack';
 import styles from './styles/mainmenu';
 
 const MainMenu = () => {
@@ -25,16 +20,16 @@ const MainMenu = () => {
   };
 
   const navigateToInputForms = () => {
-    navigation.navigate('InputForms')
-  }
+    navigation.navigate('InputForms');
+  };
 
   const navigateToClientDatabase = () => {
-    navigation.navigate('ClientDatabase')
-  }
+    navigation.navigate('ClientDatabase');
+  };
 
   const navigateToDownloadableForms = () => {
-    navigation.navigate('DownloadableFormsPrivVet')
-  }
+    navigation.navigate('DownloadableFormsPrivVet');
+  };
 
   return (
     <View style={styles.container}>
@@ -43,7 +38,10 @@ const MainMenu = () => {
         style={styles.PrivbackgroundImage} // Custom styles for the image
       />
       <Text style={styles.header}>Main Menu</Text>
-      <View style={styles.contentContainer}> 
+      <View style={styles.positionLabelContainer}>
+        <Text style={styles.positionLabel}>Private Veterinarian</Text>
+      </View>
+      <View style={styles.contentContainer}>
         <TouchableOpacity style={styles.button} onPress={navigateToInputForms}>
           <Text style={styles.buttonText}>Input Forms</Text>
         </TouchableOpacity>

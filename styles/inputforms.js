@@ -89,8 +89,8 @@ const styles = StyleSheet.create({
         marginHorizontal: 5,
         borderRadius: 20,
         position: 'absolute',  // Positioning the button absolutely within the container
-        right: 120,  // Align to the right side of the container
-        bottom: 80,    // Positioned slightly from the top to avoid overlapping the container's edge
+        right: 150,  // Align to the right side of the container
+        bottom: 100,    // Positioned slightly from the top to avoid overlapping the container's edge
         marginTop: 500,
       },
       PrivMenubutton: {
@@ -104,8 +104,8 @@ const styles = StyleSheet.create({
         marginHorizontal: 5,
         borderRadius: 20,
         position: 'absolute',  // Positioning the button absolutely within the container
-        right: 120,  // Align to the right side of the container
-        bottom: 130,    // Positioned slightly from the top to avoid overlapping the container's edge
+        right: 150,  // Align to the right side of the container
+        bottom: 150,    // Positioned slightly from the top to avoid overlapping the container's edge
       },
       MenubuttonText: {
         color: '#E74A3B',

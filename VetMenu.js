@@ -44,7 +44,10 @@ const VetMenu = () => {
         source={require('./assets/menu_pic.png')} // Ensure the path is correct
         style={styles.backgroundImage} // Custom styles for the image
       />
-      <Text style={styles.header}>Main Menu</Text>  
+      <Text style={styles.header}>Main Menu</Text>
+      <View style={styles.positionLabelContainer}>
+        <Text style={styles.positionLabel}>CVO/RabDash</Text>
+      </View>
       <View style={styles.contentContainer}> 
         <TouchableOpacity style={styles.button} onPress={navigateToInputForms}>
           <Text style={styles.buttonText}>Input Forms</Text>
