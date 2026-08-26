@@ -54,5 +54,5 @@ The frontend's `EXPO_PUBLIC_URL` (root `.env`) already points at the hosted back
 
 ## Known issues to be aware of
 
-- **`.env` and `backend/.env` are committed to git** (tracked, not gitignored) and contain a live JWT secret and plaintext DB credentials for two databases, on a public GitHub repo. Do not add further secrets to these files as-is; prefer environment variables set outside the repo until this is remediated.
+- **`.env` and `backend/.env` were committed to git for a long time** on a public GitHub repo (JWT secret, DB credentials, SMTP credentials). They're now `.gitignore`d and untracked, and the SMTP credentials that used to be hardcoded directly in `app.js` were moved to `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS` env vars — but the old values are still exposed in git history until they're rotated. Don't reintroduce hardcoded secrets in `app.js`; use `.env.example`/`backend/.env.example` as the template for what variables exist.
 - `npx expo start` reports several installed package versions are behind what Expo SDK 50 expects (`expo`, `expo-file-system`, `expo-media-library`, `expo-secure-store`, `react-native-svg`); `npx expo install --fix` will align them but hasn't been run/verified in this repo.

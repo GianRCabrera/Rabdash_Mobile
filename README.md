@@ -76,6 +76,6 @@ See [CLAUDE.md](./CLAUDE.md) for a deeper architecture walkthrough (navigation c
 
 ## Known issues
 
-- **`.env` and `backend/.env` are committed to this repository**, which is public on GitHub, and contain a live JWT secret and plaintext database credentials for two databases. These should be rotated and removed from git history — treat them as compromised.
+- **`.env` and `backend/.env` were committed to this repository** (public on GitHub) for a long time and contain database credentials, a JWT secret, and SMTP credentials. They've since been untracked (`.gitignore`d, `git rm --cached`) and hardcoded secrets moved out of `backend/app.js` into env vars — see `.env.example` / `backend/.env.example` for the variables each file needs. The **old values are still compromised** since they remain visible in this repo's git history; rotate them (new DB passwords, new `JWT_SECRET`, new SMTP password) and update Render's dashboard env vars, not just the local files, before treating this as resolved.
 - `npx expo start` reports a few installed packages are slightly behind the versions Expo SDK 50 expects (`expo`, `expo-file-system`, `expo-media-library`, `expo-secure-store`, `react-native-svg`). Run `npx expo install --fix` to align them if you hit compatibility issues.
 - No lint, typecheck, or automated test scripts are currently wired up in either `package.json`.

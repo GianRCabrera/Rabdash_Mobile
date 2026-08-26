@@ -250,12 +250,12 @@ app.get('/userProfile', async (req, res) => {
 
 // Configure Nodemailer with Hostinger SMTP
 const transporter = nodemailer.createTransport({
-  host: 'smtp.hostinger.com', // Replace with your Hostinger SMTP server
+  host: process.env.SMTP_HOST,
   port: 465, // Typically 587 or 465
   secure: true, // true for 465, false for other ports
   auth: {
-    user: 'admin@rabdash.com', // Your email address
-    pass: 'Forrabdash1!', // Your email password
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
 });
 
