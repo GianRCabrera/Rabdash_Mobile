@@ -32,6 +32,9 @@
     },
     "extra": {
       "EXPO_PUBLIC_URL": "https://rabdash-mobile-backend.onrender.com"
-    }
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
   }
 }
