@@ -9,17 +9,17 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { useAuth } from './AuthContext';  // Import the useAuth hook
+import { useAuth } from '../context/AuthContext';  // Import the useAuth hook
 import Modal from 'react-native-modal';
 import axios from 'axios';
 import Svg, { Path } from 'react-native-svg';  // Import Svg and Path
-import styles from './styles/register';
+import styles from '../../styles/register';
 
 const RegisterPage = () => {
   const [name, setFirstName] = useState('');
   const [last_name, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [position, setSelectedValue] = useState(null);
+  const [position, setSelectedValue] = useState('Private Veterinarian');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -75,7 +75,7 @@ const RegisterPage = () => {
     setFirstName('');
     setLastName('');
     setEmail('');
-    setSelectedValue(null);
+    setSelectedValue('Private Veterinarian');
     setPassword('');
     setConfirmPassword('');
   };
@@ -155,7 +155,7 @@ const RegisterPage = () => {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
-      <Image source={require('./assets/logo.png')} style={styles.image} />
+      <Image source={require('../../assets/logo.png')} style={styles.image} />
       <Text style={styles.header}>Create an Account</Text>
       <TextInput
         style={styles.input}
@@ -183,8 +183,6 @@ const RegisterPage = () => {
           value={position}
           items={[
             { label: 'Private Veterinarian', value: 'Private Veterinarian' },
-            { label: 'CVO', value: 'CVO' },
-            { label: 'RabDash', value: 'RabDash' },
           ]}
           placeholder="Position" // Set the default placeholder text to "Position"
           setOpen={setOpen}

@@ -4,7 +4,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Modal from 'react-native-modal';
 import axios from 'axios';
-import styles from './styles/submitform';
+import styles from '../../styles/submitform';
 
 const Rabies_Sample_Information_Form2 = () => {
   const [user, setUser] = useState(null);

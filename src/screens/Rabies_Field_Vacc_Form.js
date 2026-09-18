@@ -13,7 +13,7 @@ import Modal from 'react-native-modal';
 import DropDownPicker from 'react-native-dropdown-picker'; // Add this import
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import axios from 'axios';
-import { styles } from './styles/forms';
+import { styles } from '../../styles/forms';
 
 // ... (other imports and code)
 const Rabies_Field_Vacc_Form = () => {

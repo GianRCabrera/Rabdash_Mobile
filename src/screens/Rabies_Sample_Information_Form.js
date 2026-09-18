@@ -11,7 +11,7 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import Modal from 'react-native-modal';
 import axios from 'axios';
-import styles from './styles/forms';
+import styles from '../../styles/forms';
 
 const Rabies_Sample_Information_Form = () => {
   const [user, setUser] = useState(null);

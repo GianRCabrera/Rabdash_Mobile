@@ -1,13 +1,23 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import styles from './styles/mainmenu';
+import axios from 'axios';
+import styles from '../../styles/mainmenu';
+import { useAuth } from '../context/AuthContext';
 
 const MainMenu = () => {
   const navigation = useNavigation();
+  const { dispatch } = useAuth();
+  const apiURL = process.env.EXPO_PUBLIC_URL;
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     console.log('Logout button pressed!');
+    try {
+      await axios.post(`${apiURL}/logout`, {}, { withCredentials: true });
+    } catch (error) {
+      console.error('Error during logout:', error.message);
+    }
+    dispatch({ type: 'LOGOUT' });
     navigation.navigate('Login');
   };
 
@@ -34,7 +44,7 @@ const MainMenu = () => {
   return (
     <View style={styles.container}>
       <Image
-        source={require('./assets/privvet_pic.png')} // Ensure the path is correct
+        source={require('../../assets/privvet_pic.png')} // Ensure the path is correct
         style={styles.PrivbackgroundImage} // Custom styles for the image
       />
       <Text style={styles.header}>Main Menu</Text>

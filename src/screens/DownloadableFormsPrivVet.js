@@ -1,7 +1,7 @@
 import React, { useState } from 'react'; 
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import styles from './styles/inputforms';
+import styles from '../../styles/inputforms';
 import Modal from 'react-native-modal';
 import { Asset } from 'expo-asset';
 import * as MediaLibrary from 'expo-media-library';
@@ -101,7 +101,7 @@ const DownloadableFormsPrivVet = () => {
   return (
     <View style={styles.container}>
       <Image
-            source={require('./assets/download_page.png')} // Ensure the path is correct
+            source={require('../../assets/download_page.png')} // Ensure the path is correct
             style={styles.DLbackgroundImage} // Custom styles for the image
           />
       <Text style={styles.header}>Downloadable Forms </Text>

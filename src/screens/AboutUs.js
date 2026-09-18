@@ -43,36 +43,36 @@ const AboutUs = () => {
       </Text>
       <View style={styles.imageContainer}>
         <Image
-          source={require('./assets/pchrd.png')}
+          source={require('../../assets/pchrd.png')}
           style={styles.image}
           resizeMode="contain"
         />
         <Image
-          source={require('./assets/UPMIN.png')}
-          style={styles.image}
-          resizeMode="contain"
-        />
-      </View>
-      <View style={styles.imageContainer}>
-        <Image
-          source={require('./assets/cvo.png')}
-          style={styles.image}
-          resizeMode="contain"
-        />
-        <Image
-          source={require('./assets/stoprabies.png')}
+          source={require('../../assets/UPMIN.png')}
           style={styles.image}
           resizeMode="contain"
         />
       </View>
       <View style={styles.imageContainer}>
         <Image
-          source={require('./assets/pgc.png')}
+          source={require('../../assets/cvo.png')}
           style={styles.image}
           resizeMode="contain"
         />
         <Image
-          source={require('./assets/pawsitivity1.png')}
+          source={require('../../assets/stoprabies.png')}
+          style={styles.image}
+          resizeMode="contain"
+        />
+      </View>
+      <View style={styles.imageContainer}>
+        <Image
+          source={require('../../assets/pgc.png')}
+          style={styles.image}
+          resizeMode="contain"
+        />
+        <Image
+          source={require('../../assets/pawsitivity1.png')}
           style={styles.image}
           resizeMode="contain"
         />

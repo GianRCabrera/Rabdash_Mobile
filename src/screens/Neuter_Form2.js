@@ -12,7 +12,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import Modal from 'react-native-modal';
 import DropDownPicker from 'react-native-dropdown-picker';
 import axios from 'axios';
-import styles from './styles/submitform';
+import styles from '../../styles/submitform';
 
 const Neuter_Form2 = () => {
 

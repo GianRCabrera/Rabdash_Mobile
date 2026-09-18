@@ -5,7 +5,7 @@ import { View,
   StyleSheet,
   Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import styles from './styles/inputforms';
+import styles from '../../styles/inputforms';
 
 const InputForms = () => {
     const navigation = useNavigation();
@@ -29,7 +29,7 @@ const InputForms = () => {
     return (
         <View style={styles.container}>
           <Image
-            source={require('./assets/forms_pic.png')} // Ensure the path is correct
+            source={require('../../assets/forms_pic.png')} // Ensure the path is correct
             style={styles.backgroundImage} // Custom styles for the image
           />
           <Text style={styles.header}>Form Menu</Text>

@@ -11,7 +11,8 @@ import { useNavigation } from '@react-navigation/native';
 import Modal from 'react-native-modal';
 import axios from 'axios';
 import Svg, { Path } from 'react-native-svg';
-import styles from './styles/login';
+import styles from '../../styles/login';
+import { useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -19,6 +20,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
   const navigation = useNavigation();
+  const { dispatch } = useAuth();
   const [responseMessage, setResponseMessage] = useState('');
 
   const [errorModalVisible, setErrorModalVisible] = useState(false);
@@ -76,6 +78,8 @@ const LoginPage = () => {
         console.log('Login successful');
         const position = response.data.position;
 
+        dispatch({ type: 'LOGIN', payload: { user: { email, position } } });
+
         // Handle navigation based on the user position
         switch (position) {
           case 'CVO':
@@ -118,7 +122,7 @@ const LoginPage = () => {
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
       <Image
-        source={require('./assets/logo.png')}
+        source={require('../../assets/logo.png')}
         style={styles.image}
       />
       <Text style={styles.header}>Rabdash DC</Text>

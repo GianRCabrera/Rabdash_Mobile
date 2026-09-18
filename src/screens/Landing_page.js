@@ -8,7 +8,7 @@ const LandingPage = () => {
   return (
     <View style={styles.container}>
       <Image
-        source={require('./assets/Landing_page.png')} // Ensure the path is correct
+        source={require('../../assets/Landing_page.png')} // Ensure the path is correct
         style={styles.image} // Custom styles for the image
       />
       <View style={styles.contentContainer}> 

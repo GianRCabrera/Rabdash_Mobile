@@ -6,15 +6,24 @@ import {
   Image
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useAuth } from './AuthContext';  // Import the useAuth hook
-import styles from './styles/mainmenu';
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext';  // Import the useAuth hook
+import styles from '../../styles/mainmenu';
 
 const VetMenu = () => {
 
   const navigation = useNavigation();
+  const { dispatch } = useAuth();
+  const apiURL = process.env.EXPO_PUBLIC_URL;
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     console.log('Logout button pressed!');
+    try {
+      await axios.post(`${apiURL}/logout`, {}, { withCredentials: true });
+    } catch (error) {
+      console.error('Error during logout:', error.message);
+    }
+    dispatch({ type: 'LOGOUT' });
     navigation.navigate('Login');
   };
 
@@ -41,7 +50,7 @@ const VetMenu = () => {
   return (
     <View style={styles.container}>
       <Image
-        source={require('./assets/menu_pic.png')} // Ensure the path is correct
+        source={require('../../assets/menu_pic.png')} // Ensure the path is correct
         style={styles.backgroundImage} // Custom styles for the image
       />
       <Text style={styles.header}>Main Menu</Text>

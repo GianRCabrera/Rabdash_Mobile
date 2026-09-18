@@ -10,7 +10,7 @@ import Modal from 'react-native-modal';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import DropDownPicker from 'react-native-dropdown-picker'; // Add this import
 import axios from 'axios';
-import styles from './styles/submitforms3';
+import styles from '../../styles/submitforms3';
 
 const IECForm = () => {
   const [user, setUser] = useState(null);

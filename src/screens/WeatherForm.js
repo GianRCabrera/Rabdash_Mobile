@@ -8,7 +8,7 @@ import { View,
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Modal from 'react-native-modal';
 import axios from 'axios';
-import styles from './styles/submitforms3';
+import styles from '../../styles/submitforms3';
 
 const WeatherForm = () => {
   const navigation = useNavigation();

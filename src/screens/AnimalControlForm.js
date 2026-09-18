@@ -12,7 +12,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import Modal from 'react-native-modal';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import axios from 'axios';
-import styles from './styles/submitform';
+import styles from '../../styles/submitform';
 
 const AnimalControlForm = () => {
   const [user, setUser] = useState(null);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, FlatList, ScrollView, ActivityIndicator,  TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import styles from './styles/Archive';
+import styles from '../../styles/Archive';
 import Modal from 'react-native-modal';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/MaterialIcons';

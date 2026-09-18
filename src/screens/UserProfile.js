@@ -53,7 +53,7 @@ const UserProfile = () => {
         <View style={styles.userInfoContainer}>
           <Text style={styles.header}>User Profile</Text>
           <Image 
-            source={require('./assets/avatar.png')} // Ensure this path is correct
+            source={require('../../assets/avatar.png')} // Ensure this path is correct
             style={styles.profileImage}
           />
           <Text style={styles.userName}>{`${user.name || ''} ${user.last_name || ''}`}</Text>

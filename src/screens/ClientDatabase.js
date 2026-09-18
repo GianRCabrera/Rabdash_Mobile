@@ -4,7 +4,7 @@ import { View,
   TouchableOpacity,
   Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import styles from './styles/inputforms';
+import styles from '../../styles/inputforms';
 
 const ClientDatabase = () => {
     const navigation = useNavigation();
@@ -28,7 +28,7 @@ const ClientDatabase = () => {
     return (
         <View style={styles.container}>
           <Image
-            source={require('./assets/archives.png')} // Ensure the path is correct
+            source={require('../../assets/archives.png')} // Ensure the path is correct
             style={styles.DLbackgroundImage} // Custom styles for the image
           />
           <Text style={styles.header}>Client Input History (Forms) </Text>

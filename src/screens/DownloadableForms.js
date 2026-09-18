@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Modal from 'react-native-modal';
-import styles from './styles/inputforms';
+import styles from '../../styles/inputforms';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { Buffer } from 'buffer';
@@ -141,7 +141,7 @@ const DownloadableForms = () => {
     return (
       <View style={styles.container}>
         <Image
-            source={require('./assets/download_page.png')} // Ensure the path is correct
+            source={require('../../assets/download_page.png')} // Ensure the path is correct
             style={styles.DLbackgroundImage} // Custom styles for the image
           />
         <Text style={styles.header}>Downloadable Forms </Text>
