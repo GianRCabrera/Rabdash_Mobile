@@ -35,3 +35,13 @@ backend/.env
 
 # typescript
 *.tsbuildinfo
+
+# IDE
+.idea/
+.vs/
+
+# editor scratch files
+tempCodeRunnerFile.js
+
+# stray OS/env artifacts that shouldn't exist in the repo
+%ProgramData%/
