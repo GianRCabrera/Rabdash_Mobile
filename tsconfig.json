@@ -1,3 +1,10 @@
 {
-  "extends": "@tsconfig/react-native/tsconfig.json"
+  "extends": "@tsconfig/react-native/tsconfig.json",
+  "compilerOptions": {
+    // @tsconfig/react-native@3.0.2 sets module/moduleResolution to "commonjs"/"node" (aka
+    // "node10"), now deprecated. Metro (not tsc) does the real bundling here, so moving to
+    // the modern bundler-mode pairing is safe for type-checking and avoids the warning.
+    "module": "esnext",
+    "moduleResolution": "bundler"
+  }
 }
