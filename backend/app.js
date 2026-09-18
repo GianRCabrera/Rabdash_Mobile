@@ -2,9 +2,10 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
-const mysql = require('mysql');
+const mysql = require('mysql2');
 const cors = require('cors');
 const crypto = require('crypto');
+const { rateLimit } = require('express-rate-limit');
 const nodemailer = require('nodemailer'); // For sending reset password emails
 const bcrypt = require('bcrypt'); // Import bcrypt for password hashing
 const argon2 = require('argon2'); // Import argon2 for password hashing
@@ -14,10 +15,25 @@ const saltRounds = 10; // Match the rounds used in your PHP application
 const app = express();
 const path = require('path');
 
-// Generate a random secret key
-const secretKey = crypto.randomBytes(64).toString('hex');
+// Session secret: use a persisted SESSION_SECRET so logins survive a server restart.
+// Falls back to a per-boot random secret (all sessions invalidated on restart) if unset.
+if (!process.env.SESSION_SECRET) {
+  console.warn('SESSION_SECRET is not set — using an ephemeral secret; all sessions will be invalidated on every restart.');
+}
+const secretKey = process.env.SESSION_SECRET || crypto.randomBytes(64).toString('hex');
 
-app.use(cors());
+// CORS: restrict to CORS_ORIGIN (comma-separated) once known; defaults to reflecting
+// the request origin (current behavior) when unset, with credentials enabled so
+// session cookies actually work from browser/web clients.
+const allowedOrigins = (process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+  credentials: true,
+}));
 app.use(bodyParser.json());
 
 // Use the session middleware
@@ -26,6 +42,15 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
 }));
+
+// Rate limiter for auth/OTP endpoints — mitigates brute-forcing logins, OTPs, and password resets.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many attempts. Please try again later.' },
+});
 
 const dbConfig = {
   host: process.env.DB_HOST,
@@ -87,12 +112,26 @@ const queryDatabase = (pool, query, values) => {
   });
 };
 
+const requireAuth = (req, res, next) => {
+  if (!req.session.user) {
+    return res.status(401).json({ message: 'User not authenticated' });
+  }
+  next();
+};
+
+const requireCVO = (req, res, next) => {
+  const { user } = req.session;
+  if (!user) {
+    return res.status(401).json({ message: 'User not authenticated' });
+  }
+  if (user.position !== 'CVO' && user.position !== 'RabDash') {
+    return res.status(403).json({ message: 'Forbidden: CVO access required' });
+  }
+  next();
+};
+
 const verifyPassword = async (password, hash) => {
   try {
-    // Log the hash format and provided password for debugging
-    console.log('Stored password hash:', hash);
-    console.log('Password provided by user:', password);
-
     if (hash.startsWith('$2y$')) {
       // Convert $2y$ to $2b$ for bcrypt verification
       hash = hash.replace('$2y$', '$2b$');
@@ -100,14 +139,12 @@ const verifyPassword = async (password, hash) => {
 
     if (hash.startsWith('$2b$') || hash.startsWith('$2a$')) {
       // Use bcrypt for verification
-      console.log('Using bcrypt for password verification');
       return await bcrypt.compare(password, hash);
     } else if (hash.startsWith('$argon2i$') || hash.startsWith('$argon2id$')) {
       // Use Argon2 for verification
-      console.log('Using Argon2 for password verification');
       return await argon2.verify(hash, password);
     } else {
-      console.error('Unknown hash format:', hash);
+      console.error('Unknown password hash format encountered during verification.');
       throw new Error('Unknown hash format');
     }
   } catch (error) {
@@ -118,7 +155,10 @@ const verifyPassword = async (password, hash) => {
 
 
 const registerUser = async (user, pool) => {
-  const { name, last_name, email, position, password } = user;
+  const { name, last_name, email, password } = user;
+  // Public self-registration is only ever allowed as Private Veterinarian —
+  // CVO/RabDash accounts are reviewer/admin roles and must be provisioned another way.
+  const position = 'Private Veterinarian';
   const createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
   const updatedAt = createdAt;
 
@@ -140,11 +180,19 @@ const registerUser = async (user, pool) => {
   }
 };
 
-app.post('/register', async (req, res) => {
+app.post('/register', authLimiter, async (req, res) => {
+  const { email } = req.body;
+
+  const storedOtp = otpStore[email];
+  if (!storedOtp || !storedOtp.verified || storedOtp.expiry <= Date.now()) {
+    return res.status(403).json({ success: false, message: 'OTP verification required before registering.' });
+  }
+
   try {
     const userRegistered = await registerUser(req.body, pool);
     if (userRegistered) {
-      req.session.user = req.body;
+      delete otpStore[email];
+      req.session.user = { email, position: 'Private Veterinarian' };
       res.json({ success: true, message: 'User has been registered successfully' });
     }
   } catch (error) {
@@ -158,12 +206,8 @@ const logInUserFromPool = async (user, pool) => {
   try {
     console.log(`Querying ${pool.config.connectionConfig.database} for user: ${email}`);
     const results = await queryDatabase(pool, query, [email]);
-    console.log(`Results from ${pool.config.connectionConfig.database}:`, results);
     if (results.length > 0) {
       const user = results[0];
-      console.log('User found:', user);
-      console.log('Stored password hash:', user.password);
-      console.log('Password provided by user:', password);
 
       const passwordMatch = await verifyPassword(password, user.password);
       console.log(`Password match result: ${passwordMatch}`);
@@ -198,7 +242,7 @@ const logInUser = async (user) => {
   return loggedInUser;
 };
 
-app.post('/login', async (req, res) => {
+app.post('/login', authLimiter, async (req, res) => {
   try {
     const user = await logInUser(req.body);
 
@@ -214,6 +258,16 @@ app.post('/login', async (req, res) => {
     console.error('Error during login:', error);
     res.json({ success: false, message: 'An error occurred during login' });
   }
+});
+
+app.post('/logout', requireAuth, (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Error destroying session:', err);
+      return res.status(500).json({ success: false, message: 'An error occurred during logout' });
+    }
+    res.json({ success: true, message: 'Logged out successfully' });
+  });
 });
 
 app.get('/userProfile', async (req, res) => {
@@ -266,7 +320,7 @@ const generateOTP = () => {
 const otpStore = {};
 
 // OTP for reset Password
-app.post('/resetpass', async (req, res) => {
+app.post('/resetpass', authLimiter, async (req, res) => {
   const { email } = req.body;
   
   // Generate OTP (You can define generateOTP function as per your logic)
@@ -296,7 +350,7 @@ app.post('/resetpass', async (req, res) => {
     // Send email with OTP
     await transporter.sendMail(mailOptions);
     console.log(`Password reset OTP sent to ${email}`);
-    res.json({ success: true, message: 'Password reset OTP sent successfully.', otp });
+    res.json({ success: true, message: 'Password reset OTP sent successfully.' });
   } catch (error) {
     console.error('Error sending email:', error.message);
     res.status(500).json({ success: false, message: 'Failed to send password reset OTP.' });
@@ -304,7 +358,7 @@ app.post('/resetpass', async (req, res) => {
 });
 
 // Register route with OTP generation and email sending
-app.post('/registerotp', async (req, res) => {
+app.post('/registerotp', authLimiter, async (req, res) => {
   const { name, last_name, email, position, password } = req.body;
 
   try {
@@ -337,13 +391,14 @@ app.post('/registerotp', async (req, res) => {
 });
 
 // Validate OTP endpoint
-app.post('/validate-otp', async (req, res) => {
+app.post('/validate-otp', authLimiter, async (req, res) => {
   const { email, otp } = req.body;
   const storedOtp = otpStore[email];
 
   console.log(`Validating OTP for ${email}: received ${otp}, stored ${storedOtp ? storedOtp.otp : 'none'}`);
 
   if (storedOtp && storedOtp.otp === otp && storedOtp.expiry > Date.now()) {
+    storedOtp.verified = true;
     res.json({ success: true, message: 'OTP is valid.' });
   } else {
     res.status(400).json({ success: false, message: 'Invalid or expired OTP.' });
@@ -351,13 +406,14 @@ app.post('/validate-otp', async (req, res) => {
 });
 
 // Validate OTP for registration endpoint
-app.post('/validate-otp-reg', async (req, res) => {
+app.post('/validate-otp-reg', authLimiter, async (req, res) => {
   const { email, otp } = req.body;
   const storedOtp = otpStore[email];
 
   console.log(`Validating OTP for ${email}: received ${otp}, stored ${storedOtp ? storedOtp.otp : 'none'}`);
 
   if (storedOtp && storedOtp.otp === otp && storedOtp.expiry > Date.now()) {
+    storedOtp.verified = true;
     res.json({ success: true, message: 'OTP is valid.' });
   } else {
     res.status(400).json({ success: false, message: 'Invalid or expired OTP.' });
@@ -365,46 +421,31 @@ app.post('/validate-otp-reg', async (req, res) => {
 });
 
 // Reset Password Functionality
-app.post('/reset-password', async (req, res) => {
+app.post('/reset-password', authLimiter, async (req, res) => {
   const { email, oldPassword, newPassword } = req.body;
 
-  console.log('Received reset password request:', { email, oldPassword, newPassword });
-
   if (!email || !oldPassword || !newPassword) {
-    console.log('Missing fields:', { email, oldPassword, newPassword });
     return res.status(400).json({ success: false, message: 'All fields are required.' });
   }
 
   try {
-    console.log('Querying database for user with email:', email);
     const results = await queryDatabase(pool, 'SELECT * FROM users WHERE email = ?', [email]);
 
     if (results.length === 0) {
-      console.log('User not found for email:', email);
       return res.status(400).json({ success: false, message: 'User not found.' });
     }
 
     const user = results[0];
-    console.log('User found:', user);
 
-    console.log('Stored password:', user.password);
-
-    console.log('Comparing old password...');
     const passwordMatch = await verifyPassword(oldPassword, user.password);
 
-    console.log('Password match result:', passwordMatch);
-
     if (!passwordMatch) {
-      console.log('Old password is incorrect for user:', email);
       return res.status(400).json({ success: false, message: 'Old password is incorrect.' });
     }
-
-    console.log('Old password matched.');
 
     // Hash the new password
     const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
 
-    console.log('Updating user password in database...');
     await queryDatabase(pool, 'UPDATE users SET password = ? WHERE email = ?', [hashedNewPassword, email]);
     console.log('Password updated successfully for user:', email);
 
@@ -416,34 +457,32 @@ app.post('/reset-password', async (req, res) => {
 });
 
 // Reset Forgotten Password Functionality
-app.post('/reset-forgotten-password', async (req, res) => {
+app.post('/reset-forgotten-password', authLimiter, async (req, res) => {
   const { email, newPassword } = req.body;
 
-  console.log('Received reset forgotten password request:', { email, newPassword });
-
   if (!email || !newPassword) {
-    console.log('Missing fields:', { email, newPassword });
     return res.status(400).json({ success: false, message: 'All fields are required.' });
   }
 
+  const storedOtp = otpStore[email];
+  if (!storedOtp || !storedOtp.verified || storedOtp.expiry <= Date.now()) {
+    return res.status(403).json({ success: false, message: 'OTP verification required before resetting password.' });
+  }
+
   try {
-    console.log('Querying database for user with email:', email);
     const results = await queryDatabase(pool, 'SELECT * FROM users WHERE email = ?', [email]);
 
     if (results.length === 0) {
-      console.log('User not found for email:', email);
       return res.status(400).json({ success: false, message: 'User not found.' });
     }
-
-    const user = results[0];
-    console.log('User found:', user);
 
     // Hash the new password
     const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
 
-    console.log('Updating user password in database...');
     await queryDatabase(pool, 'UPDATE users SET password = ? WHERE email = ?', [hashedNewPassword, email]);
     console.log('Password updated successfully for user:', email);
+
+    delete otpStore[email];
 
     res.json({ success: true, message: 'Password changed successfully.' });
   } catch (error) {
@@ -454,7 +493,7 @@ app.post('/reset-forgotten-password', async (req, res) => {
 
 
 //Forms
-app.post('/submitVaccinationForm', async (req, res) => {
+app.post('/submitVaccinationForm', requireAuth, async (req, res) => {
   const { user } = req.session;
   const username = user.email;
   console.log('Username:', username);
@@ -607,7 +646,7 @@ app.post('/editVaccinationForm', async (req, res) => {
 });
 
 
-app.post('/submitNeuterForm', async (req, res) => {
+app.post('/submitNeuterForm', requireAuth, async (req, res) => {
   const { user } = req.session;
   const username = user.email;
   console.log('Username:', username);
@@ -734,7 +773,7 @@ app.post('/editNeuterForm', async (req, res) => {
   }
 });
 
-app.post('/submitRabiesSampleForms', async (req, res) => {
+app.post('/submitRabiesSampleForms', requireAuth, async (req, res) => {
   const { user } = req.session;
   const username = user.email;
   console.log('Username:', username);
@@ -926,13 +965,7 @@ app.get('/getVaccinationForms', async (req, res) => {
 });
 
 // New endpoint to fetch vaccination_form data from both mobile and web databases
-app.get('/getVaccinationFormsCVO', async (req, res) => {
-  const { user } = req.session;
-
-  if (!user) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
-
+app.get('/getVaccinationFormsCVO', requireCVO, async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
   const offset = (page - 1) * limit;
   const query = 'SELECT * FROM vaccination_form ORDER BY created_at DESC LIMIT ? OFFSET ?';
@@ -993,13 +1026,7 @@ app.get('/getNeuterForms', async (req, res) => {
 });
 
 // New endpoint to fetch neuter form data from both mobile and web databases
-app.get('/getNeuterFormsCVO', async (req, res) => {
-  const { user } = req.session;
-
-  if (!user) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
-
+app.get('/getNeuterFormsCVO', requireCVO, async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
   const offset = (page - 1) * limit;
   const query = 'SELECT * FROM consent_form ORDER BY created_at DESC LIMIT ? OFFSET ?';
@@ -1061,13 +1088,7 @@ app.get('/getRabiesSampleForms', async (req, res) => {
 });
 
 // Add a new endpoint to fetch rabies sample form data from both mobile and web databases
-app.get('/getRabiesSampleFormsCVO', async (req, res) => {
-  const { user } = req.session;
-
-  if (!user) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
-
+app.get('/getRabiesSampleFormsCVO', requireCVO, async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
   const offset = (page - 1) * limit;
   const query = 'SELECT * FROM bite_form ORDER BY created_at DESC LIMIT ? OFFSET ?';
@@ -1172,7 +1193,7 @@ app.post('/editBudgetForm', async (req, res) => {
   }
 });
 
-app.post('/submitWeatherForm', async (req, res) => {
+app.post('/submitWeatherForm', requireAuth, async (req, res) => {
 const { user } = req.session;
 const username = user.email;
 
@@ -1222,7 +1243,7 @@ try {
 }
 });
 
-app.post('/editWeatherForm', async (req, res) => {
+app.post('/editWeatherForm', requireAuth, async (req, res) => {
 const { user } = req.session;
 const username = user.email;
 console.log('Username:', username);
@@ -1761,7 +1782,7 @@ const startServer = (port) => {
 };
 
 // New endpoint to fetch control_form data from both mobile and web databases
-app.get('/getAnimalControlForms', async (req, res) => {
+app.get('/getAnimalControlForms', requireAuth, async (req, res) => {
   const query = 'SELECT * FROM control_form ORDER BY created_at DESC';
 
   try {
@@ -1784,7 +1805,7 @@ app.get('/getAnimalControlForms', async (req, res) => {
 });
 
 // New endpoint to fetch IEC forms data from both mobile and web databases
-app.get('/getIECForms', async (req, res) => {
+app.get('/getIECForms', requireAuth, async (req, res) => {
   const query = 'SELECT * FROM iec_form ORDER BY created_at DESC';
 
   try {
@@ -1807,7 +1828,7 @@ app.get('/getIECForms', async (req, res) => {
 });
 
 // New endpoint to fetch Schedule forms data from both mobile and web databases
-app.get('/getScheduleForms', async (req, res) => {
+app.get('/getScheduleForms', requireAuth, async (req, res) => {
   const query = 'SELECT * FROM schedule_form ORDER BY created_at DESC';
 
   try {
@@ -1830,7 +1851,7 @@ app.get('/getScheduleForms', async (req, res) => {
 });
 
 // New endpoint to fetch Budget forms data from both mobile and web databases
-app.get('/getBudgetForms', async (req, res) => {
+app.get('/getBudgetForms', requireAuth, async (req, res) => {
   const query = 'SELECT * FROM budget_form ORDER BY created_at DESC';
 
   try {
@@ -1853,7 +1874,7 @@ app.get('/getBudgetForms', async (req, res) => {
 });
 
 // Add a new endpoint to fetch weather form data
-app.get('/getWeatherForms', async (req, res) => {
+app.get('/getWeatherForms', requireAuth, async (req, res) => {
   const query = 'SELECT * FROM weather_form ORDER BY created_at DESC';
 
   try {
@@ -1874,7 +1895,7 @@ app.get('/getWeatherForms', async (req, res) => {
 });
 
 // New endpoint to fetch exposure_form data from both mobile and web databases
-app.get('/getRabiesExposureForms', async (req, res) => {
+app.get('/getRabiesExposureForms', requireAuth, async (req, res) => {
   const query = 'SELECT * FROM exposure_form ORDER BY created_at DESC';
 
   try {
@@ -1897,7 +1918,7 @@ app.get('/getRabiesExposureForms', async (req, res) => {
 });
 
 // DELETE endpoint for Vaccination Forms
-app.delete('/deleteVaccinationForm/:id', async (req, res) => {
+app.delete('/deleteVaccinationForm/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
 
   const deleteQuery = 'DELETE FROM vaccination_form WHERE id = ?';
@@ -1913,7 +1934,7 @@ app.delete('/deleteVaccinationForm/:id', async (req, res) => {
 });
 
 // DELETE endpoint for Neuter Forms
-app.delete('/deleteNeuterForm/:id', async (req, res) => {
+app.delete('/deleteNeuterForm/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
 
   const deleteQuery = 'DELETE FROM consent_form WHERE id = ?';
@@ -1929,7 +1950,7 @@ app.delete('/deleteNeuterForm/:id', async (req, res) => {
 });
 
 // DELETE endpoint for Rabies Sample Forms
-app.delete('/deleteRabiesSampleForm/:id', async (req, res) => {
+app.delete('/deleteRabiesSampleForm/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
 
   const deleteQuery = 'DELETE FROM bite_form WHERE id = ?';
@@ -1946,7 +1967,7 @@ app.delete('/deleteRabiesSampleForm/:id', async (req, res) => {
 
 
 // DELETE endpoint for Budget Forms
-app.delete('/deleteBudgetForm/:id', async (req, res) => {
+app.delete('/deleteBudgetForm/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
 
   const deleteQuery = 'DELETE FROM budget_form WHERE id = ?';
@@ -1962,7 +1983,7 @@ app.delete('/deleteBudgetForm/:id', async (req, res) => {
 });
 
 // DELETE endpoint for Schedule Forms
-app.delete('/deleteScheduleForm/:id', async (req, res) => {
+app.delete('/deleteScheduleForm/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
 
   const deleteQuery = 'DELETE FROM schedule_form WHERE id = ?';
@@ -1978,7 +1999,7 @@ app.delete('/deleteScheduleForm/:id', async (req, res) => {
 });
 
 // DELETE endpoint for IEC Forms
-app.delete('/deleteIECForm/:id', async (req, res) => {
+app.delete('/deleteIECForm/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
 
   const deleteQuery = 'DELETE FROM iec_form WHERE id = ?';
@@ -1994,7 +2015,7 @@ app.delete('/deleteIECForm/:id', async (req, res) => {
 });
 
 // DELETE endpoint for Animal Control Forms
-app.delete('/deleteAnimalControlForm/:id', async (req, res) => {
+app.delete('/deleteAnimalControlForm/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
 
   const deleteQuery = 'DELETE FROM control_form WHERE id = ?';
@@ -2010,7 +2031,7 @@ app.delete('/deleteAnimalControlForm/:id', async (req, res) => {
 });
 
 // DELETE endpoint for Rabies Exposure Forms
-app.delete('/deleteRabiesExposureForm/:id', async (req, res) => {
+app.delete('/deleteRabiesExposureForm/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
 
   const deleteQuery = 'DELETE FROM exposure_form WHERE id = ?';
@@ -2041,12 +2062,8 @@ app.get('/Rabies_Sample_Report_form.xlsx', (req, res) => {
 res.sendFile(path.join(__dirname, 'assets/templates/Rabies_Sample_Report_form.xlsx'));
 });
 
-app.get('/Rabies_Sample_Report_form.xlsx', (req, res) => {
-res.sendFile(path.join(__dirname, 'assets/templates/Rabies_Sample_Report_form.xlsx'));
-});
-
 app.get('/IEC_Report_form.xlsx', (req, res) => {
-res.sendFile(path.join(__dirname, 'assets/templates/IEC_Report_formx.lsx'));
+res.sendFile(path.join(__dirname, 'assets/templates/IEC_Report_form.xlsx'));
 });
 
 app.get('/Daily_Report_form.xlsx', (req, res) => {
