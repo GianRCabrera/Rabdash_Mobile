@@ -187,7 +187,7 @@ const Rabies_Sample_Information_Form = () => {
           number,
           district: districtValue,
           barangay,
-          date: selectedDate,
+          date: selectedDate.toISOString(),
           species: speciesValue,
           breed,
           age,

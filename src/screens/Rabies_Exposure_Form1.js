@@ -182,12 +182,12 @@ const Rabies_Exposure_Form = () => {
         const formData = {
           id: editableItem ? editableItem.id : null, // Include the ID from editableItem
           regNo: regNoValue,
-          regDate: selectedDateTime,
+          regDate: selectedDateTime.toISOString(),
           name: nameValue,
           address: addressValue,
           age: ageValue,
           sex: sexValue,
-          expDate: selectedDateTime2,
+          expDate: selectedDateTime2.toISOString(),
           place: placeValue,
           typeAnimal: typeAnimalValue,
           typeBNB: typeValue,
@@ -202,12 +202,12 @@ const Rabies_Exposure_Form = () => {
     } else {
       navigation.navigate('Rabies_Exposure_Form2',{
         regNo: regNoValue,
-          regDate: selectedDateTime,
+          regDate: selectedDateTime.toISOString(),
           name: nameValue,
           address: addressValue,
           age: ageValue,
           sex: sexValue,
-          expDate: selectedDateTime2,
+          expDate: selectedDateTime2.toISOString(),
           place: placeValue,
           typeAnimal: typeAnimalValue,
           typeBNB: typeValue,

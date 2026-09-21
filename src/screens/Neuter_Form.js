@@ -176,7 +176,7 @@ const Neuter_Form = () => {
           // New entry: Pass along the filled data without petData
           // All fields are filled, proceed to the next screen
           navigation.navigate('Neuter_Form2', {
-            date: selectedDate,
+            date: selectedDate.toISOString(),
             district: districtValue,
             barangay: barangayValue,
             purok: purokValue,

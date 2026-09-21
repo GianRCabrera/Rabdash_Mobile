@@ -201,12 +201,12 @@ useEffect(() => {
       } else {
         // New entry: Pass along the filled data without petData
         navigation.navigate('Rabies_Field_Vacc_Form2', {
-          date: selectedDate,
+          date: selectedDate.toISOString(),
           district: districtValue,
           barangay: barangayValue,
           purok: purokValue,
           vaccinator: vaccinatorValue,
-          timeStart: selectedTime,
+          timeStart: selectedTime.toISOString(),
           ownerName: owner_nameValue,
           address: addressValue,
           sex: sexValue,
