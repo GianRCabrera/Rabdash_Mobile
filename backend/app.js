@@ -419,7 +419,9 @@ app.post('/validate-otp', authLimiter, async (req, res) => {
   const { email, otp } = req.body;
   const storedOtp = otpStore[email];
 
-  console.log(`Validating OTP for ${email}: received ${otp}, stored ${storedOtp ? storedOtp.otp : 'none'}`);
+  // Never log the OTP value itself (submitted or stored) — it's the credential
+  // that gates a password reset, so leaking it via logs defeats the point of OTP.
+  console.log(`Validating OTP for ${email}: match=${!!(storedOtp && storedOtp.otp === otp && storedOtp.expiry > Date.now())}`);
 
   if (storedOtp && storedOtp.otp === otp && storedOtp.expiry > Date.now()) {
     storedOtp.verified = true;
@@ -434,7 +436,9 @@ app.post('/validate-otp-reg', authLimiter, async (req, res) => {
   const { email, otp } = req.body;
   const storedOtp = otpStore[email];
 
-  console.log(`Validating OTP for ${email}: received ${otp}, stored ${storedOtp ? storedOtp.otp : 'none'}`);
+  // Never log the OTP value itself (submitted or stored) — it's the credential
+  // that gates registration, so leaking it via logs defeats the point of OTP.
+  console.log(`Validating OTP for ${email}: match=${!!(storedOtp && storedOtp.otp === otp && storedOtp.expiry > Date.now())}`);
 
   if (storedOtp && storedOtp.otp === otp && storedOtp.expiry > Date.now()) {
     storedOtp.verified = true;
