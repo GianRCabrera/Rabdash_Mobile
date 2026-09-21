@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 const bodyParser = require('body-parser');
 const mysql = require('mysql2');
 const cors = require('cors');
@@ -40,14 +41,34 @@ app.use(cors({
 }));
 app.use(bodyParser.json());
 
+// Persist sessions in the mobile DB instead of the default in-memory store, which
+// express-session warns leaks memory and doesn't survive a process restart — on
+// Render's free tier the instance restarts on every inactivity spin-down, so without
+// this every user was getting logged out far more often than SESSION_SECRET alone
+// (which only persists the signing key, not the session data) would suggest.
+const sessionStore = new MySQLStore({
+  host: process.env.DB_HOST,
+  port: 3306,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
+});
+sessionStore.onReady().catch((error) => {
+  console.error('Session store failed to initialize:', error);
+});
+
 // Use the session middleware
 // cookie.secure: 'auto' marks the cookie Secure when the request is actually HTTPS
 // (via trust proxy above on Render) but still works over plain HTTP for local dev,
 // where the mobile app/Expo Go talks to a LAN-IP backend without TLS.
 app.use(session({
   secret: secretKey,
+  store: sessionStore,
   resave: false,
-  saveUninitialized: true,
+  // false (not the previous true): with a persistent store, saveUninitialized would
+  // write a DB row for every request that touches session middleware — i.e. nearly
+  // every request — even from visitors who never log in.
+  saveUninitialized: false,
   cookie: {
     secure: 'auto',
     httpOnly: true,
