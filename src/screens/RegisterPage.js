@@ -133,8 +133,8 @@ const RegisterPage = () => {
 
     } catch (error) {
       const errorMessage =
-        error.response && error.response.data
-          ? error.response.data
+        error.response && error.response.data && error.response.data.message
+          ? error.response.data.message
           : 'An error occurred during registration.';
       showErrorModal(errorMessage);
     }
