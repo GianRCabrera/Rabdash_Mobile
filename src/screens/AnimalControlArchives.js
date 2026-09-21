@@ -199,6 +199,7 @@ if (isLoading) {
         ) : (
         <FlatList
           ref={flatListRef} // Assign the ref to FlatList
+          scrollEnabled={false}
           data={filteredForms.slice(startIndex, endIndex)}
           //data={filteredForms} 
           keyExtractor={(item) => item.id.toString()}

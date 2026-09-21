@@ -209,6 +209,7 @@ const Sample_form_archive = () => {
         ) : (
         <FlatList
           ref={flatListRef}
+          scrollEnabled={false}
           data={filteredForms.slice(startIndex, endIndex)}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (

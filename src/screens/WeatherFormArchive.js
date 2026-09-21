@@ -118,6 +118,7 @@ if (isLoading) {
         ) : (
         <FlatList
           ref={flatListRef} // Assign the ref to FlatList
+          scrollEnabled={false}
           data={filteredForms} 
           //data={vaccinationForms}
           keyExtractor={(item) => item.id.toString()}

@@ -225,6 +225,7 @@ const Neuter_Form_archive = () => {
         ) : (
         <FlatList
           ref={flatListRef} // Assign the ref to FlatList
+          scrollEnabled={false}
           data={filteredForms.slice(startIndex, endIndex)} // Render only the data within the current page range
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (

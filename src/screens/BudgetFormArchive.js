@@ -193,6 +193,7 @@ const BudgetFormArchive = () => {
         ) : (
         <FlatList
           ref={flatListRef} // Assign the ref to FlatList
+          scrollEnabled={false}
           data={filteredForms.slice(startIndex, endIndex)} // Render only the current page items
           //data={filteredForms}
           keyExtractor={(item) => item.id.toString()}
