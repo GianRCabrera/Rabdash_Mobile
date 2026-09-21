@@ -70,7 +70,7 @@ const LoginPage = () => {
 
     try {
       console.log('Login button pressed!');
-      console.log('Request Payload:', { email, password });
+      console.log('Request Payload:', { email });
 
       const response = await axios.post(`${apiURL}/login`, { email, password });
       console.log('Response Payload:', response.data);
