@@ -164,8 +164,12 @@ const verifyPassword = async (password, hash) => {
       // Use Argon2 for verification
       return await argon2.verify(hash, password);
     } else {
-      console.error('Unknown password hash format encountered during verification.');
-      throw new Error('Unknown hash format');
+      // Some rows have a plaintext string in `password` instead of a bcrypt/argon2 hash
+      // (inserted directly via SQL, not through /register). Treat as "no match" rather
+      // than throwing, so the caller sees a normal failed login instead of a 500 —
+      // callers should never end up authenticating against a hash we can't verify.
+      console.error('Unknown password hash format encountered during verification; treating as no match.');
+      return false;
     }
   } catch (error) {
     console.error('Error verifying password:', error);
