@@ -1019,8 +1019,7 @@ app.get('/getVaccinationForms', async (req, res) => {
       console.log('Vaccination Forms:', adjustedResults);
       res.json(adjustedResults);
     } else {
-      console.error('No vaccination forms found in the database');
-      res.status(404).json({ message: 'No vaccination forms found' });
+      res.json([]);
     }
   } catch (error) {
     console.error('Error retrieving vaccination forms:', error);
@@ -1044,8 +1043,7 @@ app.get('/getVaccinationFormsCVO', requireCVO, async (req, res) => {
       console.log('Vaccination Forms:', vaccinationForms);
       res.json(vaccinationForms);
     } else {
-      console.error('No vaccination forms found in the databases');
-      res.status(404).json({ message: 'No vaccination forms found' });
+      res.json([]);
     }
   } catch (error) {
     console.error('Error retrieving vaccination forms:', error);
@@ -1080,8 +1078,7 @@ app.get('/getNeuterForms', async (req, res) => {
       console.log('Neuter Forms:', adjustedResults);
       res.json(adjustedResults);
     } else {
-      console.error('No neuter forms found in the database');
-      res.status(404).json({ message: 'No neuter forms found' });
+      res.json([]);
     }
   } catch (error) {
     console.error('Error retrieving neuter forms:', error);
@@ -1105,8 +1102,7 @@ app.get('/getNeuterFormsCVO', requireCVO, async (req, res) => {
       console.log('Neuter Forms:', neuterForms);
       res.json(neuterForms);
     } else {
-      console.error('No neuter forms found in the databases');
-      res.status(404).json({ message: 'No neuter forms found' });
+      res.json([]);
     }
   } catch (error) {
     console.error('Error retrieving neuter forms:', error);
@@ -1142,8 +1138,7 @@ app.get('/getRabiesSampleForms', async (req, res) => {
       console.log('Rabies Sample Forms:', adjustedResults);
       res.json(adjustedResults);
     } else {
-      console.error('No rabies sample forms found in the database');
-      res.status(404).json({ message: 'No rabies sample forms found' });
+      res.json([]);
     }
   } catch (error) {
     console.error('Error retrieving rabies sample forms:', error);
@@ -1167,8 +1162,7 @@ app.get('/getRabiesSampleFormsCVO', requireCVO, async (req, res) => {
       console.log('Rabies Sample Forms:', rabiesSampleForms);
       res.json(rabiesSampleForms);
     } else {
-      console.error('No rabies sample forms found in the databases');
-      res.status(404).json({ message: 'No rabies sample forms found' });
+      res.json([]);
     }
   } catch (error) {
     console.error('Error retrieving rabies sample forms:', error);
@@ -1865,8 +1859,7 @@ app.get('/getAnimalControlForms', requireAuth, async (req, res) => {
       console.log('Animal Control and Rehabilitation Daily Report Forms:', controlForms);
       res.json(controlForms);
     } else {
-      console.error('No Animal Control and Rehabilitation Daily Report forms found in the databases');
-      res.status(404).json({ message: 'No Animal Control and Rehabilitation Daily Report forms found' });
+      res.json([]);
     }
   } catch (error) {
     console.error('Error retrieving Animal Control and Rehabilitation Daily Report forms:', error);
@@ -1888,8 +1881,7 @@ app.get('/getIECForms', requireAuth, async (req, res) => {
       console.log('IEC Report Forms:', iecForms);
       res.json(iecForms);
     } else {
-      console.error('No IEC forms found in the databases');
-      res.status(404).json({ message: 'No IEC Report forms found' });
+      res.json([]);
     }
   } catch (error) {
     console.error('Error retrieving IEC Report forms:', error);
@@ -1911,8 +1903,7 @@ app.get('/getScheduleForms', requireAuth, async (req, res) => {
       console.log('Schedule Forms:', scheduleForms);
       res.json(scheduleForms);
     } else {
-      console.error('No Schedule forms found in the databases');
-      res.status(404).json({ message: 'No Schedule Report forms found' });
+      res.json([]);
     }
   } catch (error) {
     console.error('Error retrieving Schedule Report forms:', error);
@@ -1934,8 +1925,7 @@ app.get('/getBudgetForms', requireAuth, async (req, res) => {
       console.log('Budget Forms:', budgetForms);
       res.json(budgetForms);
     } else {
-      console.error('No Budget forms found in the databases');
-      res.status(404).json({ message: 'No Budget Report forms found' });
+      res.json([]);
     }
   } catch (error) {
     console.error('Error retrieving Budget Report forms:', error);
@@ -1955,8 +1945,7 @@ app.get('/getWeatherForms', requireAuth, async (req, res) => {
       console.log('Weather Forms:', weatherForms);
       res.json(weatherForms);
     } else {
-      console.error('No Weather forms found in the database');
-      res.status(404).json({ message: 'No Weather Report forms found' });
+      res.json([]);
     }
   } catch (error) {
     console.error('Error retrieving Weather Report forms:', error);
@@ -1978,8 +1967,7 @@ app.get('/getRabiesExposureForms', requireAuth, async (req, res) => {
       console.log('Rabies Exposure Forms:', exposureForms);
       res.json(exposureForms);
     } else {
-      console.error('No Rabies Exposure forms found in the databases');
-      res.status(404).json({ message: 'No Rabies Exposure forms found' });
+      res.json([]);
     }
   } catch (error) {
     console.error('Error retrieving Rabies Exposure forms:', error);
