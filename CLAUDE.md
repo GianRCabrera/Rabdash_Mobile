@@ -46,7 +46,7 @@ The frontend's `EXPO_PUBLIC_URL` (root `.env`) already points at the hosted back
 
 **Two separate MySQL pools** are created in `backend/app.js`: `pool` (the mobile app's own DB, env `DB_*`) and `webPool` (a companion website's DB, env `WEB_DB_*`) — some `get*FormsCVO` endpoints read from the web DB for CVO-side review views. Both call `handleDisconnect()` at startup, which retries the initial connection and re-wires a reconnect handler on `'error'`.
 
-**Session secret is regenerated on every backend boot** (`crypto.randomBytes(64)` in `app.js`, not read from `JWT_SECRET`) — existing sessions/cookies do not survive a backend restart even though a persistent `JWT_SECRET` is also defined in `backend/.env` (unclear if/where it's actually used vs. the ad hoc session secret).
+**Session secret reads from `SESSION_SECRET`** (`backend/app.js`), falling back to a per-boot `crypto.randomBytes(64)` value (which invalidates all sessions on restart) only if that env var is unset. The `JWT_SECRET` env var that used to sit alongside it was dead — never referenced anywhere in `app.js` — and has been removed from `backend/.env.example`.
 
 **Password hashing is inconsistent between bcrypt and argon2** — both libraries are imported and used in `backend/app.js`; check which one a given route (`/register`, `/login`, `/reset-password`, etc.) uses before assuming a single hashing scheme.
 
