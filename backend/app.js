@@ -130,6 +130,26 @@ const requireCVO = (req, res, next) => {
   next();
 };
 
+const CVO_POSITIONS = ['CVO', 'RabDash'];
+
+// Guards edit/delete on a form record: only the submitter (matched by username) or a
+// CVO/RabDash reviewer may modify it. `table` is always a hardcoded literal from the
+// call site, never user input, so it's safe to interpolate into the query.
+// Sends the response and returns false when the caller should stop; true means proceed.
+const authorizeFormMutation = async (req, res, table, id) => {
+  const { user } = req.session;
+  const rows = await queryDatabase(pool, `SELECT username FROM ${table} WHERE id = ?`, [id]);
+  if (rows.length === 0) {
+    res.status(404).json({ message: 'Record not found' });
+    return false;
+  }
+  if (rows[0].username !== user.email && !CVO_POSITIONS.includes(user.position)) {
+    res.status(403).json({ message: 'Forbidden: you do not have permission to modify this record' });
+    return false;
+  }
+  return true;
+};
+
 const verifyPassword = async (password, hash) => {
   try {
     if (hash.startsWith('$2y$')) {
@@ -608,11 +628,12 @@ app.post('/editVaccinationForm', async (req, res) => {
   const updateQuery = `
     UPDATE vaccination_form SET
     date=?, district=?, barangay=?, purok=?, vaccinator=?, timeStart=?, ownerName=?, address=?,
-    sex=?, contactNo=?, petName=?, petAge=?, species=?, petSex=?, color=?, cardNo=?, vaccine=?, 
+    sex=?, contactNo=?, petName=?, petAge=?, species=?, petSex=?, color=?, cardNo=?, vaccine=?,
     source=?, dateVaccinated=?, timeFinish=?, updated_at=? WHERE id=?
   `;
 
   try {
+    if (!(await authorizeFormMutation(req, res, 'vaccination_form', id))) return;
     await queryDatabase(pool, updateQuery, [
       date,
       district,
@@ -746,6 +767,7 @@ app.post('/editNeuterForm', async (req, res) => {
   `;
 
   try {
+    if (!(await authorizeFormMutation(req, res, 'consent_form', id))) return;
     await queryDatabase(pool, updateQuery, [
       date,
       district,
@@ -891,6 +913,7 @@ app.post('/editRabiesSampleForms', async (req, res) => {
   `;
 
   try {
+    if (!(await authorizeFormMutation(req, res, 'bite_form', id))) return;
     await queryDatabase(pool, updateQuery, [
       name,
       sex,
@@ -1178,6 +1201,7 @@ app.post('/editBudgetForm', async (req, res) => {
   `;
 
   try {
+    if (!(await authorizeFormMutation(req, res, 'budget_form', id))) return;
     await queryDatabase(pool, updateQuery, [
       year,
       budget,
@@ -1221,7 +1245,7 @@ const insertQuery = `
 `;
 
 try {
-  const result = await queryDatabase(insertQuery, [
+  const result = await queryDatabase(pool, insertQuery, [
     username,
     minimum_temperature,
     maximum_temperature,
@@ -1267,7 +1291,8 @@ const updateQuery = `
 `;
 
 try {
-  await queryDatabase(updateQuery, [
+  if (!(await authorizeFormMutation(req, res, 'weather_form', id))) return;
+  await queryDatabase(pool, updateQuery, [
     minimum_temperature,
     maximum_temperature,
     mean_temperature,
@@ -1354,6 +1379,7 @@ app.post('/editScheduleForm', async (req, res) => {
   `;
 
   try {
+    if (!(await authorizeFormMutation(req, res, 'schedule_form', id))) return;
     await queryDatabase(pool, updateQuery, [
       date,
       title,
@@ -1446,6 +1472,7 @@ app.post('/editIECForm', async (req, res) => {
   `;
 
   try {
+    if (!(await authorizeFormMutation(req, res, 'iec_form', id))) return;
     await queryDatabase(pool, updateQuery, [
       date,
       title,
@@ -1554,6 +1581,7 @@ app.post('/editAnimalControlForm', async (req, res) => {
   `;
 
   try {
+    if (!(await authorizeFormMutation(req, res, 'control_form', id))) return;
     await queryDatabase(pool, updateQuery, [
       date1,
       cageNum,
@@ -1705,11 +1733,12 @@ app.post('/editRabiesExposureForm', async (req, res) => {
   const updateQuery = `
     UPDATE exposure_form SET
     regNo=?, regDate=?, name=?, address=?, age=?, sex=?, expDate=?, place=?, typeAnimal=?,
-    typeBNB=?, site=?, category=?, washing=?, RIG=?, route=?, d0=?, d3=?, d7=?, d14=?, d28=?, 
+    typeBNB=?, site=?, category=?, washing=?, RIG=?, route=?, d0=?, d3=?, d7=?, d14=?, d28=?,
     brand=?, outcome=?, bitingStatus=?, remarks=?, updated_at=? WHERE id=?
   `;
 
   try {
+    if (!(await authorizeFormMutation(req, res, 'exposure_form', id))) return;
     await queryDatabase(pool, updateQuery, [
       regNo,
       regDate,
@@ -1924,6 +1953,7 @@ app.delete('/deleteVaccinationForm/:id', requireAuth, async (req, res) => {
   const deleteQuery = 'DELETE FROM vaccination_form WHERE id = ?';
 
   try {
+    if (!(await authorizeFormMutation(req, res, 'vaccination_form', id))) return;
     await queryDatabase(pool, deleteQuery, [id]);
     console.log(`Vaccination form with ID ${id} deleted successfully`);
     res.json({ success: true, message: 'Vaccination form deleted successfully' });
@@ -1940,6 +1970,7 @@ app.delete('/deleteNeuterForm/:id', requireAuth, async (req, res) => {
   const deleteQuery = 'DELETE FROM consent_form WHERE id = ?';
 
   try {
+    if (!(await authorizeFormMutation(req, res, 'consent_form', id))) return;
     await queryDatabase(pool, deleteQuery, [id]);
     console.log(`Neuter form with ID ${id} deleted successfully`);
     res.json({ success: true, message: 'Neuter form deleted successfully' });
@@ -1956,6 +1987,7 @@ app.delete('/deleteRabiesSampleForm/:id', requireAuth, async (req, res) => {
   const deleteQuery = 'DELETE FROM bite_form WHERE id = ?';
 
   try {
+    if (!(await authorizeFormMutation(req, res, 'bite_form', id))) return;
     await queryDatabase(pool, deleteQuery, [id]);
     console.log(`Rabies sample form with ID ${id} deleted successfully`);
     res.json({ success: true, message: 'Rabies sample form deleted successfully' });
@@ -1973,6 +2005,7 @@ app.delete('/deleteBudgetForm/:id', requireAuth, async (req, res) => {
   const deleteQuery = 'DELETE FROM budget_form WHERE id = ?';
 
   try {
+    if (!(await authorizeFormMutation(req, res, 'budget_form', id))) return;
     await queryDatabase(pool, deleteQuery, [id]);
     console.log(`Budget form with ID ${id} deleted successfully`);
     res.json({ success: true, message: 'Budget form deleted successfully' });
@@ -1989,6 +2022,7 @@ app.delete('/deleteScheduleForm/:id', requireAuth, async (req, res) => {
   const deleteQuery = 'DELETE FROM schedule_form WHERE id = ?';
 
   try {
+    if (!(await authorizeFormMutation(req, res, 'schedule_form', id))) return;
     await queryDatabase(pool, deleteQuery, [id]);
     console.log(`Schedule form with ID ${id} deleted successfully`);
     res.json({ success: true, message: 'Schedule form deleted successfully' });
@@ -2005,6 +2039,7 @@ app.delete('/deleteIECForm/:id', requireAuth, async (req, res) => {
   const deleteQuery = 'DELETE FROM iec_form WHERE id = ?';
 
   try {
+    if (!(await authorizeFormMutation(req, res, 'iec_form', id))) return;
     await queryDatabase(pool, deleteQuery, [id]);
     console.log(`IEC form with ID ${id} deleted successfully`);
     res.json({ success: true, message: 'IEC form deleted successfully' });
@@ -2021,6 +2056,7 @@ app.delete('/deleteAnimalControlForm/:id', requireAuth, async (req, res) => {
   const deleteQuery = 'DELETE FROM control_form WHERE id = ?';
 
   try {
+    if (!(await authorizeFormMutation(req, res, 'control_form', id))) return;
     await queryDatabase(pool, deleteQuery, [id]);
     console.log(`Animal control form with ID ${id} deleted successfully`);
     res.json({ success: true, message: 'Animal control form deleted successfully' });
@@ -2037,6 +2073,7 @@ app.delete('/deleteRabiesExposureForm/:id', requireAuth, async (req, res) => {
   const deleteQuery = 'DELETE FROM exposure_form WHERE id = ?';
 
   try {
+    if (!(await authorizeFormMutation(req, res, 'exposure_form', id))) return;
     await queryDatabase(pool, deleteQuery, [id]);
     console.log(`Rabies Exposure form with ID ${id} deleted successfully`);
     res.json({ success: true, message: 'Rabies Exposure form deleted successfully' });
