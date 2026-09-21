@@ -15,6 +15,10 @@ const saltRounds = 10; // Match the rounds used in your PHP application
 const app = express();
 const path = require('path');
 
+// Trust Render's TLS-terminating proxy so req.secure (and cookie.secure: 'auto' below)
+// reflect the original client protocol instead of the plain-HTTP hop behind the proxy.
+app.set('trust proxy', 1);
+
 // Session secret: use a persisted SESSION_SECRET so logins survive a server restart.
 // Falls back to a per-boot random secret (all sessions invalidated on restart) if unset.
 if (!process.env.SESSION_SECRET) {
@@ -37,10 +41,18 @@ app.use(cors({
 app.use(bodyParser.json());
 
 // Use the session middleware
+// cookie.secure: 'auto' marks the cookie Secure when the request is actually HTTPS
+// (via trust proxy above on Render) but still works over plain HTTP for local dev,
+// where the mobile app/Expo Go talks to a LAN-IP backend without TLS.
 app.use(session({
   secret: secretKey,
   resave: false,
   saveUninitialized: true,
+  cookie: {
+    secure: 'auto',
+    httpOnly: true,
+    sameSite: 'lax',
+  },
 }));
 
 // Rate limiter for auth/OTP endpoints — mitigates brute-forcing logins, OTPs, and password resets.
