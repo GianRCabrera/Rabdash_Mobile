@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useNavigation } from '@react-navigation/native';
 import { AppButton } from '../components';
@@ -9,9 +9,15 @@ const LandingPage = () => {
   const navigation = useNavigation();
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      <Image source={require('../../assets/Landing_page.png')} style={styles.image} resizeMode="contain" />
+      {/* flex: 1 here, not a fixed height — the image fills whatever space
+          is actually available above the card on this device, instead of a
+          fixed-height image leaving a large empty gap on taller screens
+          (what made the previous version feel like it was "floating"). */}
+      <View style={styles.imageArea}>
+        <Image source={require('../../assets/Landing_page.png')} style={styles.image} resizeMode="contain" />
+      </View>
 
       <View style={styles.card}>
         <Text style={styles.header}>Rabdash DC</Text>
@@ -23,28 +29,31 @@ const LandingPage = () => {
           <AppButton title="Sign Up" onPress={() => navigation.navigate('Register')} variant="inverse" style={styles.button} />
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
+  },
+  imageArea: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.xxl,
   },
   image: {
-    width: '80%',
-    height: 220,
-    marginBottom: spacing.xxl,
+    width: '100%',
+    height: '100%',
   },
   card: {
-    width: '100%',
     backgroundColor: colors.primary,
-    borderRadius: radii.md,
-    paddingVertical: spacing.xxxl,
+    borderTopLeftRadius: radii.md * 2,
+    borderTopRightRadius: radii.md * 2,
+    paddingTop: spacing.xxxl,
+    paddingBottom: spacing.xxl,
     paddingHorizontal: spacing.xl,
     alignItems: 'center',
     ...shadow,
