@@ -95,7 +95,10 @@ const handleBackPress = () => {
   const backTo = route.params?.from;
   switch (backTo) {
     case 'ArchiveMenu':
-      navigation.navigate('ArchiveMenu');
+      // 'ArchiveMenu' isn't a real registered screen name — the actual
+      // archive-menu screen for Private Veterinarian users is
+      // ClientDatabase (parallels VetArchiveMenu for CVO/RabDash).
+      navigation.navigate('ClientDatabase');
       break;
     case 'VetInputForms':
       navigation.navigate('VetInputForms');
