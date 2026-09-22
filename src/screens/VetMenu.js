@@ -1,23 +1,16 @@
-import React, { useState, useContext } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image
-} from 'react-native';
+import React from 'react';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';  // Import the useAuth hook
-import styles from '../../styles/mainmenu';
+import { useAuth } from '../context/AuthContext';
+import { AppButton, MenuScreen, menuStyles } from '../components';
 
 const VetMenu = () => {
-
   const navigation = useNavigation();
-  const { dispatch } = useAuth();
+  const { state, dispatch } = useAuth();
   const apiURL = process.env.EXPO_PUBLIC_URL;
+  const position = state.user.position || 'CVO / RabDash';
 
   const handleLogout = async () => {
-    console.log('Logout button pressed!');
     try {
       await axios.post(`${apiURL}/logout`, {}, { withCredentials: true });
     } catch (error) {
@@ -27,57 +20,27 @@ const VetMenu = () => {
     navigation.navigate('Login');
   };
 
-  const navigateToAboutUs = () => {
-    navigation.navigate('AboutUs');
-  };
-
-  const navigateToUserProfile = () => {
-    navigation.navigate('UserProfile');
-  };
-
-  const navigateToInputForms = () => {
-    navigation.navigate('VetInputForms')
-  }
-
-  const navigateToVetArchiveMenu = () => {
-    navigation.navigate('VetArchiveMenu')
-  }
-
-  const navigateToDownloadableForms = () => {
-    navigation.navigate('DownloadableForms')
-  }
+  const navigateToAboutUs = () => navigation.navigate('AboutUs');
+  const navigateToUserProfile = () => navigation.navigate('UserProfile');
+  const navigateToInputForms = () => navigation.navigate('VetInputForms');
+  const navigateToVetArchiveMenu = () => navigation.navigate('VetArchiveMenu');
+  const navigateToDownloadableForms = () => navigation.navigate('DownloadableForms');
 
   return (
-    <View style={styles.container}>
-      <Image
-        source={require('../../assets/menu_pic.png')} // Ensure the path is correct
-        style={styles.backgroundImage} // Custom styles for the image
+    <MenuScreen title="Main Menu" badge={position} backgroundImage={require('../../assets/menu_pic.png')}>
+      <AppButton title="Input Forms" variant="inverse" onPress={navigateToInputForms} style={menuStyles.button} />
+      <AppButton title="Form Archives" variant="inverse" onPress={navigateToVetArchiveMenu} style={menuStyles.button} />
+      <AppButton title="Downloadable Forms" variant="inverse" onPress={navigateToDownloadableForms} style={menuStyles.button} />
+      <AppButton title="My Profile" variant="inverse" onPress={navigateToUserProfile} style={menuStyles.button} />
+      <AppButton title="About Us" variant="inverse" onPress={navigateToAboutUs} style={menuStyles.button} />
+      <AppButton
+        title="Log Out"
+        variant="ghost"
+        onPress={handleLogout}
+        style={menuStyles.backButton}
+        textStyle={menuStyles.backButtonText}
       />
-      <Text style={styles.header}>Main Menu</Text>
-      <View style={styles.positionLabelContainer}>
-        <Text style={styles.positionLabel}>CVO/RabDash</Text>
-      </View>
-      <View style={styles.contentContainer}> 
-        <TouchableOpacity style={styles.button} onPress={navigateToInputForms}>
-          <Text style={styles.buttonText}>Input Forms</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={navigateToVetArchiveMenu}>
-          <Text style={styles.buttonText}>Form Archives</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={navigateToDownloadableForms}>
-          <Text style={styles.buttonText}>Downloadable Forms</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={navigateToUserProfile}>
-          <Text style={styles.buttonText}>My Profile</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={navigateToAboutUs}>
-          <Text style={styles.buttonText}>About Us</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.Logoutbutton} onPress={handleLogout}>
-          <Text style={styles.LogoutbuttonText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    </MenuScreen>
   );
 };
 

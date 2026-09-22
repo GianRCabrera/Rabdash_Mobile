@@ -1,17 +1,16 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import styles from '../../styles/mainmenu';
 import { useAuth } from '../context/AuthContext';
+import { AppButton, MenuScreen, menuStyles } from '../components';
 
 const MainMenu = () => {
   const navigation = useNavigation();
-  const { dispatch } = useAuth();
+  const { state, dispatch } = useAuth();
   const apiURL = process.env.EXPO_PUBLIC_URL;
+  const position = state.user.position || 'Private Veterinarian';
 
   const handleLogout = async () => {
-    console.log('Logout button pressed!');
     try {
       await axios.post(`${apiURL}/logout`, {}, { withCredentials: true });
     } catch (error) {
@@ -21,57 +20,27 @@ const MainMenu = () => {
     navigation.navigate('Login');
   };
 
-  const navigateToAboutUs = () => {
-    navigation.navigate('AboutUs');
-  };
-
-  const navigateToUserProfile = () => {
-    navigation.navigate('UserProfile');
-  };
-
-  const navigateToInputForms = () => {
-    navigation.navigate('InputForms');
-  };
-
-  const navigateToClientDatabase = () => {
-    navigation.navigate('ClientDatabase');
-  };
-
-  const navigateToDownloadableForms = () => {
-    navigation.navigate('DownloadableFormsPrivVet');
-  };
+  const navigateToAboutUs = () => navigation.navigate('AboutUs');
+  const navigateToUserProfile = () => navigation.navigate('UserProfile');
+  const navigateToInputForms = () => navigation.navigate('InputForms');
+  const navigateToClientDatabase = () => navigation.navigate('ClientDatabase');
+  const navigateToDownloadableForms = () => navigation.navigate('DownloadableFormsPrivVet');
 
   return (
-    <View style={styles.container}>
-      <Image
-        source={require('../../assets/privvet_pic.png')} // Ensure the path is correct
-        style={styles.PrivbackgroundImage} // Custom styles for the image
+    <MenuScreen title="Main Menu" badge={position} backgroundImage={require('../../assets/privvet_pic.png')}>
+      <AppButton title="Input Forms" variant="inverse" onPress={navigateToInputForms} style={menuStyles.button} />
+      <AppButton title="Form Archives" variant="inverse" onPress={navigateToClientDatabase} style={menuStyles.button} />
+      <AppButton title="Downloadable Forms" variant="inverse" onPress={navigateToDownloadableForms} style={menuStyles.button} />
+      <AppButton title="My Profile" variant="inverse" onPress={navigateToUserProfile} style={menuStyles.button} />
+      <AppButton title="About Us" variant="inverse" onPress={navigateToAboutUs} style={menuStyles.button} />
+      <AppButton
+        title="Log Out"
+        variant="ghost"
+        onPress={handleLogout}
+        style={menuStyles.backButton}
+        textStyle={menuStyles.backButtonText}
       />
-      <Text style={styles.header}>Main Menu</Text>
-      <View style={styles.positionLabelContainer}>
-        <Text style={styles.positionLabel}>Private Veterinarian</Text>
-      </View>
-      <View style={styles.contentContainer}>
-        <TouchableOpacity style={styles.button} onPress={navigateToInputForms}>
-          <Text style={styles.buttonText}>Input Forms</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={navigateToClientDatabase}>
-          <Text style={styles.buttonText}>Form Archives</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={navigateToDownloadableForms}>
-          <Text style={styles.buttonText}>Downloadable Forms</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={navigateToUserProfile}>
-          <Text style={styles.buttonText}>My Profile</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={navigateToAboutUs}>
-          <Text style={styles.buttonText}>About Us</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.Logoutbutton} onPress={handleLogout}>
-          <Text style={styles.LogoutbuttonText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    </MenuScreen>
   );
 };
 
