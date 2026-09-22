@@ -1,34 +1,26 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native'; // Import Image from 'react-native'
+import { View, Text, StyleSheet, Image } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { useNavigation } from '@react-navigation/native';
+import { AppButton } from '../components';
+import { colors, spacing, radii, typography, shadow } from '../theme/theme';
 
 const LandingPage = () => {
   const navigation = useNavigation();
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require('../../assets/Landing_page.png')} // Ensure the path is correct
-        style={styles.image} // Custom styles for the image
-      />
-      <View style={styles.contentContainer}> 
+      <StatusBar style="dark" />
+      <Image source={require('../../assets/Landing_page.png')} style={styles.image} resizeMode="contain" />
+
+      <View style={styles.card}>
         <Text style={styles.header}>Rabdash DC</Text>
         <Text style={styles.subheader}>
           Leveraging data and research to assist in achieving a rabies-free Davao City by 2030.
         </Text>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigation.navigate('Login')}
-          >
-            <Text style={styles.buttonText}>Login</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigation.navigate('Register')}
-          >
-            <Text style={styles.buttonText}>Sign Up</Text>
-          </TouchableOpacity>
+        <View style={styles.buttonRow}>
+          <AppButton title="Login" onPress={() => navigation.navigate('Login')} variant="inverse" style={styles.button} />
+          <AppButton title="Sign Up" onPress={() => navigation.navigate('Register')} variant="inverse" style={styles.button} />
         </View>
       </View>
     </View>
@@ -40,57 +32,43 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: 'white',
-  },
-  contentContainer: {
-    backgroundColor: '#E74A3B', // Orange background for the inner container
-    padding: 20,
-    borderRadius: 75,
-    width: '120%', // Adjust width as needed
-    height: '65%',
-    alignItems: 'center',
-  },
-  header: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 40, // Adjusted spacing for visual balance
-    marginTop: 40, // Adjusted spacing for visual balance
-  },
-  subheader: {
-    fontSize: 18,
-    color: 'white',
-    textAlign: 'center',
-    paddingHorizontal: 40, // Add horizontal padding for better text alignment
-    marginBottom: 10, // Space between subheader and buttons
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.xl,
   },
   image: {
-    width: 350, // Increased width
-    height: 300, // Increased height
-    marginBottom: 50, // Space between image and header
-    marginTop: 200, // Space between image and header
-
+    width: '80%',
+    height: 220,
+    marginBottom: spacing.xxl,
   },
-  buttonContainer: {
+  card: {
+    width: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: radii.md,
+    paddingVertical: spacing.xxxl,
+    paddingHorizontal: spacing.xl,
+    alignItems: 'center',
+    ...shadow,
+    shadowOpacity: 0.15,
+  },
+  header: {
+    ...typography.largeTitle,
+    color: colors.onPrimary,
+    marginBottom: spacing.lg,
+  },
+  subheader: {
+    ...typography.body,
+    color: colors.onPrimary,
+    textAlign: 'center',
+    marginBottom: spacing.xl,
+  },
+  buttonRow: {
     flexDirection: 'row',
+    gap: spacing.md,
+    width: '100%',
   },
   button: {
-    backgroundColor: 'white',
-    padding: 10,
-    borderRadius: 5,
-    width: '40%',
-    marginTop: 30,
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    marginHorizontal: 5,
+    flex: 1,
   },
-  buttonText: {
-    color: '#E74A3B',
-    fontSize: 18,
-    fontWeight: 'bold',
-  }
 });
 
 export default LandingPage;
