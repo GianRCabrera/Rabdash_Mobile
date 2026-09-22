@@ -2184,4 +2184,13 @@ res.sendFile(path.join(__dirname, 'assets/templates/Rabies_Exposure_Report_form.
 });
 
 const PORT = process.env.PORT || 3000;
-startServer(PORT);
+
+// Only auto-start the server when this file is run directly (`node app.js`,
+// which is exactly what `npm start`/Render do) — not when it's require()'d,
+// e.g. from a test file via supertest, which drives the app in-process
+// without needing it to actually bind a port.
+if (require.main === module) {
+  startServer(PORT);
+}
+
+module.exports = app;

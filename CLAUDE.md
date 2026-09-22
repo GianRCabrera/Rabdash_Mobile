@@ -26,7 +26,7 @@ cd backend && npm install
 npm start                # nodemon app.js, listens on PORT env var or 3000
 ```
 
-There are no lint, typecheck, or test scripts configured in either `package.json` (no test runner is wired up despite `jest`/`react-test-renderer` being present as devDependencies).
+There are no lint or typecheck scripts configured in either `package.json`. The frontend still has no test runner wired up despite `jest`/`react-test-renderer` being present as devDependencies. `backend/` does have a test suite now (`cd backend && npm test`, ~14 tests, ~1s) — see the Architecture section below for how it works without a real database.
 
 The frontend's `EXPO_PUBLIC_URL` (root `.env`) already points at the hosted backend (`https://rabdash-mobile-backend.onrender.com`), so the local Expo app works against production data without running `backend/` locally. Only run the backend locally when changing backend code — point `.env` at `http://<your-LAN-IP>:3000` (see the commented-out alternatives already in `.env`) since a physical device/simulator on Expo Go can't reach `localhost`.
 
@@ -51,6 +51,8 @@ The frontend's `EXPO_PUBLIC_URL` (root `.env`) already points at the hosted back
 **Password hashing is inconsistent between bcrypt and argon2** — both libraries are imported and used in `backend/app.js`; check which one a given route (`/register`, `/login`, `/reset-password`, etc.) uses before assuming a single hashing scheme.
 
 **Downloadable report templates**: `backend/assets/templates/*.xlsx` are served as static files via dedicated `app.get('/<Name>_Report_form.xlsx', ...)` routes and consumed by `DownloadableForms.js`/`DownloadableFormsPrivVet.js` on the frontend (via `expo-document-picker`/`expo-file-system`/`expo-sharing`).
+
+**Backend tests (`backend/__tests__/`, run with `cd backend && npm test`)** use `supertest` against the real `app.js` with `mysql2` and `express-mysql-session` replaced by manual Jest mocks (`backend/__mocks__/`) — no real database involved, tests run in ~1s. This only works because `app.js` exports `app` via `module.exports = app` and guards its `startServer(PORT)` call behind `if (require.main === module)`, so requiring it from a test doesn't also bind a real port. `__tests__/helpers.js` provides `loadApp()` (mocks + fresh `require('../app')` after `jest.resetModules()`) and `mockQueryResult(pool, sqlFragment, rows)` (routes a fake pool's query results by matching a substring of the SQL, since there's no real SQL engine to run against — `rows` can be a function of the query's parameter values for per-call variation, e.g. returning a different user row per login email). Call `loadApp()` once per file (`beforeAll`, not `beforeEach`) — re-requiring `app.js` repeatedly in one file leaks enough timers (rate limiter, etc.) to eventually hang a later test; `npm test` also runs with `--forceExit` as a safety net for the same underlying reason. Coverage so far: login edge cases, the IDOR ownership/CVO-override fix, and the per-user list-scoping fix — not the whole API.
 
 ## Known issues to be aware of
 
