@@ -10,6 +10,7 @@ describe('Ownership check on edit/delete (the IDOR fix)', () => {
     'owner@example.invalid': { position: 'Private Veterinarian' },
     'attacker@example.invalid': { position: 'Private Veterinarian' },
     'reviewer@example.invalid': { position: 'RabDash' },
+    'cvo@example.invalid': { position: 'CVO' },
   };
 
   const loginAs = async (email) => {
@@ -77,6 +78,14 @@ describe('Ownership check on edit/delete (the IDOR fix)', () => {
     const res = await reviewer.delete('/deleteVaccinationForm/1');
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
+  });
+
+  // PROVISIONAL (see CLAUDE.md): CVO is not currently a reviewer — it does
+  // NOT get the ownership-override RabDash gets, same as any other non-owner.
+  test('a CVO account editing a record it does not own still gets 403', async () => {
+    const cvo = await loginAs('cvo@example.invalid');
+    const res = await cvo.post('/editVaccinationForm').send({ id: 1, ownerName: 'Should not work' });
+    expect(res.status).toBe(403);
   });
 
   test('editing a nonexistent record id gets 404', async () => {

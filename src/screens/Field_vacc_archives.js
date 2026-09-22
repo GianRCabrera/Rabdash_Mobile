@@ -38,13 +38,16 @@ const Field_vacc_archives = () => {
         const response = await axios.get(`${apiURL}/Position`, { withCredentials: true });
         setUser(response.data);
 
+        // PROVISIONAL (see CLAUDE.md): only RabDash is a full reviewer for now —
+        // CVO is scoped like Private Veterinarian (own submissions only), same
+        // as the backend's getVaccinationForms/getVaccinationFormsCVO split.
         let formsResponse;
-        if (response.data.position === 'CVO' || response.data.position === 'RabDash') {
+        if (response.data.position === 'RabDash') {
           formsResponse = await axios.get(`${apiURL}/getVaccinationFormsCVO`, {
             params: { page: 1, limit: itemsPerPage },
             withCredentials: true,
           });
-        } else if (response.data.position === 'Private Veterinarian') {
+        } else if (response.data.position === 'Private Veterinarian' || response.data.position === 'CVO') {
           formsResponse = await axios.get(`${apiURL}/getVaccinationForms`, {
             params: { page: 1, limit: itemsPerPage },
             withCredentials: true,

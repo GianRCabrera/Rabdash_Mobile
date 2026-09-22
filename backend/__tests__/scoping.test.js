@@ -53,10 +53,12 @@ describe('GET /getWeatherForms scoping (own records vs. all records)', () => {
     expect(res.body.every((row) => row.note === 'unscoped query')).toBe(true);
   });
 
-  test('a CVO reviewer also gets the unscoped query', async () => {
+  // PROVISIONAL (see CLAUDE.md): CVO is not currently a reviewer — scoped
+  // the same as Private Veterinarian until an elevated CVO tier is designed.
+  test('a CVO account is scoped to its own records too, not treated as a reviewer', async () => {
     const agent = await loginAs('cvo@example.invalid');
     const res = await agent.get('/getWeatherForms');
     expect(res.status).toBe(200);
-    expect(res.body).toHaveLength(2);
+    expect(res.body).toEqual([expect.objectContaining({ note: 'own-only query', username: 'cvo@example.invalid' })]);
   });
 });

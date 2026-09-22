@@ -44,10 +44,12 @@ const Neuter_Form_archive = () => {
         const response = await axios.get(`${apiURL}/Position`);
         setUser(response.data);
 
+        // PROVISIONAL (see CLAUDE.md): only RabDash is a full reviewer for now —
+        // CVO is scoped like Private Veterinarian (own submissions only).
         let formsResponse;
-        if (response.data.position === 'CVO' || response.data.position === 'RabDash') {
+        if (response.data.position === 'RabDash') {
           formsResponse = await axios.get(`${apiURL}/getNeuterFormsCVO`);
-        } else if (response.data.position === 'Private Veterinarian') {
+        } else if (response.data.position === 'Private Veterinarian' || response.data.position === 'CVO') {
           formsResponse = await axios.get(`${apiURL}/getNeuterForms`);
         } else {
           console.warn('Unknown user position:', response.data.position);

@@ -157,22 +157,28 @@ const requireAuth = (req, res, next) => {
   next();
 };
 
-const requireCVO = (req, res, next) => {
+// PROVISIONAL (Sep 2026, not finalized — see CLAUDE.md): RabDash is currently the
+// only true reviewer role (sees/edits everyone's submissions). CVO is a real,
+// self-registerable position, but is intentionally scoped like Private
+// Veterinarian (own submissions only) until a proper elevated-CVO tier is
+// designed. Named requireReviewer/REVIEWER_POSITIONS rather than requireCVO
+// specifically so this doesn't read as "requires CVO" when it excludes CVO.
+const requireReviewer = (req, res, next) => {
   const { user } = req.session;
   if (!user) {
     return res.status(401).json({ message: 'User not authenticated' });
   }
-  if (user.position !== 'CVO' && user.position !== 'RabDash') {
-    return res.status(403).json({ message: 'Forbidden: CVO access required' });
+  if (!REVIEWER_POSITIONS.includes(user.position)) {
+    return res.status(403).json({ message: 'Forbidden: reviewer access required' });
   }
   next();
 };
 
-const CVO_POSITIONS = ['CVO', 'RabDash'];
+const REVIEWER_POSITIONS = ['RabDash'];
 
 // Guards edit/delete on a form record: only the submitter (matched by username) or a
-// CVO/RabDash reviewer may modify it. `table` is always a hardcoded literal from the
-// call site, never user input, so it's safe to interpolate into the query.
+// reviewer may modify it. `table` is always a hardcoded literal from the call site,
+// never user input, so it's safe to interpolate into the query.
 // Sends the response and returns false when the caller should stop; true means proceed.
 const authorizeFormMutation = async (req, res, table, id) => {
   const { user } = req.session;
@@ -181,7 +187,7 @@ const authorizeFormMutation = async (req, res, table, id) => {
     res.status(404).json({ message: 'Record not found' });
     return false;
   }
-  if (rows[0].username !== user.email && !CVO_POSITIONS.includes(user.position)) {
+  if (rows[0].username !== user.email && !REVIEWER_POSITIONS.includes(user.position)) {
     res.status(403).json({ message: 'Forbidden: you do not have permission to modify this record' });
     return false;
   }
@@ -216,11 +222,16 @@ const verifyPassword = async (password, hash) => {
 };
 
 
+// Positions selectable via public self-registration. RabDash is deliberately
+// excluded — that's still provisioned separately, never through this form.
+const SELF_REGISTERABLE_POSITIONS = ['Private Veterinarian', 'CVO'];
+
 const registerUser = async (user, pool) => {
   const { name, last_name, email, password } = user;
-  // Public self-registration is only ever allowed as Private Veterinarian —
-  // CVO/RabDash accounts are reviewer/admin roles and must be provisioned another way.
-  const position = 'Private Veterinarian';
+  // Validate against a whitelist rather than trusting the client's `position`
+  // directly — otherwise a crafted request could self-assign 'RabDash' or any
+  // other string. Falls back to Private Veterinarian for anything unrecognized.
+  const position = SELF_REGISTERABLE_POSITIONS.includes(user.position) ? user.position : 'Private Veterinarian';
   const createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
   const updatedAt = createdAt;
 
@@ -234,8 +245,8 @@ const registerUser = async (user, pool) => {
     `;
 
     await queryDatabase(pool, query, [name, last_name, email, position, hashedPassword, createdAt, updatedAt]);
-    console.log('User registered successfully');
-    return true;
+    console.log('User registered successfully as', position);
+    return position;
   } catch (error) {
     console.error('Error during registration:', error);
     throw new Error('An error occurred during registration.');
@@ -251,10 +262,10 @@ app.post('/register', authLimiter, async (req, res) => {
   }
 
   try {
-    const userRegistered = await registerUser(req.body, pool);
-    if (userRegistered) {
+    const registeredPosition = await registerUser(req.body, pool);
+    if (registeredPosition) {
       delete otpStore[email];
-      req.session.user = { email, position: 'Private Veterinarian' };
+      req.session.user = { email, position: registeredPosition };
       res.json({ success: true, message: 'User has been registered successfully' });
     }
   } catch (error) {
@@ -1033,7 +1044,7 @@ app.get('/getVaccinationForms', async (req, res) => {
 });
 
 // New endpoint to fetch vaccination_form data from both mobile and web databases
-app.get('/getVaccinationFormsCVO', requireCVO, async (req, res) => {
+app.get('/getVaccinationFormsCVO', requireReviewer, async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
   const offset = (page - 1) * limit;
   const query = 'SELECT * FROM vaccination_form ORDER BY created_at DESC LIMIT ? OFFSET ?';
@@ -1092,7 +1103,7 @@ app.get('/getNeuterForms', async (req, res) => {
 });
 
 // New endpoint to fetch neuter form data from both mobile and web databases
-app.get('/getNeuterFormsCVO', requireCVO, async (req, res) => {
+app.get('/getNeuterFormsCVO', requireReviewer, async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
   const offset = (page - 1) * limit;
   const query = 'SELECT * FROM consent_form ORDER BY created_at DESC LIMIT ? OFFSET ?';
@@ -1152,7 +1163,7 @@ app.get('/getRabiesSampleForms', async (req, res) => {
 });
 
 // Add a new endpoint to fetch rabies sample form data from both mobile and web databases
-app.get('/getRabiesSampleFormsCVO', requireCVO, async (req, res) => {
+app.get('/getRabiesSampleFormsCVO', requireReviewer, async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
   const offset = (page - 1) * limit;
   const query = 'SELECT * FROM bite_form ORDER BY created_at DESC LIMIT ? OFFSET ?';
@@ -1853,7 +1864,7 @@ const startServer = (port) => {
 // New endpoint to fetch control_form data from both mobile and web databases
 app.get('/getAnimalControlForms', requireAuth, async (req, res) => {
   const { user } = req.session;
-  const isReviewer = CVO_POSITIONS.includes(user.position);
+  const isReviewer = REVIEWER_POSITIONS.includes(user.position);
   const query = isReviewer
     ? 'SELECT * FROM control_form ORDER BY created_at DESC'
     : 'SELECT * FROM control_form WHERE username = ? ORDER BY created_at DESC';
@@ -1880,7 +1891,7 @@ app.get('/getAnimalControlForms', requireAuth, async (req, res) => {
 // New endpoint to fetch IEC forms data from both mobile and web databases
 app.get('/getIECForms', requireAuth, async (req, res) => {
   const { user } = req.session;
-  const isReviewer = CVO_POSITIONS.includes(user.position);
+  const isReviewer = REVIEWER_POSITIONS.includes(user.position);
   const query = isReviewer
     ? 'SELECT * FROM iec_form ORDER BY created_at DESC'
     : 'SELECT * FROM iec_form WHERE username = ? ORDER BY created_at DESC';
@@ -1907,7 +1918,7 @@ app.get('/getIECForms', requireAuth, async (req, res) => {
 // New endpoint to fetch Schedule forms data from both mobile and web databases
 app.get('/getScheduleForms', requireAuth, async (req, res) => {
   const { user } = req.session;
-  const isReviewer = CVO_POSITIONS.includes(user.position);
+  const isReviewer = REVIEWER_POSITIONS.includes(user.position);
   const query = isReviewer
     ? 'SELECT * FROM schedule_form ORDER BY created_at DESC'
     : 'SELECT * FROM schedule_form WHERE username = ? ORDER BY created_at DESC';
@@ -1934,7 +1945,7 @@ app.get('/getScheduleForms', requireAuth, async (req, res) => {
 // New endpoint to fetch Budget forms data from both mobile and web databases
 app.get('/getBudgetForms', requireAuth, async (req, res) => {
   const { user } = req.session;
-  const isReviewer = CVO_POSITIONS.includes(user.position);
+  const isReviewer = REVIEWER_POSITIONS.includes(user.position);
   const query = isReviewer
     ? 'SELECT * FROM budget_form ORDER BY created_at DESC'
     : 'SELECT * FROM budget_form WHERE username = ? ORDER BY created_at DESC';
@@ -1961,7 +1972,7 @@ app.get('/getBudgetForms', requireAuth, async (req, res) => {
 // Add a new endpoint to fetch weather form data
 app.get('/getWeatherForms', requireAuth, async (req, res) => {
   const { user } = req.session;
-  const isReviewer = CVO_POSITIONS.includes(user.position);
+  const isReviewer = REVIEWER_POSITIONS.includes(user.position);
   const query = isReviewer
     ? 'SELECT * FROM weather_form ORDER BY created_at DESC'
     : 'SELECT * FROM weather_form WHERE username = ? ORDER BY created_at DESC';
@@ -1986,7 +1997,7 @@ app.get('/getWeatherForms', requireAuth, async (req, res) => {
 // New endpoint to fetch exposure_form data from both mobile and web databases
 app.get('/getRabiesExposureForms', requireAuth, async (req, res) => {
   const { user } = req.session;
-  const isReviewer = CVO_POSITIONS.includes(user.position);
+  const isReviewer = REVIEWER_POSITIONS.includes(user.position);
   const query = isReviewer
     ? 'SELECT * FROM exposure_form ORDER BY created_at DESC'
     : 'SELECT * FROM exposure_form WHERE username = ? ORDER BY created_at DESC';
