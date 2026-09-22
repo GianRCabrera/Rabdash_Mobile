@@ -66,28 +66,32 @@ const Field_vacc_archives = () => {
   }, []);
 
   useEffect(() => {
+    // Null-safe: any field can be null/missing on a given record, and this used to
+    // call .toLowerCase() directly on each one, crashing the whole screen on load
+    // (not just on search) the moment any record had a null field.
+    const matches = (value) => String(value ?? '').toLowerCase().includes(searchTerm.toLowerCase());
     const filtered = vaccinationForms.filter(form =>
-      form.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.date.includes(searchTerm) ||
-      form.district.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.barangay.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.purok.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.vaccinator.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.timeStart.includes(searchTerm) ||
-      form.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.sex.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.contactNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.petName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.petAge.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.species.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.petSex.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.color.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.cardNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.vaccine.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.dateVaccinated.includes(searchTerm) ||
-      form.timeFinish.includes(searchTerm)
+      matches(form.username) ||
+      matches(form.date) ||
+      matches(form.district) ||
+      matches(form.barangay) ||
+      matches(form.purok) ||
+      matches(form.vaccinator) ||
+      matches(form.timeStart) ||
+      matches(form.ownerName) ||
+      matches(form.address) ||
+      matches(form.sex) ||
+      matches(form.contactNo) ||
+      matches(form.petName) ||
+      matches(form.petAge) ||
+      matches(form.species) ||
+      matches(form.petSex) ||
+      matches(form.color) ||
+      matches(form.cardNo) ||
+      matches(form.vaccine) ||
+      matches(form.source) ||
+      matches(form.dateVaccinated) ||
+      matches(form.timeFinish)
     );
 
     setFilteredForms(filtered.length > 0 ? filtered : vaccinationForms);
