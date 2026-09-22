@@ -199,7 +199,7 @@ const BudgetFormArchive = () => {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.itemContainer}>
-              <Text style={styles.itemText}>Budget: <Text style={styles.itemDataText}>{item.username}</Text></Text>
+              <Text style={styles.itemText}>Username: <Text style={styles.itemDataText}>{item.username}</Text></Text>
               <Text style={styles.itemText}>Period: <Text style={styles.itemDataText}>{item.year}</Text></Text>
               <Text style={styles.itemText}>Annual Budget: <Text style={styles.itemDataText}>{item.budget}</Text></Text>
               <Text style={styles.itemText}>Annual Cost of Vaccine: <Text style={styles.itemDataText}>{item.costvax}</Text></Text>

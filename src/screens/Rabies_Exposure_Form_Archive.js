@@ -206,7 +206,7 @@ if (isLoading) {
     <ScrollView contentContainerStyle={styles.scrollViewContainer}>
       <View style={styles.container}>
       <View style={styles.headerContainer}>
-          <Text style={styles.header}>Rabies Exposure Form Archive Archive</Text>
+          <Text style={styles.header}>Rabies Exposure Form Archive</Text>
         </View>
         <View style={styles.searchContainer}>
           <Icon name="search" size={20} color="#000" style={styles.searchIcon} />
