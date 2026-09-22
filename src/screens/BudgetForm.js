@@ -33,6 +33,7 @@ const BudgetForm = () => {
 
   const [isModalVisible, setModalVisible] = useState(false);
   const [isConfirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [validationMessage, setValidationMessage] = useState('Please fill in all fields before proceeding.');
 
   const toggleConfirmModal = () => {
     setConfirmModalVisible(!isConfirmModalVisible);
@@ -98,8 +99,12 @@ const BudgetForm = () => {
    if (
     selectedYear === null ||
     budgetValue === '' ||
-    costvaxValue === '' 
+    costvaxValue === ''
    ) {
+     setValidationMessage('Please fill in all fields before proceeding.');
+     toggleModal();
+   } else if (isNaN(Number(budgetValue)) || isNaN(Number(costvaxValue))) {
+     setValidationMessage('Budget and Annual Cost of Vaccine must be numbers.');
      toggleModal();
    } else {
       // ... (existing code)
@@ -241,7 +246,7 @@ const navigateAfterSubmit = () => {
           <Modal isVisible={isModalVisible}>
             <View style={styles.modalContainer}>
               <Text style={styles.modalText}>
-                Please fill in all fields before proceeding.
+                {validationMessage}
               </Text>
               <TouchableOpacity style={styles.modalButton}  onPress={toggleModal}>
                 <Text style={styles.modalButtonText}>OK</Text>
