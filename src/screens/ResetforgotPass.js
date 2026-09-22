@@ -118,7 +118,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.primary,
-    padding: spacing.xl,
+    paddingHorizontal: spacing.xxxl,
+    paddingVertical: spacing.xl,
   },
   card: {
     width: '100%',

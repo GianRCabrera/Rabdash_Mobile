@@ -5,16 +5,11 @@ import { useNavigation } from '@react-navigation/native';
 import { AppButton } from '../components';
 import { colors, spacing, typography } from '../theme/theme';
 
-// Solid red background, matching Login/Register/every other pre-auth
-// screen, instead of the previous white-top/red-card-bottom split. That
-// split is what made empty space read as "floating" — a two-tone layout
-// makes any gap look like a mistake, where a single uniform background
-// reads as intentional even when content doesn't fill the exact center
-// (this is exactly how LoginPage.js already works with no such complaint).
-// Also swaps the standalone illustration (a boxy asset with its own
-// baked-in light background, sitting oddly on red) for the same logo
-// already used on Login/Register, so first launch -> login feels like one
-// continuous flow instead of a visually different screen.
+// Solid red, matching Login/Register. One centered content group (not
+// split top/bottom — that left one large, oddly empty gap in the middle,
+// worse than the plain-centered version) — flexbox justifyContent:
+// 'center' on a single group is symmetric by construction, so top and
+// bottom margins match exactly regardless of screen height.
 const LandingPage = () => {
   const navigation = useNavigation();
 
@@ -27,7 +22,6 @@ const LandingPage = () => {
         <Text style={styles.subheader}>
           Leveraging data and research to assist in achieving a rabies-free Davao City by 2030.
         </Text>
-
         <View style={styles.buttonRow}>
           <AppButton title="Login" onPress={() => navigation.navigate('Login')} variant="inverse" style={styles.button} />
           <AppButton title="Sign Up" onPress={() => navigation.navigate('Register')} variant="inverse" style={styles.button} />
@@ -46,23 +40,28 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: spacing.xxl,
+    paddingHorizontal: spacing.xxxl,
   },
   logo: {
-    width: 200,
-    height: 200,
-    marginBottom: spacing.lg,
+    width: 220,
+    height: 220,
+    marginBottom: spacing.xs,
   },
   header: {
     ...typography.largeTitle,
     color: colors.onPrimary,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.sm,
   },
   subheader: {
     ...typography.body,
     color: colors.onPrimary,
     textAlign: 'center',
-    marginBottom: spacing.xxxl,
+    marginBottom: spacing.xxxl * 1.75,
+    // Narrower than the full content width on purpose — shorter line
+    // length means less side-to-side eye travel per line while reading.
+    // 310 is calibrated to keep this exact sentence at 2 lines; if the
+    // copy changes, re-check the line count.
+    maxWidth: 310,
   },
   buttonRow: {
     flexDirection: 'row',

@@ -226,13 +226,14 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: spacing.xxl,
     paddingVertical: spacing.xxl,
   },
   image: {
-    width: 130,
-    height: 130,
+    width: 160,
+    height: 160,
     marginBottom: spacing.lg,
   },
   title: {

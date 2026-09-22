@@ -166,12 +166,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.primary,
-    paddingHorizontal: spacing.xxl,
+    paddingHorizontal: spacing.xxxl,
   },
   image: {
-    width: 180,
-    height: 180,
-    marginBottom: spacing.lg,
+    width: 200,
+    height: 200,
+    marginBottom: spacing.xs,
   },
   title: {
     ...typography.title,
