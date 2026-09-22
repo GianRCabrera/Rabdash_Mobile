@@ -91,7 +91,6 @@ const dbConfig = {
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
   connectionLimit: 10,
-  acquireTimeout: 30000,
   waitForConnections: true,
   queueLimit: 0
 };
@@ -102,28 +101,34 @@ const webDbConfig = {
   password: process.env.WEB_DB_PASSWORD,
   database: process.env.WEB_DB_DATABASE,
   connectionLimit: 10,
-  acquireTimeout: 30000,
   waitForConnections: true,
   queueLimit: 0
 };
 
 const pool = mysql.createPool(dbConfig);        // Pool for mobile application
-const webPool = mysql.createPool(webDbConfig);  // Pool for web application 
+const webPool = mysql.createPool(webDbConfig);  // Pool for web application
 
-function handleDisconnect(pool) {
+// Retries the initial connection; does NOT re-register the 'error' listener on each
+// retry (that was a bug — every retry added another listener, eventually tripping
+// Node's MaxListenersExceededWarning when a DB stayed unreachable for a while).
+function tryConnect(pool) {
   pool.getConnection((err, connection) => {
     if (err) {
       console.error('Error getting database connection:', err);
-      setTimeout(() => handleDisconnect(pool), 2000); // Retry after 2 seconds
+      setTimeout(() => tryConnect(pool), 2000); // Retry after 2 seconds
     } else if (connection) {
       connection.release();
     }
   });
+}
+
+function handleDisconnect(pool) {
+  tryConnect(pool);
 
   pool.on('error', (err) => {
     console.error('Database error:', err);
     if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-      handleDisconnect(pool); // Reconnect if connection was lost
+      tryConnect(pool); // Reconnect if connection was lost
     } else {
       throw err;
     }
@@ -1847,11 +1852,16 @@ const startServer = (port) => {
 
 // New endpoint to fetch control_form data from both mobile and web databases
 app.get('/getAnimalControlForms', requireAuth, async (req, res) => {
-  const query = 'SELECT * FROM control_form ORDER BY created_at DESC';
+  const { user } = req.session;
+  const isReviewer = CVO_POSITIONS.includes(user.position);
+  const query = isReviewer
+    ? 'SELECT * FROM control_form ORDER BY created_at DESC'
+    : 'SELECT * FROM control_form WHERE username = ? ORDER BY created_at DESC';
+  const params = isReviewer ? [] : [user.email];
 
   try {
-    const mobileResults = await queryDatabase(pool, query);
-    const webResults = await queryDatabase(webPool, query);
+    const mobileResults = await queryDatabase(pool, query, params);
+    const webResults = await queryDatabase(webPool, query, params);
 
     const controlForms = [...mobileResults, ...webResults];
 
@@ -1869,11 +1879,16 @@ app.get('/getAnimalControlForms', requireAuth, async (req, res) => {
 
 // New endpoint to fetch IEC forms data from both mobile and web databases
 app.get('/getIECForms', requireAuth, async (req, res) => {
-  const query = 'SELECT * FROM iec_form ORDER BY created_at DESC';
+  const { user } = req.session;
+  const isReviewer = CVO_POSITIONS.includes(user.position);
+  const query = isReviewer
+    ? 'SELECT * FROM iec_form ORDER BY created_at DESC'
+    : 'SELECT * FROM iec_form WHERE username = ? ORDER BY created_at DESC';
+  const params = isReviewer ? [] : [user.email];
 
   try {
-    const mobileResults = await queryDatabase(pool, query);
-    const webResults = await queryDatabase(webPool, query);
+    const mobileResults = await queryDatabase(pool, query, params);
+    const webResults = await queryDatabase(webPool, query, params);
 
     const iecForms = [...mobileResults, ...webResults];
 
@@ -1891,11 +1906,16 @@ app.get('/getIECForms', requireAuth, async (req, res) => {
 
 // New endpoint to fetch Schedule forms data from both mobile and web databases
 app.get('/getScheduleForms', requireAuth, async (req, res) => {
-  const query = 'SELECT * FROM schedule_form ORDER BY created_at DESC';
+  const { user } = req.session;
+  const isReviewer = CVO_POSITIONS.includes(user.position);
+  const query = isReviewer
+    ? 'SELECT * FROM schedule_form ORDER BY created_at DESC'
+    : 'SELECT * FROM schedule_form WHERE username = ? ORDER BY created_at DESC';
+  const params = isReviewer ? [] : [user.email];
 
   try {
-    const mobileResults = await queryDatabase(pool, query);
-    const webResults = await queryDatabase(webPool, query);
+    const mobileResults = await queryDatabase(pool, query, params);
+    const webResults = await queryDatabase(webPool, query, params);
 
     const scheduleForms = [...mobileResults, ...webResults];
 
@@ -1913,11 +1933,16 @@ app.get('/getScheduleForms', requireAuth, async (req, res) => {
 
 // New endpoint to fetch Budget forms data from both mobile and web databases
 app.get('/getBudgetForms', requireAuth, async (req, res) => {
-  const query = 'SELECT * FROM budget_form ORDER BY created_at DESC';
+  const { user } = req.session;
+  const isReviewer = CVO_POSITIONS.includes(user.position);
+  const query = isReviewer
+    ? 'SELECT * FROM budget_form ORDER BY created_at DESC'
+    : 'SELECT * FROM budget_form WHERE username = ? ORDER BY created_at DESC';
+  const params = isReviewer ? [] : [user.email];
 
   try {
-    const mobileResults = await queryDatabase(pool, query);
-    const webResults = await queryDatabase(webPool, query);
+    const mobileResults = await queryDatabase(pool, query, params);
+    const webResults = await queryDatabase(webPool, query, params);
 
     const budgetForms = [...mobileResults, ...webResults];
 
@@ -1935,10 +1960,15 @@ app.get('/getBudgetForms', requireAuth, async (req, res) => {
 
 // Add a new endpoint to fetch weather form data
 app.get('/getWeatherForms', requireAuth, async (req, res) => {
-  const query = 'SELECT * FROM weather_form ORDER BY created_at DESC';
+  const { user } = req.session;
+  const isReviewer = CVO_POSITIONS.includes(user.position);
+  const query = isReviewer
+    ? 'SELECT * FROM weather_form ORDER BY created_at DESC'
+    : 'SELECT * FROM weather_form WHERE username = ? ORDER BY created_at DESC';
+  const params = isReviewer ? [] : [user.email];
 
   try {
-    const results = await queryDatabase(pool, query);
+    const results = await queryDatabase(pool, query, params);
 
     if (results.length > 0) {
       const weatherForms = results;
@@ -1955,11 +1985,16 @@ app.get('/getWeatherForms', requireAuth, async (req, res) => {
 
 // New endpoint to fetch exposure_form data from both mobile and web databases
 app.get('/getRabiesExposureForms', requireAuth, async (req, res) => {
-  const query = 'SELECT * FROM exposure_form ORDER BY created_at DESC';
+  const { user } = req.session;
+  const isReviewer = CVO_POSITIONS.includes(user.position);
+  const query = isReviewer
+    ? 'SELECT * FROM exposure_form ORDER BY created_at DESC'
+    : 'SELECT * FROM exposure_form WHERE username = ? ORDER BY created_at DESC';
+  const params = isReviewer ? [] : [user.email];
 
   try {
-    const mobileResults = await queryDatabase(pool, query);
-    const webResults = await queryDatabase(webPool, query);
+    const mobileResults = await queryDatabase(pool, query, params);
+    const webResults = await queryDatabase(webPool, query, params);
 
     const exposureForms = [...mobileResults, ...webResults];
 
