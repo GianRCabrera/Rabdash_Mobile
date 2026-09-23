@@ -3,21 +3,8 @@ import { View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import axios from 'axios';
-import { AppButton, AppInput, AppDateField, AppDropdown, AppModal, FormScreen, menuStyles } from '../components';
-
-const DISTRICTS = [
-  { label: 'Agdao', value: 'Agdao' },
-  { label: 'Baguio', value: 'Baguio' },
-  { label: 'Buhangin', value: 'Buhangin' },
-  { label: 'Bunawan', value: 'Bunawan' },
-  { label: 'Calinan', value: 'Calinan' },
-  { label: 'Marilog', value: 'Marilog' },
-  { label: 'Paquibato', value: 'Paquibato' },
-  { label: 'Poblacion', value: 'Poblacion' },
-  { label: 'Talomo', value: 'Talomo' },
-  { label: 'Toril', value: 'Toril' },
-  { label: 'Tugbok', value: 'Tugbok' },
-];
+import { AppButton, AppInput, AppDateField, AppDropdown, AppModal, FormScreen, FormSectionLabel, menuStyles } from '../components';
+import { DISTRICTS } from '../constants/districts';
 
 const IECForm = () => {
   const route = useRoute();
@@ -169,6 +156,7 @@ const IECForm = () => {
 
   return (
     <FormScreen title="IEC Form">
+      <FormSectionLabel title="Event Details" first />
       <AppDateField
         label="Date"
         value={selectedDate ? selectedDate.toDateString() : null}
@@ -184,6 +172,7 @@ const IECForm = () => {
 
       <AppInput label="Title" placeholder="" value={titleValue} onChangeText={setTitleValue} />
 
+      <FormSectionLabel title="Location" />
       <AppDropdown
         label="District"
         open={isDistrictOpen}
@@ -191,13 +180,14 @@ const IECForm = () => {
         items={DISTRICTS}
         setOpen={setIsDistrictOpen}
         setValue={setDistrictValue}
-        placeholder="Please select first"
+        placeholder="Select district"
       />
 
       <AppInput label="Barangay" placeholder="Enter Barangay" value={barangayValue} onChangeText={setBarangayValue} />
 
       <AppInput label="Purok" placeholder="Purok 1-A" value={purokValue} onChangeText={setPurokValue} />
 
+      <FormSectionLabel title="Participation & Materials" />
       <AppInput
         label="No. of Participants"
         placeholder="10"
@@ -216,7 +206,7 @@ const IECForm = () => {
         keyboardType="numeric"
       />
 
-      <View style={menuStyles.row}>
+      <View style={menuStyles.formActionsRow}>
         <AppButton title="Back" variant="secondary" onPress={handleBackPress} style={menuStyles.rowButton} />
         <AppButton title="Submit" variant="primary" onPress={handleSubmitPress} style={menuStyles.rowButton} />
       </View>

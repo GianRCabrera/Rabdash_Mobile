@@ -168,7 +168,7 @@ const BudgetForm = () => {
         keyboardType="numeric"
       />
 
-      <View style={menuStyles.row}>
+      <View style={menuStyles.formActionsRow}>
         <AppButton title="Back" variant="secondary" onPress={handleBackPress} style={menuStyles.rowButton} />
         <AppButton title="Submit" variant="primary" onPress={handleSubmitPress} style={menuStyles.rowButton} />
       </View>

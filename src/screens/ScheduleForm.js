@@ -3,21 +3,8 @@ import { View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import axios from 'axios';
-import { AppButton, AppInput, AppDateField, AppDropdown, AppModal, FormScreen, menuStyles } from '../components';
-
-const DISTRICTS = [
-  { label: 'Agdao', value: 'Agdao' },
-  { label: 'Baguio', value: 'Baguio' },
-  { label: 'Buhangin', value: 'Buhangin' },
-  { label: 'Bunawan', value: 'Bunawan' },
-  { label: 'Calinan', value: 'Calinan' },
-  { label: 'Marilog', value: 'Marilog' },
-  { label: 'Paquibato', value: 'Paquibato' },
-  { label: 'Poblacion', value: 'Poblacion' },
-  { label: 'Talomo', value: 'Talomo' },
-  { label: 'Toril', value: 'Toril' },
-  { label: 'Tugbok', value: 'Tugbok' },
-];
+import { AppButton, AppInput, AppDateField, AppDropdown, AppModal, FormScreen, FormSectionLabel, menuStyles } from '../components';
+import { DISTRICTS } from '../constants/districts';
 
 const ScheduleForm = () => {
   const route = useRoute();
@@ -148,6 +135,7 @@ const ScheduleForm = () => {
 
   return (
     <FormScreen title="Schedule Form">
+      <FormSectionLabel title="Event Details" first />
       <AppDateField
         label="Date"
         value={selectedDate ? selectedDate.toDateString() : null}
@@ -163,6 +151,7 @@ const ScheduleForm = () => {
 
       <AppInput label="Title" placeholder="" value={titleValue} onChangeText={setTitleValue} />
 
+      <FormSectionLabel title="Location" />
       <AppDropdown
         label="District"
         open={isDistrictOpen}
@@ -170,14 +159,14 @@ const ScheduleForm = () => {
         items={DISTRICTS}
         setOpen={setIsDistrictOpen}
         setValue={setDistrictValue}
-        placeholder="Please select first"
+        placeholder="Select district"
       />
 
       <AppInput label="Barangay" placeholder="Enter Barangay" value={barangayValue} onChangeText={setBarangayValue} />
 
       <AppInput label="Purok" placeholder="Enter Purok" value={purokValue} onChangeText={setPurokValue} />
 
-      <View style={menuStyles.row}>
+      <View style={menuStyles.formActionsRow}>
         <AppButton title="Back" variant="secondary" onPress={handleBackPress} style={menuStyles.rowButton} />
         <AppButton title="Submit" variant="primary" onPress={handleSubmitPress} style={menuStyles.rowButton} />
       </View>

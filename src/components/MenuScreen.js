@@ -62,6 +62,15 @@ export const menuStyles = StyleSheet.create({
   rowButton: {
     flex: 1,
   },
+  // Same two-up row, but for a form screen's trailing Back/Submit pair —
+  // needs breathing room above it (the last field's own marginBottom isn't
+  // enough on its own) rather than below, since nothing follows it.
+  formActionsRow: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: spacing.md,
+    marginTop: spacing.lg,
+  },
   backButton: {
     width: '100%',
     marginTop: spacing.lg,
