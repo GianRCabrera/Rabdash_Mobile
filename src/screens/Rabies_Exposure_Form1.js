@@ -1,24 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView, // Import ScrollView
-} from 'react-native';
+import { View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import Modal from 'react-native-modal';
-import DropDownPicker from 'react-native-dropdown-picker'; // Add this import
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { styles } from '../../styles/forms';
+import axios from 'axios';
+import {
+  AppButton,
+  AppInput,
+  AppDateField,
+  AppDropdown,
+  AppModal,
+  FormScreen,
+  FormSectionLabel,
+  menuStyles,
+} from '../components';
+
+const SEXES = [
+  { label: 'Male', value: 'Male' },
+  { label: 'Female', value: 'Female' },
+];
+
+const BITE_TYPES = [
+  { label: 'B', value: 'B' },
+  { label: 'NB', value: 'NB' },
+];
 
 const Rabies_Exposure_Form = () => {
-
   const [user, setUser] = useState(null);
   const route = useRoute();
-  const [editableItem, setEditableItem] = useState(null); // Add this line to handle editable item
+  const [editableItem, setEditableItem] = useState(null);
 
   const [regNoValue, setRegNoValue] = useState('');
 
@@ -45,39 +54,27 @@ const Rabies_Exposure_Form = () => {
   const [isModalVisible, setModalVisible] = useState(false);
 
   const navigation = useNavigation();
+  const apiURL = process.env.EXPO_PUBLIC_URL;
 
-  const showDateTimePicker = () => {
-    setDateTimePickerVisibility(true);
-  };
-
-  const hideDateTimePicker = () => {
-    setDateTimePickerVisibility(false);
-  };
+  const showDateTimePicker = () => setDateTimePickerVisibility(true);
+  const hideDateTimePicker = () => setDateTimePickerVisibility(false);
 
   const handleDateTimeConfirm = (datetime) => {
     hideDateTimePicker();
-    // Do something with the selected date (e.g., update state)
     setSelectedDateTime(datetime);
   };
 
-  const showDateTimePicker2 = () => {
-    setDateTimePickerVisibility2(true);
-  };
-
-  const hideDateTimePicker2 = () => {
-    setDateTimePickerVisibility2(false);
-  };
+  const showDateTimePicker2 = () => setDateTimePickerVisibility2(true);
+  const hideDateTimePicker2 = () => setDateTimePickerVisibility2(false);
 
   const handleDateTimeConfirm2 = (datetime2) => {
     hideDateTimePicker2();
-    // Do something with the selected date (e.g., update state)
     setSelectedDateTime2(datetime2);
   };
 
   const handleSexOpen = () => {
     setIsSexOpen(!isSexOpen);
     setIsTypeOpen(false);
-
   };
 
   const handleTypeOpen = () => {
@@ -85,66 +82,36 @@ const Rabies_Exposure_Form = () => {
     setIsSexOpen(false);
   };
 
-  // Function to handle changes in the "Barangay" TextInput
-  const handleRegNoChange = (text) => {
-    setRegNoValue(text);
-  };
-  const handleNameChange = (text) => {
-    setNameValue(text);
-  };
-  const handleAgeChange = (text) => {
-    setAgeValue(text);
-  };
-  
-  const handleAddressChange = (text) => {
-    setAddressValue(text);
-  };
-
-  const handleSexChange = (value) => {
-    setSexValue(value);
-  };
-
-  const handleTypeChange = (value) => {
-    setTypeValue(value);
-  };
-
-  const handlePlaceChange = (text) => {
-    setPlaceValue(text);
-  };
-
-  const handleTypeAnimalChange = (text) => {
-    setTypeAnimalValue(text);
-  };
-
-  const handleSiteChange = (text) => {
-    setSiteValue(text);
-  };
-
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
 
   const formatDateTime = (dateStr) => {
-  if (!dateStr) return null;
-  const date = new Date(dateStr);
-  if (isNaN(date.getTime())) {
-    return null;
-  }
-  // Subtract 4 hours from the time
-  date.setHours(date.getHours() - 4);
-  return date;
-};
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      return null;
+    }
+    date.setHours(date.getHours() - 4);
+    return date;
+  };
 
-  useEffect(()=>{
-    // Conditional Autofill based on 'fromArchive' flag
+  useEffect(() => {
+    axios.get(`${apiURL}/Position`)
+      .then(response => {
+        setUser(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching position:', error);
+      });
+
     const { item, fromArchive } = route.params || {};
     if (fromArchive && item) {
-      // Autofill fields if coming from archives
-      setRegNoValue(item.regNo.toString()|| '');
+      setRegNoValue(item.regNo.toString() || '');
       setSelectedDateTime(formatDateTime(item.regDate));
       setNameValue(item.name);
       setAddressValue(item.address);
-      setAgeValue(item.age.toString() || ''); // Ensure age is converted to string if it's not already
+      setAgeValue(item.age.toString() || '');
       setSexValue(item.sex);
       setSelectedDateTime2(formatDateTime(item.expDate));
       setPlaceValue(item.place);
@@ -153,16 +120,13 @@ const Rabies_Exposure_Form = () => {
       setSiteValue(item.site);
     }
 
-    // Additional logic to handle editable item from archives
     if (route.params?.fromArchive && route.params?.item) {
-      // Set editableItem state to the item passed from archives
       setEditableItem(route.params.item);
     }
   }, [route.params]);
 
   const handleNextPress = () => {
-     // Check if all fields are filled
-     if (
+    if (
       regNoValue === '' ||
       selectedDateTime === null ||
       nameValue === '' ||
@@ -176,306 +140,143 @@ const Rabies_Exposure_Form = () => {
       siteValue === ''
     ) {
       toggleModal();
-    } else {
-      // Determine if it's a new entry or an edit based on editableItem
-      if (editableItem){
-        const formData = {
-          id: editableItem ? editableItem.id : null, // Include the ID from editableItem
-          regNo: regNoValue,
-          regDate: selectedDateTime.toISOString(),
-          name: nameValue,
-          address: addressValue,
-          age: ageValue,
-          sex: sexValue,
-          expDate: selectedDateTime2.toISOString(),
-          place: placeValue,
-          typeAnimal: typeAnimalValue,
-          typeBNB: typeValue,
-          site: siteValue
-        };
-      // All fields are filled, proceed to the next screen
+    } else if (editableItem) {
+      const formData = {
+        id: editableItem ? editableItem.id : null,
+        regNo: regNoValue,
+        regDate: selectedDateTime.toISOString(),
+        name: nameValue,
+        address: addressValue,
+        age: ageValue,
+        sex: sexValue,
+        expDate: selectedDateTime2.toISOString(),
+        place: placeValue,
+        typeAnimal: typeAnimalValue,
+        typeBNB: typeValue,
+        site: siteValue,
+      };
       navigation.navigate('Rabies_Exposure_Form2', {
         formData,
-          petData: editableItem, // Pass along pet-related data from archives if editing
-          fromArchive: !!editableItem,
+        petData: editableItem,
+        fromArchive: !!editableItem,
       });
     } else {
-      navigation.navigate('Rabies_Exposure_Form2',{
+      navigation.navigate('Rabies_Exposure_Form2', {
         regNo: regNoValue,
-          regDate: selectedDateTime.toISOString(),
-          name: nameValue,
-          address: addressValue,
-          age: ageValue,
-          sex: sexValue,
-          expDate: selectedDateTime2.toISOString(),
-          place: placeValue,
-          typeAnimal: typeAnimalValue,
-          typeBNB: typeValue,
-          site: siteValue,
-
-       // No need to pass petData for a new entry
-       fromArchive: false, // Indicate this is not from archives/edit mode
+        regDate: selectedDateTime.toISOString(),
+        name: nameValue,
+        address: addressValue,
+        age: ageValue,
+        sex: sexValue,
+        expDate: selectedDateTime2.toISOString(),
+        place: placeValue,
+        typeAnimal: typeAnimalValue,
+        typeBNB: typeValue,
+        site: siteValue,
+        fromArchive: false,
       });
     }
-  }
-};
-
-const handleBackPress = () => {
-  // Default back navigation if no specific source is provided
-  const defaultBack = () => {
-    navigation.goBack();
   };
 
-  // Dynamic navigation based on the source
-  const navigateBack = () => {
+  const handleBackPress = () => {
     const source = route.params?.source;
     switch (source) {
       case 'Field_vacc_archives':
-        navigation.navigate('Field_vacc_archives'); // Replace 'ArchiveScreen' with your actual archive screen name
+        navigation.navigate('Field_vacc_archives');
         break;
-      case 'InputMenu':
-        const position = user.position;
-
-        if (position === 'CVO' || position === 'Rabdash') {
+      case 'InputMenu': {
+        const position = user?.position;
+        if (position === 'CVO' || position === 'RabDash') {
           navigation.navigate('VetInputForms');
         } else if (position === 'Private Veterinarian') {
           navigation.navigate('InputForms');
         } else {
           console.warn('Unknown user position:', position);
         }
-      break;
-      default:
-        defaultBack();
         break;
+      }
+      default:
+        navigation.goBack();
     }
   };
 
-  navigateBack();
-};
-
   return (
-    <View style={styles.container}>
-      <View style={styles.headerContainerexp}>
-          <Text style={styles.header}>Rabies Exposure Form</Text>
+    <FormScreen title="Rabies Exposure Form">
+      <FormSectionLabel title="Registration" first />
+      <View style={menuStyles.row}>
+        <View style={menuStyles.rowButton}>
+          <AppInput label="No." placeholder="" value={regNoValue} onChangeText={setRegNoValue} />
+        </View>
+        <View style={menuStyles.rowButton}>
+          <AppDateField label="Date" mode="datetime" value={selectedDateTime} onPress={showDateTimePicker} />
+        </View>
       </View>
+      <DateTimePickerModal
+        isVisible={isDateTimePickerVisible}
+        mode="datetime"
+        onConfirm={handleDateTimeConfirm}
+        onCancel={hideDateTimePicker}
+      />
+      <AppInput label="Name of Patient" placeholder="" value={nameValue} onChangeText={setNameValue} />
+      <AppInput label="Address" placeholder="" value={addressValue} onChangeText={setAddressValue} />
 
-      {/* White Container */}
-      <View style={styles.whiteContainer}>
-      <ScrollView
-        contentContainerStyle={styles.scrollViewContainer} 
-        nestedScrollEnabled={true} // Enable this on Android
-      >
-        {/* Green Container */}
-        <View style={styles.greenContainer}>
-          <Text style={styles.greenText}>Input "N/A" if information is unavailable</Text>
+      <FormSectionLabel title="History of Exposure" />
+      <View style={menuStyles.row}>
+        <View style={menuStyles.rowButton}>
+          <AppInput label="Age" placeholder="" value={ageValue} onChangeText={setAgeValue} />
         </View>
-  
-        <View style={styles.rowContainer}>
-          <Text style={styles.headerText}>Registration</Text>
-        </View>
-
-        {/* Container for Date and District */}
-        <View style={styles.rowContainer2}>
-          {/* Registration Number Container */}
-          <View style={styles.labelContainer}>
-            <Text style={[styles.labelText, { textAlign: 'left' }]}>No.</Text>
-            <TextInput
-              style={styles.textBox}
-              placeholder=""
-              value={regNoValue}  // Set the value from the state
-              onChangeText={handleRegNoChange}  // Handle text changes
-              // Additional TextInput props can be added as needed
-            />
-          </View>
-
-          {/* Date Container */}
-          <View style={styles.labelContainer}>
-          <Text style={styles.labelText}>Date</Text>
-          <TouchableOpacity onPress={showDateTimePicker}>
-            <Text style={styles.textBox}>
-              {selectedDateTime ? `${selectedDateTime.toLocaleDateString()} ${selectedDateTime.toLocaleTimeString()}`: 'Select Date and Time'} 
-            </Text>
-          </TouchableOpacity>
-           <DateTimePickerModal
-            isVisible={isDateTimePickerVisible}
-            mode="datetime"
-            onConfirm={handleDateTimeConfirm}
-            onCancel={hideDateTimePicker}
-          /> 
-          </View>
-        </View>
-        <View style={styles.rowContainer2}>
-
-        {/* Name Container */}
-        <View style={styles.labelContainer}>
-          <Text style={[styles.labelText, { textAlign: 'left' }]}>Name of Patient</Text>
-          <TextInput
-            style={styles.textBox2}
-            placeholder=""
-            value={nameValue}  // Set the value from the state
-            onChangeText={handleNameChange}  // Handle text changes
-            // Additional TextInput props can be added as needed
+        <View style={menuStyles.rowButton}>
+          <AppDropdown
+            label="Sex"
+            open={isSexOpen}
+            value={sexValue}
+            items={SEXES}
+            setOpen={handleSexOpen}
+            setValue={setSexValue}
+            placeholder="Select sex"
           />
-          </View>
         </View>
-        {/* Container for Name and Address */}
-        <View style={styles.rowContainer2}>
-          {/* Adress Label Text */}
-          <View style={styles.labelContainer}>  
-              <Text style={styles.labelText}>Address</Text>
-              <TextInput
-                style={styles.textBox2}
-                placeholder=""
-                value={addressValue}  // Set the value from the state
-                onChangeText={handleAddressChange}  // Handle text changes
-                // Additional TextInput props can be added as needed
-              />
-            </View>
-        </View>
-
-        <View style={styles.rowContainer2}>
-          <Text style={styles.headerText}>History of Exposure</Text>
-        </View>
-  
-        {/* Container for Age and Sex */}
-        <View style={styles.rowContainer2}>
-          <View style={styles.labelContainer}>
-            <Text style={styles.labelText}>Age</Text>
-            <TextInput
-              style={styles.textBox}
-              placeholder=""
-              value={ageValue}  // Set the value from the state
-              onChangeText={handleAgeChange}  // Handle text changes
-              // Additional TextInput props can be added as needed
-            />
-          </View>
-  
-          <View style={styles.dropdownContainer}>
-              <Text style={styles.labelText}>Sex</Text>
-                <DropDownPicker
-                  open={isSexOpen}
-                  value={sexValue}
-                  items={[
-                    { label: 'Male', value: 'Male' },
-                    { label: 'Female', value: 'Female' },
-                  ]}
-                  placeholder="Please select first"
-                  setOpen={handleSexOpen}
-                  setValue={handleSexChange}
-                  listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
-                />
-            </View>
-        </View>
-
-        <View style={styles.rowContainer2}>
-        {/* Name Date and Place */}
-        {/* Date Container */}
-        <View style={styles.labelContainer}>
-          <Text style={styles.labelText}>Date</Text>
-          <TouchableOpacity onPress={showDateTimePicker2}>
-            < Text style={styles.textBox}>
-              {selectedDateTime2 ? `${selectedDateTime2.toLocaleDateString()} ${selectedDateTime2.toLocaleTimeString()}` : 'Select Date and Time'}
-            </Text>
-          </TouchableOpacity>
-           <DateTimePickerModal
-            isVisible={isDateTimePickerVisible2}
-            mode="datetime"
-            onConfirm={handleDateTimeConfirm2}
-            onCancel={hideDateTimePicker2}
-          /> 
-          </View>
-
-          <View style={styles.labelContainer}>
-              <Text style={styles.labelText}>Place (Where the biting occurred)</Text>
-              <TextInput
-                style={styles.textBox}
-                placeholder=""
-                value={placeValue}  // Set the value from the state
-                onChangeText={handlePlaceChange}  // Handle text changes
-                // Additional TextInput props can be added as needed
-              />
-            </View>
-          </View>
-          
-          {/* Container for Animal Type and Type */}
-          <View style={styles.rowContainer2}>
-            {/* Animal Type Label Text */}
-            <View style={styles.labelContainer}>  
-              <Text style={styles.labelText}>Type of Animal</Text>
-              <TextInput
-                style={styles.textBox}
-                placeholder=""
-                value={typeAnimalValue}  // Set the value from the state
-                onChangeText={handleTypeAnimalChange}  // Handle text changes
-                // Additional TextInput props can be added as needed
-              />
-            </View>
-
-            {/* Type (B/NB) Label Text */}
-            <View style={styles.dropdownContainer}>
-              <Text style={styles.labelText}>Type (B/NB)</Text>
-                <DropDownPicker
-                  open={isTypeOpen}
-                  value={typeValue}
-                  items={[
-                    { label: 'B', value: 'B' },
-                    { label: 'NB', value: 'NB' },
-                  ]}
-                  placeholder="Please select first"
-                  setOpen={handleTypeOpen}
-                  setValue={handleTypeChange}
-                  listMode="SCROLLVIEW" // Ensure the internal list is a ScrollView
-                />
-            </View>
-          </View>
-
-          {/* Container and Label for Site (Body parts) */}
-          <View style={styles.rowcontainer2}>
-            <View style={styles.labelContainer}>  
-              <Text style={styles.labelText}>Site (Body parts)</Text>
-              <TextInput
-                style={styles.textBox}
-                placeholder=""
-                value={siteValue}  // Set the value from the state
-                onChangeText={handleSiteChange}  // Handle text changes
-                // Additional TextInput props can be added as needed
-              />
-            </View>
-          </View>
-
-          {/* Container for Back and Next Number */}
-          <View style={styles.rowContainer2}>
-            {/* Back Button */}
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleBackPress}
-            >
-              <Text style={styles.buttonText}>Back</Text>
-            </TouchableOpacity>
-
-            {/* Next Button */}
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleNextPress}  // Add this line
-            >
-              <Text style={styles.buttonText}>Next</Text>
-            </TouchableOpacity>
-
-            {/* Modal to check if all fields are inputted */}
-            <Modal isVisible={isModalVisible}>
-              <View style={styles.modalContainer}>
-                <Text style={styles.modalText}>
-                  Please fill in all fields before proceeding.
-                </Text>
-                <TouchableOpacity style={styles.modalButton} onPress={toggleModal}>
-                  <Text style={styles.modalButtonText}>OK</Text>
-                </TouchableOpacity>
-              </View>
-            </Modal>
-          </View>
-        </ScrollView>
       </View>
-    </View>
+
+      <AppDateField label="Date" mode="datetime" value={selectedDateTime2} onPress={showDateTimePicker2} />
+      <DateTimePickerModal
+        isVisible={isDateTimePickerVisible2}
+        mode="datetime"
+        onConfirm={handleDateTimeConfirm2}
+        onCancel={hideDateTimePicker2}
+      />
+      <AppInput label="Place (Where the biting occurred)" placeholder="" value={placeValue} onChangeText={setPlaceValue} />
+
+      <View style={menuStyles.row}>
+        <View style={menuStyles.rowButton}>
+          <AppInput label="Type of Animal" placeholder="" value={typeAnimalValue} onChangeText={setTypeAnimalValue} />
+        </View>
+        <View style={menuStyles.rowButton}>
+          <AppDropdown
+            label="Type (B/NB)"
+            open={isTypeOpen}
+            value={typeValue}
+            items={BITE_TYPES}
+            setOpen={handleTypeOpen}
+            setValue={setTypeValue}
+            placeholder="Select type"
+          />
+        </View>
+      </View>
+      <AppInput label="Site (Body parts)" placeholder="" value={siteValue} onChangeText={setSiteValue} />
+
+      <View style={menuStyles.formActionsRow}>
+        <AppButton title="Back" variant="secondary" onPress={handleBackPress} style={menuStyles.rowButton} />
+        <AppButton title="Next" variant="primary" onPress={handleNextPress} style={menuStyles.rowButton} />
+      </View>
+
+      <AppModal
+        isVisible={isModalVisible}
+        message="Please fill in all fields before proceeding."
+        onBackdropPress={toggleModal}
+        actions={[{ label: 'OK', onPress: toggleModal }]}
+      />
+    </FormScreen>
   );
 };
 
