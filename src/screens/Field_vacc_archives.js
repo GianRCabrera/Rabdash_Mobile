@@ -1,10 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, FlatList, ScrollView, ActivityIndicator, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import styles from '../../styles/Archive';
-import Modal from 'react-native-modal';
 import axios from 'axios';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {
+  AppModal,
+  ArchiveScreen,
+  ArchiveSearchBar,
+  ArchiveListItem,
+  ArchivePagination,
+  AppButton,
+  menuStyles,
+} from '../components';
+import { colors } from '../theme/theme';
 
 const Field_vacc_archives = () => {
   const [user, setUser] = useState(null);
@@ -14,7 +21,6 @@ const Field_vacc_archives = () => {
   const [editableItem, setEditableItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredForms, setFilteredForms] = useState([]);
-  const flatListRef = useRef();
   const [deletableItem, setDeletableItem] = useState(null);
   const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
   const [isNotificationModalVisible, setNotificationModalVisible] = useState(false);
@@ -97,16 +103,11 @@ const Field_vacc_archives = () => {
       matches(form.timeFinish)
     );
 
-    setFilteredForms(filtered.length > 0 ? filtered : vaccinationForms);
+    // Previously fell back to showing the full unfiltered list when a search
+    // had zero matches, instead of an empty state — searching for something
+    // that genuinely doesn't exist silently looked like the search did nothing.
+    setFilteredForms(filtered);
   }, [searchTerm, vaccinationForms]);
-
-  const handleSearchSubmit = () => {
-    if (filteredForms.length > 0) {
-      flatListRef.current?.scrollToIndex({ animated: true, index: 0 });
-    } else {
-      console.log('No filtered items to scroll to');
-    }
-  };
 
   const handleEditPress = (item) => {
     setEditableItem(item);
@@ -183,7 +184,11 @@ const Field_vacc_archives = () => {
     const nextPage = currentPage + 1;
     setIsFetching(true);
     try {
-      const response = await axios.get(`${apiURL}/getVaccinationFormsCVO`, {
+      // Fixed: this previously always hit the CVO endpoint regardless of
+      // position, so a Private Veterinarian or CVO user's "next page" would
+      // fetch RabDash-scoped data instead of their own.
+      const endpoint = user?.position === 'RabDash' ? 'getVaccinationFormsCVO' : 'getVaccinationForms';
+      const response = await axios.get(`${apiURL}/${endpoint}`, {
         params: { page: nextPage, limit: itemsPerPage },
         withCredentials: true,
       });
@@ -204,131 +209,97 @@ const Field_vacc_archives = () => {
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-
-  if (isLoading) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
-  }
+  const pageItems = filteredForms.slice(startIndex, endIndex);
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-      <View style={styles.container}>
-        <View style={styles.headerContainer}>
-          <Text style={styles.header}>Rabies Field Vaccination Archive</Text>
-        </View>
-        <View style={styles.searchContainer}>
-          <Icon name="search" size={20} color="#000" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchBar}
-            placeholder="Search by owner, pet name, or date..."
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            returnKeyType="search"
-            onSubmitEditing={handleSearchSubmit}
-          />
-        </View>
-        <View style={styles.divider} />
-        <FlatList
-          ref={flatListRef}
-          scrollEnabled={false}
-          data={filteredForms.slice(startIndex, endIndex)}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.itemContainer}>
-              <Text style={styles.itemText}>Username: <Text style={styles.itemDataText}>{item.username}</Text></Text>
-              <Text style={styles.itemText}>Date: <Text style={styles.itemDataText}>{addOneDay(item.date.split('T')[0])}</Text></Text>
-              <Text style={styles.itemText}>District: <Text style={styles.itemDataText}>{item.district}</Text></Text>
-              <Text style={styles.itemText}>Barangay: <Text style={styles.itemDataText}>{item.barangay}</Text></Text>
-              <Text style={styles.itemText}>Purok: <Text style={styles.itemDataText}>{item.purok}</Text></Text>
-              <Text style={styles.itemText}>Vaccinator/s: <Text style={styles.itemDataText}>{item.vaccinator}</Text></Text>
-              <Text style={styles.itemText}>Time Started: <Text style={styles.itemDataText}>{item.timeStart}</Text></Text>
-              <Text style={styles.itemText}>Owner Name: <Text style={styles.itemDataText}>{item.ownerName}</Text></Text>
-              <Text style={styles.itemText}>Address: <Text style={styles.itemDataText}>{item.address}</Text></Text>
-              <Text style={styles.itemText}>Sex: <Text style={styles.itemDataText}>{item.sex}</Text></Text>
-              <Text style={styles.itemText}>Contact No.: <Text style={styles.itemDataText}>{item.contactNo}</Text></Text>
-              <Text style={styles.itemText}>Animal Name: <Text style={styles.itemDataText}>{item.petName}</Text></Text>
-              <Text style={styles.itemText}>Animal Age: <Text style={styles.itemDataText}>{item.petAge}</Text></Text>
-              <Text style={styles.itemText}>Species: <Text style={styles.itemDataText}>{item.species}</Text></Text>
-              <Text style={styles.itemText}>Sex: <Text style={styles.itemDataText}>{item.petSex}</Text></Text>
-              <Text style={styles.itemText}>Color/Markings: <Text style={styles.itemDataText}>{item.color}</Text></Text>
-              <Text style={styles.itemText}>Card Number: <Text style={styles.itemDataText}>{item.cardNo}</Text></Text>
-              <Text style={styles.itemText}>Vaccine Used/Lot Number: <Text style={styles.itemDataText}>{item.vaccine}</Text></Text>
-              <Text style={styles.itemText}>Source of Vaccine: <Text style={styles.itemDataText}>{item.source}</Text></Text>
-              <Text style={styles.itemText}>Date Vaccinated: <Text style={styles.itemDataText}>{addOneDay(item.dateVaccinated.split('T')[0])}</Text></Text>
-              <Text style={styles.itemText}>Time Finished: <Text style={styles.itemDataText}>{item.timeFinish}</Text></Text>
+    <ArchiveScreen
+      title="Rabies Field Vaccination Archive"
+      loading={isLoading}
+      isEmpty={filteredForms.length === 0}
+      emptyMessage="No vaccination records found."
+    >
+      <ArchiveSearchBar
+        value={searchTerm}
+        onChangeText={setSearchTerm}
+        placeholder="Search by owner, pet name, or date..."
+      />
 
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.editButton} onPress={() => handleEditPress(item)}>
-                  <Text style={styles.modalButtonText}>Edit</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeletePress(item)}>
-                  <Text style={styles.modalButtonText}>Delete</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.divider} />
-            </View>
-          )}
-          ListFooterComponent={() => isFetching && <ActivityIndicator size="large" color="#0000ff" />}
+      {pageItems.map((item) => (
+        <ArchiveListItem
+          key={item.id}
+          fields={[
+            { label: 'Username', value: item.username },
+            { label: 'Date', value: addOneDay(item.date.split('T')[0]) },
+            { label: 'District', value: item.district },
+            { label: 'Barangay', value: item.barangay },
+            { label: 'Purok', value: item.purok },
+            { label: 'Vaccinator/s', value: item.vaccinator },
+            { label: 'Time Started', value: item.timeStart },
+            { label: 'Owner Name', value: item.ownerName },
+            { label: 'Address', value: item.address },
+            { label: 'Sex', value: item.sex },
+            { label: 'Contact No.', value: item.contactNo },
+            { label: 'Animal Name', value: item.petName },
+            { label: 'Animal Age', value: item.petAge },
+            { label: 'Species', value: item.species },
+            { label: 'Animal Sex', value: item.petSex },
+            { label: 'Color/Markings', value: item.color },
+            { label: 'Card Number', value: item.cardNo },
+            { label: 'Vaccine Used/Lot Number', value: item.vaccine },
+            { label: 'Source of Vaccine', value: item.source },
+            { label: 'Date Vaccinated', value: addOneDay(item.dateVaccinated.split('T')[0]) },
+            { label: 'Time Finished', value: item.timeFinish },
+          ]}
+          onEdit={() => handleEditPress(item)}
+          onDelete={() => handleDeletePress(item)}
         />
-        <Text style={styles.pageText}>Page: <Text>{currentPage}</Text></Text>
-        <View style={styles.buttonContainer}>
-          {currentPage > 1 && (
-            <TouchableOpacity style={styles.button} onPress={handlePreviousPage}>
-              <Text style={styles.buttonText}>Previous Page</Text>
-            </TouchableOpacity>
-          )}
-          {vaccinationForms.length >= endIndex && (
-            <TouchableOpacity style={styles.button} onPress={handleNextPage}>
-              <Text style={styles.buttonText}>Next Page</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+      ))}
 
-        <TouchableOpacity style={styles.button} onPress={handleBackPress}>
-          <Text style={styles.buttonText}>Archives Menu</Text>
-        </TouchableOpacity>
+      {isFetching && <ActivityIndicator size="large" color={colors.onPrimary} />}
 
-        <Modal isVisible={isConfirmModalVisible}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>Do you want to proceed editing the Vaccination Form?</Text>
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity style={styles.modalButton} onPress={submitForm}>
-                <Text style={styles.modalButtonText}>Yes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalButton} onPress={toggleConfirmModal}>
-                <Text style={styles.modalButtonText}>No</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+      <ArchivePagination
+        page={currentPage}
+        hasPrev={currentPage > 1}
+        hasNext={vaccinationForms.length >= endIndex}
+        onPrev={handlePreviousPage}
+        onNext={handleNextPage}
+      />
 
-        <Modal isVisible={isDeleteModalVisible}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>Are you sure you want to delete this entry?</Text>
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity style={styles.modalButton} onPress={deleteItem}>
-                <Text style={styles.modalButtonText}>Yes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalButton} onPress={toggleDeleteModal}>
-                <Text style={styles.modalButtonText}>No</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+      <AppButton
+        title="Archives Menu"
+        variant="ghost"
+        onPress={handleBackPress}
+        style={menuStyles.backButton}
+        textStyle={menuStyles.backButtonText}
+      />
 
-        <Modal isVisible={isNotificationModalVisible}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>{notificationMessage}</Text>
-            <TouchableOpacity style={styles.modalButton} onPress={toggleNotificationModal}>
-              <Text style={styles.modalButtonText}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        </Modal>
-      </View>
-    </ScrollView>
+      <AppModal
+        isVisible={isConfirmModalVisible}
+        message="Do you want to proceed editing the Vaccination Form?"
+        onBackdropPress={toggleConfirmModal}
+        actions={[
+          { label: 'No', variant: 'secondary', onPress: toggleConfirmModal },
+          { label: 'Yes', onPress: submitForm },
+        ]}
+      />
+
+      <AppModal
+        isVisible={isDeleteModalVisible}
+        message="Are you sure you want to delete this entry?"
+        onBackdropPress={toggleDeleteModal}
+        actions={[
+          { label: 'No', variant: 'secondary', onPress: toggleDeleteModal },
+          { label: 'Yes', variant: 'danger', onPress: deleteItem },
+        ]}
+      />
+
+      <AppModal
+        isVisible={isNotificationModalVisible}
+        message={notificationMessage}
+        onBackdropPress={toggleNotificationModal}
+        actions={[{ label: 'OK', onPress: toggleNotificationModal }]}
+      />
+    </ArchiveScreen>
   );
 };
 
