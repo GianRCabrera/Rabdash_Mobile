@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Image, ScrollView } from 'react-native';
+import { View, Text, Image, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { AppButton, AppCard, ScreenHeader, menuStyles } from '../components';
+import { colors, spacing, typography, radii } from '../theme/theme';
 
 const UserProfile = () => {
   const navigation = useNavigation();
-  const apiURL = process.env.EXPO_PUBLIC_URL || 'http://localhost:3000'; // Ensure a fallback URL
+  const apiURL = process.env.EXPO_PUBLIC_URL || 'http://localhost:3000';
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -31,7 +33,6 @@ const UserProfile = () => {
           break;
         default:
           console.warn('Unknown user position:', user.position);
-          break;
       }
     } else {
       console.warn('User position is undefined');
@@ -43,127 +44,97 @@ const UserProfile = () => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.headerContainer}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackToMainMenu}>
-          <Icon name="arrow-back" size={25} color="white" />
-        </TouchableOpacity>
-      </View>
-      {user ? (
-        <View style={styles.userInfoContainer}>
-          <Text style={styles.header}>User Profile</Text>
-          <Image 
-            source={require('../../assets/avatar.png')} // Ensure this path is correct
-            style={styles.profileImage}
-          />
-          <Text style={styles.userName}>{`${user.name || ''} ${user.last_name || ''}`}</Text>
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScreenHeader title="User Profile" />
 
-          <View style={styles.infoRow}>
-            <Icon name="person" size={20} color="#E74A3B" style={styles.icon} />
-            <Text style={styles.text}>{`${user.name || ''}`}</Text>
-          </View>
+        {user ? (
+          <AppCard style={styles.card}>
+            <Image source={require('../../assets/avatar.png')} style={styles.avatar} />
+            <Text style={styles.name}>{`${user.name || ''} ${user.last_name || ''}`}</Text>
 
-          <View style={styles.infoRow}>
-            <Icon name="person-outline" size={20} color="#E74A3B" style={styles.icon} />
-            <Text style={styles.text}>{`${user.last_name || ''}`}</Text>
-          </View>
+            <View style={styles.infoRow}>
+              <Icon name="person" size={20} color={colors.primary} style={styles.icon} />
+              <Text style={styles.infoText}>{user.name || 'N/A'}</Text>
+            </View>
 
-          <View style={styles.infoRow}>
-            <Icon name="email" size={20} color="#E74A3B" style={styles.icon} />
-            <Text style={styles.text}>{user.email || 'N/A'}</Text>
-          </View>
+            <View style={styles.infoRow}>
+              <Icon name="person-outline" size={20} color={colors.primary} style={styles.icon} />
+              <Text style={styles.infoText}>{user.last_name || 'N/A'}</Text>
+            </View>
 
-          <View style={styles.infoRow}>
-            <Icon name="work" size={20} color="#E74A3B" style={styles.icon} />
-            <Text style={styles.text}>{user.position || 'N/A'}</Text>
-          </View>
+            <View style={styles.infoRow}>
+              <Icon name="email" size={20} color={colors.primary} style={styles.icon} />
+              <Text style={styles.infoText}>{user.email || 'N/A'}</Text>
+            </View>
 
-          <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
-            <Text style={styles.buttonText}>Reset Password</Text>
-          </TouchableOpacity>
+            <View style={styles.infoRow}>
+              <Icon name="work" size={20} color={colors.primary} style={styles.icon} />
+              <Text style={styles.infoText}>{user.position || 'N/A'}</Text>
+            </View>
 
-          <TouchableOpacity style={styles.button} onPress={handleBackToMainMenu}>
-            <Text style={styles.buttonText}>Main Menu</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <ActivityIndicator size="large" color="#3498db" />
-      )}
-    </ScrollView>
+            <AppButton title="Reset Password" variant="primary" onPress={handleResetPassword} style={styles.resetButton} />
+          </AppCard>
+        ) : (
+          <ActivityIndicator size="large" color={colors.onPrimary} style={styles.loading} />
+        )}
+
+        <AppButton
+          title="Main Menu"
+          variant="ghost"
+          onPress={handleBackToMainMenu}
+          style={menuStyles.backButton}
+          textStyle={menuStyles.backButtonText}
+        />
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    justifyContent: 'center',
+    flex: 1,
+    backgroundColor: colors.primary,
+    paddingTop: spacing.xxxl * 1.5,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xl,
+  },
+  scrollContent: {
+    paddingBottom: spacing.xxxl,
+  },
+  card: {
     alignItems: 'center',
-    backgroundColor: '#E74A3B',
-    padding: 20,
   },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    width: '100%',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  backButton: {
-    position: 'absolute',
-    left: 20,
-    top: 20,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#34495e',
-    marginBottom: 30,
-  },
-  userInfoContainer: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    elevation: 3,
-    alignItems: 'center',
-    width: '90%',
-  },
-  profileImage: {
+  avatar: {
     width: 100,
     height: 100,
-    borderRadius: 50,
-    marginBottom: 15,
+    borderRadius: radii.pill,
+    marginBottom: spacing.md,
   },
-  userName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 30,
-    color: '#2c3e50',
+  name: {
+    ...typography.title,
+    color: colors.textPrimary,
+    marginBottom: spacing.xl,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    width: '100%',
+    marginBottom: spacing.md,
   },
   icon: {
-    marginRight: 10,
+    marginRight: spacing.sm,
   },
-  text: {
-    fontSize: 16,
-    color: '#34495e',
+  infoText: {
+    ...typography.body,
+    color: colors.textPrimary,
   },
-  button: {
-    backgroundColor: '#3498db',
-    padding: 10,
-    borderRadius: 15,
-    marginTop: 20,
-    width: '60%',
-    alignItems: 'center',
+  resetButton: {
+    width: '100%',
+    marginTop: spacing.lg,
   },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+  loading: {
+    marginTop: spacing.xxxl,
   },
 });
 
