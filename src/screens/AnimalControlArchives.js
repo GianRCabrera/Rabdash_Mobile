@@ -1,39 +1,48 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, FlatList, ScrollView, ActivityIndicator,  TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import styles from '../../styles/Archive';
-import Modal from 'react-native-modal';
 import axios from 'axios';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {
+  AppModal,
+  ArchiveScreen,
+  ArchiveSearchBar,
+  ArchiveListItem,
+  ArchivePagination,
+  AppButton,
+  menuStyles,
+} from '../components';
 
 const AnimalControlArchives = () => {
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Add loading state
+  const [isLoading, setIsLoading] = useState(true);
   const [vaccinationForms, setVaccinationForms] = useState([]);
 
   const [isConfirmModalVisible, setConfirmModalVisible] = useState(false);
-
-  const [editableItem, setEditableItem] = useState(null); // Initialize state for storing item to edit
+  const [editableItem, setEditableItem] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredForms, setFilteredForms] = useState([]);
-  const flatListRef = useRef(); // Add this ref for the FlatList
 
-  const [deletableItem, setDeletableItem] = useState(null); // State to store item to be deleted
-  const [isDeleteModalVisible, setDeleteModalVisible] = useState(false); // State to manage delete modal visibility
+  const [deletableItem, setDeletableItem] = useState(null);
+  const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
 
   const [isNotificationModalVisible, setNotificationModalVisible] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
 
   const navigation = useNavigation();
-
   const apiURL = process.env.EXPO_PUBLIC_URL;
 
-  const [currentPage, setCurrentPage] = useState(1); // State to manage current page
-  const itemsPerPage = 5; // Number of items per page
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-  const navigateToVetArchiveMenu = () => {
-    navigation.navigate('VetArchiveMenu');
+  const handleBackPress = () => {
+    const position = user?.position;
+    if (position === 'CVO' || position === 'RabDash') {
+      navigation.navigate('VetArchiveMenu');
+    } else if (position === 'Private Veterinarian') {
+      navigation.navigate('ClientDatabase');
+    } else {
+      console.warn('Unknown user position:', position);
+    }
   };
 
   const toggleConfirmModal = () => {
@@ -41,24 +50,33 @@ const AnimalControlArchives = () => {
   };
 
   useEffect(() => {
-    const fetchVaccinationForms = async() => {
+    // Previously this screen never fetched /Position and hardcoded its back
+    // button straight to VetArchiveMenu regardless of who was viewing it —
+    // a Private Veterinarian ended up on the CVO-only menu. The
+    // getAnimalControlForms endpoint itself has no CVO-scoped counterpart
+    // (unlike Field Vacc/Neuter/Sample), so every position still sees the
+    // same unscoped data — only the back-navigation destination is fixed here.
+    const fetchUserAndForms = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get(`${apiURL}/getAnimalControlForms`);
-        setVaccinationForms(response.data);
-        setFilteredForms(response.data); // Initialize filteredForms with all forms
+        const [positionResponse, formsResponse] = await Promise.all([
+          axios.get(`${apiURL}/Position`),
+          axios.get(`${apiURL}/getAnimalControlForms`),
+        ]);
+        setUser(positionResponse.data);
+        setVaccinationForms(formsResponse.data);
       } catch (error) {
         console.error('Error fetching Animal Control and Rehabilitation Section Daily Report Archive forms:', error);
       } finally {
         setIsLoading(false);
       }
-    }
+    };
 
-    fetchVaccinationForms();
+    fetchUserAndForms();
   }, []);
 
   useEffect(() => {
-    const filtered = vaccinationForms.filter(form => 
+    const filtered = vaccinationForms.filter(form =>
       form.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       form.date1?.includes(searchTerm) ||
       (form.cageNum?.toString().toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -68,232 +86,160 @@ const AnimalControlArchives = () => {
       form.date3?.includes(searchTerm) ||
       (form.euthHeads?.toString().toLowerCase().includes(searchTerm.toLowerCase())) ||
       form.date4?.includes(searchTerm) ||
-      form.chief?.toLowerCase().includes(searchTerm.toLowerCase()) 
+      form.chief?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  
-    if (filtered.length > 0) {
-      setFilteredForms(filtered);
-    } else {
-      console.log('No match found');
-      // Show all items if no match or empty search
-      setFilteredForms(vaccinationForms);
-    }
+    // Previously fell back to the full unfiltered list on zero matches —
+    // fixed to show an actual empty state instead.
+    setFilteredForms(filtered);
   }, [searchTerm, vaccinationForms]);
 
-   // Function to find the first matched item index and scroll to it
- const handleSearchSubmit = () => {
-  if (filteredForms.length > 0) {
-    // If there are filtered forms, attempt to scroll to the top of the list
-    flatListRef.current?.scrollToIndex({ animated: true, index: 0 });
-  } else {
-    console.log('No filtered items to scroll to');
-  }
- };
-
- // Function to open modal and set the item to be edited
- const handleEditPress = (item) => {
-  setEditableItem(item); // Store the item to be edited
-  toggleConfirmModal();
-};
-
-const submitForm = () => {
-  if (editableItem) {
-    navigation.navigate('AnimalControlForm', {
-      item: editableItem,
-      fromArchive: true
-    });
+  const handleEditPress = (item) => {
+    setEditableItem(item);
     toggleConfirmModal();
-  }
-};
+  };
 
-// Function to handle deletion of item
-const handleDeletePress = (item) => {
-  setDeletableItem(item); // Store the item to be deleted
-  toggleDeleteModal(); // Open the delete confirmation modal
-};
+  const submitForm = () => {
+    if (editableItem) {
+      navigation.navigate('AnimalControlForm', {
+        item: editableItem,
+        fromArchive: true
+      });
+      toggleConfirmModal();
+    }
+  };
 
-// Function to toggle delete confirmation modal visibility
-const toggleDeleteModal = () => {
-  setDeleteModalVisible(!isDeleteModalVisible);
-};
+  const handleDeletePress = (item) => {
+    setDeletableItem(item);
+    toggleDeleteModal();
+  };
 
-const deleteItem = () => {
-  if (!deletableItem) return; // Ensure there is an item to delete
+  const toggleDeleteModal = () => {
+    setDeleteModalVisible(!isDeleteModalVisible);
+  };
 
-  setIsLoading(true); // Start loading indicator
-  axios.delete(`${apiURL}/deleteAnimalControlForm/${deletableItem.id}`)
-    .then(response => {
-      if (response.data.success) {
-        setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
-        setNotificationMessage('Entry deleted successfully!');
-      } else {
-        setNotificationMessage('Failed to delete entry. ' + response.data.message);
-      }
-    })
-    .catch(error => {
-      console.error('Error deleting item:', error);
-      setNotificationMessage('An error occurred while deleting the entry.');
-    })
-    .finally(() => {
-      setIsLoading(false); // Stop loading indicator
-      toggleDeleteModal(false); // Close the delete confirmation modal
-      toggleNotificationModal(); // Show notification modal
-      setDeletableItem(null); // Clear the deletable item state
-    });
-};
+  const deleteItem = () => {
+    if (!deletableItem) return;
 
-const toggleNotificationModal = () => {
-  setNotificationModalVisible(!isNotificationModalVisible);
-};
+    setIsLoading(true);
+    axios.delete(`${apiURL}/deleteAnimalControlForm/${deletableItem.id}`)
+      .then(response => {
+        if (response.data.success) {
+          setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
+          setNotificationMessage('Entry deleted successfully!');
+        } else {
+          setNotificationMessage('Failed to delete entry. ' + response.data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error deleting item:', error);
+        setNotificationMessage('An error occurred while deleting the entry.');
+      })
+      .finally(() => {
+        setIsLoading(false);
+        toggleDeleteModal(false);
+        toggleNotificationModal();
+        setDeletableItem(null);
+      });
+  };
 
+  const toggleNotificationModal = () => {
+    setNotificationModalVisible(!isNotificationModalVisible);
+  };
 
-// Function to add one day to the date
-const addOneDayToDate = (dateStr) => {
-  const date = new Date(dateStr);
-  date.setDate(date.getDate() + 1);
-  return date.toISOString().split('T')[0]; // Return the date in YYYY-MM-DD format
-};
+  const addOneDayToDate = (dateStr) => {
+    const date = new Date(dateStr);
+    date.setDate(date.getDate() + 1);
+    return date.toISOString().split('T')[0];
+  };
 
-// Function to handle next page button press
-const handleNextPage = () => {
-  setCurrentPage(currentPage + 1);
-};
+  const handleNextPage = () => {
+    setCurrentPage(currentPage + 1);
+  };
 
-// Calculate the slice range based on currentPage and itemsPerPage
-const startIndex = (currentPage - 1) * itemsPerPage;
-const endIndex = startIndex + itemsPerPage;
+  const handlePreviousPage = () => {
+    setCurrentPage(currentPage - 1);
+  };
 
-// Function to handle previous page button press
-const handlePreviousPage = () => {
-  setCurrentPage(currentPage - 1);
-};
-
-if (isLoading) {
-  return (
-    <View style={[styles.container, { justifyContent: 'center' }]}>
-      <ActivityIndicator size="large" color="#0000ff" />
-    </View>
-  );
-}
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const pageItems = filteredForms.slice(startIndex, endIndex);
 
   return (
-    <ScrollView contentContainerSFtyle={styles.scrollViewContainer}>
-      <View style={styles.container}>
-        <View style={styles.headerContainer}>
-          <Text style={styles.header}>Animal Control and Rehabilitation Section Daily Report Form Archive </Text>
-        </View>
-        <View style={styles.searchContainer}>
-          <Icon name="search" size={20} color="#000" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchBar}
-            placeholder="Search by owner, pet name, or date..."
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            returnKeyType="search"
-            onSubmitEditing={handleSearchSubmit}
-          />
-        </View>
-        <View style={styles.divider} />
-         {isLoading ? (
-          <ActivityIndicator size="large" color="#0000ff" />
-        ) : (
-        <FlatList
-          ref={flatListRef} // Assign the ref to FlatList
-          scrollEnabled={false}
-          data={filteredForms.slice(startIndex, endIndex)}
-          //data={filteredForms} 
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.itemContainer}>
-              <Text style={styles.itemText}>Username: <Text style={styles.itemDataText}>{item.username}</Text></Text>
-              <Text style={styles.itemText}>Date: <Text style={styles.itemDataText}>{addOneDayToDate(item.date1.split('T')[0])}</Text></Text>
-              <Text style={styles.itemText}>Cage Number: <Text style={styles.itemDataText}>{item.cageNum}</Text></Text>
-              
-              <Text style={styles.itemText}>Impounded</Text>
-              <Text style={styles.itemText}>No. of Heads: <Text style={styles.itemDataText}>{item.impHeads}</Text></Text>
-              <Text style={styles.itemText}>Date: <Text style={styles.itemDataText}>{addOneDayToDate(item.date2.split('T')[0])}</Text></Text>
-              
-              <Text style={styles.itemText}>Claimed</Text>
-              <Text style={styles.itemText}>No. of Heads: <Text style={styles.itemDataText}>{item.claimedHeads}</Text></Text>
-              <Text style={styles.itemText}>Date: <Text style={styles.itemDataText}>{addOneDayToDate(item.date3.split('T')[0])}</Text></Text>
-              
-              <Text style={styles.itemText}>Euthanized</Text>
-              <Text style={styles.itemText}>No. of Heads: <Text style={styles.itemDataText}>{item.euthHeads}</Text></Text>
-              <Text style={styles.itemText}>Date: <Text style={styles.itemDataText}>{addOneDayToDate(item.date4.split('T')[0])}</Text></Text>
-              <Text style={styles.itemText}>Chief of Operation/Team Leader: <Text style={styles.itemDataText}>{item.chief}</Text></Text>
+    <ArchiveScreen
+      title="Animal Control & Rehabilitation Archive"
+      loading={isLoading}
+      isEmpty={filteredForms.length === 0}
+      emptyMessage="No animal control records found."
+    >
+      <ArchiveSearchBar
+        value={searchTerm}
+        onChangeText={setSearchTerm}
+        placeholder="Search by username, cage number, or date..."
+      />
 
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.editButton} onPress={() => handleEditPress(item)}>
-                  <Text style={styles.modalButtonText}>Edit</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeletePress(item)}>
-                  <Text style={styles.modalButtonText}>Delete</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.divider} />
-            </View>
-          )}
+      {pageItems.map((item) => (
+        <ArchiveListItem
+          key={item.id}
+          fields={[
+            { label: 'Username', value: item.username },
+            { label: 'Date', value: addOneDayToDate(item.date1.split('T')[0]) },
+            { label: 'Cage Number', value: item.cageNum },
+            { label: 'Impounded — No. of Heads', value: item.impHeads },
+            { label: 'Impounded — Date', value: addOneDayToDate(item.date2.split('T')[0]) },
+            { label: 'Claimed — No. of Heads', value: item.claimedHeads },
+            { label: 'Claimed — Date', value: addOneDayToDate(item.date3.split('T')[0]) },
+            { label: 'Euthanized — No. of Heads', value: item.euthHeads },
+            { label: 'Euthanized — Date', value: addOneDayToDate(item.date4.split('T')[0]) },
+            { label: 'Chief of Operation/Team Leader', value: item.chief },
+          ]}
+          onEdit={() => handleEditPress(item)}
+          onDelete={() => handleDeletePress(item)}
         />
-        )}
+      ))}
 
-        <Text Text style={styles.pageText}>Page: <Text>{currentPage}</Text></Text> 
-          <View style={styles.buttonContainer}>
-            {currentPage > 1 && (
-              <TouchableOpacity style={styles.button} onPress={handlePreviousPage}>
-                <Text style={styles.buttonText}>Previous Page</Text>
-              </TouchableOpacity>
-            )}
+      <ArchivePagination
+        page={currentPage}
+        hasPrev={currentPage > 1}
+        hasNext={filteredForms.length > endIndex}
+        onPrev={handlePreviousPage}
+        onNext={handleNextPage}
+      />
 
-            {filteredForms.length > endIndex && (
-              <TouchableOpacity style={styles.button} onPress={handleNextPage}>
-                <Text style={styles.buttonText}>Next Page</Text>
-              </TouchableOpacity>
-            )}
-        </View>
+      <AppButton
+        title="Archives Menu"
+        variant="ghost"
+        onPress={handleBackPress}
+        style={menuStyles.backButton}
+        textStyle={menuStyles.backButtonText}
+      />
 
-        <TouchableOpacity style={styles.button} onPress={navigateToVetArchiveMenu}>
-          <Text style={styles.buttonText}>Archives Menu</Text>
-        </TouchableOpacity>
+      <AppModal
+        isVisible={isConfirmModalVisible}
+        message="Do you want to proceed editing the Animal Control Form?"
+        onBackdropPress={toggleConfirmModal}
+        actions={[
+          { label: 'No', variant: 'secondary', onPress: toggleConfirmModal },
+          { label: 'Yes', onPress: submitForm },
+        ]}
+      />
 
-        {/* Modal to check if all fields are inputted */}
-        <Modal isVisible={isConfirmModalVisible}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>Do you want to proceed editing the Neuter Form?</Text>
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity style={styles.modalButton} onPress={() => submitForm(editableItem)}>
-                <Text style={styles.modalButtonText}>Yes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalButton} onPress={toggleConfirmModal}>
-                <Text style={styles.modalButtonText}>No</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+      <AppModal
+        isVisible={isDeleteModalVisible}
+        message="Are you sure you want to delete this entry?"
+        onBackdropPress={toggleDeleteModal}
+        actions={[
+          { label: 'No', variant: 'secondary', onPress: toggleDeleteModal },
+          { label: 'Yes', variant: 'danger', onPress: deleteItem },
+        ]}
+      />
 
-        <Modal isVisible={isDeleteModalVisible}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>Are you sure you want to delete this entry?</Text>
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity style={styles.modalButton} onPress={deleteItem}>
-                <Text style={styles.modalButtonText}>Yes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalButton} onPress={toggleDeleteModal}>
-                <Text style={styles.modalButtonText}>No</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-
-        <Modal isVisible={isNotificationModalVisible}>
-                <View style={styles.modalContainer}>
-                    <Text style={styles.modalText}>{notificationMessage}</Text>
-                    <TouchableOpacity style={styles.modalButton} onPress={toggleNotificationModal}>
-                        <Text style={styles.modalButtonText}>OK</Text>
-                    </TouchableOpacity>
-                </View>
-        </Modal>
-      </View>
-    </ScrollView>
+      <AppModal
+        isVisible={isNotificationModalVisible}
+        message={notificationMessage}
+        onBackdropPress={toggleNotificationModal}
+        actions={[{ label: 'OK', onPress: toggleNotificationModal }]}
+      />
+    </ArchiveScreen>
   );
 };
 

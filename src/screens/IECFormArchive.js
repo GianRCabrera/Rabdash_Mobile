@@ -1,10 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, FlatList, ScrollView, ActivityIndicator, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import styles from '../../styles/Archive';
-import Modal from 'react-native-modal';
 import axios from 'axios';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {
+  AppModal,
+  ArchiveScreen,
+  ArchiveSearchBar,
+  ArchiveListItem,
+  ArchivePagination,
+  AppButton,
+  menuStyles,
+} from '../components';
 
 const IECFormArchive = () => {
   const [user, setUser] = useState(null);
@@ -14,7 +19,6 @@ const IECFormArchive = () => {
   const [editableItem, setEditableItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredForms, setFilteredForms] = useState([]);
-  const flatListRef = useRef();
 
   const navigation = useNavigation();
   const apiURL = process.env.EXPO_PUBLIC_URL;
@@ -27,10 +31,15 @@ const IECFormArchive = () => {
   const [isNotificationModalVisible, setNotificationModalVisible] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
 
-  const [filterType, setFilterType] = useState('all'); // 'all' or 'user'
-
-  const navigateToVetArchiveMenu = () => {
-    navigation.navigate('VetArchiveMenu');
+  const handleBackPress = () => {
+    const position = user?.position;
+    if (position === 'CVO' || position === 'RabDash') {
+      navigation.navigate('VetArchiveMenu');
+    } else if (position === 'Private Veterinarian') {
+      navigation.navigate('ClientDatabase');
+    } else {
+      console.warn('Unknown user position:', position);
+    }
   };
 
   const toggleConfirmModal = () => {
@@ -38,12 +47,21 @@ const IECFormArchive = () => {
   };
 
   useEffect(() => {
-    const fetchVaccinationForms = async () => {
+    // Previously this screen never fetched /Position and hardcoded its back
+    // button straight to VetArchiveMenu regardless of who was viewing it —
+    // a Private Veterinarian ended up on the CVO-only menu. The getIECForms
+    // endpoint itself has no CVO-scoped counterpart (unlike Field Vacc/
+    // Neuter/Sample), so every position still sees the same unscoped data —
+    // only the back-navigation destination is fixed here.
+    const fetchUserAndForms = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get(`${apiURL}/getIECForms`);
-        setVaccinationForms(response.data);
-        setFilteredForms(response.data);
+        const [positionResponse, formsResponse] = await Promise.all([
+          axios.get(`${apiURL}/Position`),
+          axios.get(`${apiURL}/getIECForms`),
+        ]);
+        setUser(positionResponse.data);
+        setVaccinationForms(formsResponse.data);
       } catch (error) {
         console.error('Error fetching SEMINARS/TRAININGS/IEC Report Form Archives:', error);
       } finally {
@@ -51,24 +69,11 @@ const IECFormArchive = () => {
       }
     };
 
-    fetchVaccinationForms();
+    fetchUserAndForms();
   }, []);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await axios.get(`${apiURL}/getUser`);
-        setUser(response.data);
-      } catch (error) {
-        console.error('Error fetching user:', error);
-      }
-    };
-
-    fetchUser();
-  }, []);
-
-  useEffect(() => {
-    const filtered = vaccinationForms.filter(form => 
+    const filtered = vaccinationForms.filter(form =>
       form.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       form.date?.includes(searchTerm) ||
       form.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -79,30 +84,10 @@ const IECFormArchive = () => {
       form.brochure?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       String(form.materials).toLowerCase().includes(searchTerm.toLowerCase())
     );
-    if (filtered.length > 0) {
-      setFilteredForms(filtered);
-    } else {
-      setFilteredForms(vaccinationForms);
-    }
-  }, [searchTerm, vaccinationForms]);
-
-  useEffect(() => {
-    let filtered;
-    if (filterType === 'user' && user) {
-      filtered = vaccinationForms.filter(form => form.username === user.username);
-    } else {
-      filtered = vaccinationForms;
-    }
+    // Previously fell back to the full unfiltered list on zero matches —
+    // fixed to show an actual empty state instead.
     setFilteredForms(filtered);
-  }, [filterType, vaccinationForms, user]);
-
-  const handleSearchSubmit = () => {
-    if (filteredForms.length > 0) {
-      flatListRef.current?.scrollToIndex({ animated: true, index: 0 });
-    } else {
-      console.log('No filtered items to scroll to');
-    }
-  };
+  }, [searchTerm, vaccinationForms]);
 
   const handleEditPress = (item) => {
     setEditableItem(item);
@@ -128,9 +113,6 @@ const IECFormArchive = () => {
   const handleNextPage = () => {
     setCurrentPage(currentPage + 1);
   };
-
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
 
   const handlePreviousPage = () => {
     setCurrentPage(currentPage - 1);
@@ -174,120 +156,85 @@ const IECFormArchive = () => {
     setNotificationModalVisible(!isNotificationModalVisible);
   };
 
-  if (isLoading) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
-  }
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const pageItems = filteredForms.slice(startIndex, endIndex);
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-      <View style={styles.container}>
-        <View style={styles.headerContainer}>
-          <Text style={styles.header}>SEMINARS/TRAININGS/IEC Archive</Text>
-        </View>
-        <View style={styles.searchContainer}>
-          <Icon name="search" size={20} color="#000" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchBar}
-            placeholder="Search by owner, pet name, or date..."
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            returnKeyType="search"
-            onSubmitEditing={handleSearchSubmit}
-          />
-        </View>
-        <View style={styles.divider} />
+    <ArchiveScreen
+      title="Seminars/Trainings/IEC Archive"
+      loading={isLoading}
+      isEmpty={filteredForms.length === 0}
+      emptyMessage="No IEC records found."
+    >
+      <ArchiveSearchBar
+        value={searchTerm}
+        onChangeText={setSearchTerm}
+        placeholder="Search by title, district, or date..."
+      />
 
-        <FlatList
-          ref={flatListRef}
-          scrollEnabled={false}
-          data={filteredForms.slice(startIndex, endIndex)}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.itemContainer}>
-              <Text style={styles.itemText}>Username: <Text style={styles.itemDataText}>{item.username}</Text></Text>
-              <Text style={styles.itemText}>Date: <Text style={styles.itemDataText}>{addOneDayToDate(item.date.split('T')[0])}</Text></Text>
-              <Text style={styles.itemText}>Title: <Text style={styles.itemDataText}>{item.title}</Text></Text>
-              <Text style={styles.itemText}>District: <Text style={styles.itemDataText}>{item.district}</Text></Text>
-              <Text style={styles.itemText}>Barangay: <Text style={styles.itemDataText}>{item.barangay}</Text></Text>
-              <Text style={styles.itemText}>Purok: <Text style={styles.itemDataText}>{item.purok}</Text></Text>
-              <Text style={styles.itemText}>No. of Participants: <Text style={styles.itemDataText}>{item.participants}</Text></Text>
-              <Text style={styles.itemText}>Brochure(Kind): <Text style={styles.itemDataText}>{item.brochure}</Text></Text>
-              <Text style={styles.itemText}>No. of Materials: <Text style={styles.itemDataText}>{item.materials}</Text></Text>
-
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.editButton} onPress={() => handleEditPress(item)}>
-                  <Text style={styles.modalButtonText}>Edit</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeletePress(item)}>
-                  <Text style={styles.modalButtonText}>Delete</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.divider} />
-            </View>
-          )}
+      {pageItems.map((item) => (
+        <ArchiveListItem
+          key={item.id}
+          fields={[
+            { label: 'Username', value: item.username },
+            { label: 'Date', value: addOneDayToDate(item.date.split('T')[0]) },
+            { label: 'Title', value: item.title },
+            { label: 'District', value: item.district },
+            { label: 'Barangay', value: item.barangay },
+            { label: 'Purok', value: item.purok },
+            { label: 'No. of Participants', value: item.participants },
+            { label: 'Brochure (Kind)', value: item.brochure },
+            { label: 'No. of Materials', value: item.materials },
+          ]}
+          onEdit={() => handleEditPress(item)}
+          onDelete={() => handleDeletePress(item)}
         />
+      ))}
 
-        <Text style={styles.pageText}>Page: <Text>{currentPage}</Text></Text>
-        <View style={styles.buttonContainer}>
-          {currentPage > 1 && (
-            <TouchableOpacity style={styles.button} onPress={handlePreviousPage}>
-              <Text style={styles.buttonText}>Previous Page</Text>
-            </TouchableOpacity>
-          )}
+      <ArchivePagination
+        page={currentPage}
+        hasPrev={currentPage > 1}
+        hasNext={filteredForms.length > endIndex}
+        onPrev={handlePreviousPage}
+        onNext={handleNextPage}
+      />
 
-          {filteredForms.length > endIndex && (
-            <TouchableOpacity style={styles.button} onPress={handleNextPage}>
-              <Text style={styles.buttonText}>Next Page</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+      <AppButton
+        title="Archives Menu"
+        variant="ghost"
+        onPress={handleBackPress}
+        style={menuStyles.backButton}
+        textStyle={menuStyles.backButtonText}
+      />
 
-        <TouchableOpacity style={styles.button} onPress={navigateToVetArchiveMenu}>
-          <Text style={styles.buttonText}>Archives Menu</Text>
-        </TouchableOpacity>
+      <AppModal
+        isVisible={isConfirmModalVisible}
+        message="Do you want to proceed editing the IEC Form?"
+        onBackdropPress={toggleConfirmModal}
+        actions={[
+          { label: 'No', variant: 'secondary', onPress: toggleConfirmModal },
+          { label: 'Yes', onPress: submitForm },
+        ]}
+      />
 
-        <Modal isVisible={isConfirmModalVisible}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>Do you want to proceed editing the IEC Form?</Text>
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity style={styles.modalButton} onPress={() => submitForm(editableItem)}>
-                <Text style={styles.modalButtonText}>Yes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalButton} onPress={toggleConfirmModal}>
-                <Text style={styles.modalButtonText}>No</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+      <AppModal
+        isVisible={isDeleteModalVisible}
+        message="Are you sure you want to delete this entry?"
+        onBackdropPress={toggleDeleteModal}
+        actions={[
+          { label: 'No', variant: 'secondary', onPress: toggleDeleteModal },
+          { label: 'Yes', variant: 'danger', onPress: deleteItem },
+        ]}
+      />
 
-        <Modal isVisible={isDeleteModalVisible}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>Are you sure you want to delete this entry?</Text>
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity style={styles.modalButton} onPress={deleteItem}>
-                <Text style={styles.modalButtonText}>Yes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalButton} onPress={toggleDeleteModal}>
-                <Text style={styles.modalButtonText}>No</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-
-        <Modal isVisible={isNotificationModalVisible}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>{notificationMessage}</Text>
-            <TouchableOpacity style={styles.modalButton} onPress={toggleNotificationModal}>
-              <Text style={styles.modalButtonText}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        </Modal>
-      </View>
-    </ScrollView>
+      <AppModal
+        isVisible={isNotificationModalVisible}
+        message={notificationMessage}
+        onBackdropPress={toggleNotificationModal}
+        actions={[{ label: 'OK', onPress: toggleNotificationModal }]}
+      />
+    </ArchiveScreen>
   );
 };
 
