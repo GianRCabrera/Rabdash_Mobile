@@ -221,7 +221,7 @@ const Rabies_Exposure_Form = () => {
       <AppInput label="Address" placeholder="" value={addressValue} onChangeText={setAddressValue} />
 
       <FormSectionLabel title="History of Exposure" />
-      <View style={menuStyles.row}>
+      <View style={[menuStyles.row, isSexOpen && { zIndex: 20 }]}>
         <View style={menuStyles.rowButton}>
           <AppInput label="Age" placeholder="" value={ageValue} onChangeText={setAgeValue} />
         </View>
@@ -247,7 +247,7 @@ const Rabies_Exposure_Form = () => {
       />
       <AppInput label="Place (Where the biting occurred)" placeholder="" value={placeValue} onChangeText={setPlaceValue} />
 
-      <View style={menuStyles.row}>
+      <View style={[menuStyles.row, isTypeOpen && { zIndex: 20 }]}>
         <View style={menuStyles.rowButton}>
           <AppInput label="Type of Animal" placeholder="" value={typeAnimalValue} onChangeText={setTypeAnimalValue} />
         </View>

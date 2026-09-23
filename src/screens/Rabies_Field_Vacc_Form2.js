@@ -233,7 +233,7 @@ const Rabies_Field_Vacc_Form2 = () => {
       <AppInput label="Name" placeholder="Browny" value={petName} onChangeText={setpetName} />
       <AppInput label="Age" placeholder="8 months Old" value={petAge} onChangeText={setpetAge} />
 
-      <View style={menuStyles.row}>
+      <View style={[menuStyles.row, (isSpeciesOpen || isAnimalSexOpen) && { zIndex: 20 }]}>
         <View style={menuStyles.rowButton}>
           <AppDropdown
             label="Species"

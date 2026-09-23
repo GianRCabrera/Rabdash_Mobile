@@ -393,7 +393,7 @@ const Rabies_Exposure_Form2 = () => {
         onCancel={hideDateTimePicker6}
       />
 
-      <View style={menuStyles.row}>
+      <View style={[menuStyles.row, isOutcomeOpen && { zIndex: 20 }]}>
         <View style={menuStyles.rowButton}>
           <AppInput label="Brand Name" placeholder="" value={brand} onChangeText={setBrand} />
         </View>

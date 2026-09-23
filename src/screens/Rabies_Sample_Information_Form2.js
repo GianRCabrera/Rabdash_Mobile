@@ -253,7 +253,7 @@ const Rabies_Sample_Information_Form2 = () => {
   return (
     <FormScreen title="Rabies Sample Information (Part 2)">
       <FormSectionLabel title="Sample Details" first />
-      <View style={menuStyles.row}>
+      <View style={[menuStyles.row, (activeDropdown === 'sex' || activeDropdown === 'specimen') && { zIndex: 20 }]}>
         <View style={menuStyles.rowButton}>
           <AppDropdown
             label="Sex"
