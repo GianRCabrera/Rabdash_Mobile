@@ -15,7 +15,7 @@ const formatValue = (value, mode) => {
   if (mode === 'time') return value.toLocaleTimeString();
   if (mode === 'datetime') return `${value.toLocaleDateString()} ${value.toLocaleTimeString()}`;
   if (mode === 'year') return value.getFullYear().toString();
-  return value.toDateString();
+  return value.toLocaleDateString();
 };
 
 // The "tap to open a date picker" field used across every form screen —
