@@ -16,7 +16,7 @@ const VetInputForms = () => {
   const navigateToMainMenu = () => navigation.navigate('VetMenu');
 
   return (
-    <MenuScreen title="Forms" backgroundImage={require('../../assets/forms_pic.png')}>
+    <MenuScreen title="Forms">
       <View style={menuStyles.row}>
         <AppButton title="Rabies Field Vaccination" variant="inverse" onPress={navigateToRabies_Field_Vacc_Form} style={menuStyles.rowButton} />
         <AppButton title="Neuter" variant="inverse" onPress={navigateToRabies_Neuter_Form} style={menuStyles.rowButton} />

@@ -1,30 +1,27 @@
 import React from 'react';
-import { View, Text, Image, ScrollView, StyleSheet } from 'react-native';
-import { colors, spacing, typography, radii, shadow } from '../theme/theme';
+import { View, ScrollView, StyleSheet } from 'react-native';
+import ScreenHeader from './ScreenHeader';
+import { colors, spacing } from '../theme/theme';
 
 // Shared layout for the app's grid-of-buttons menu screens (MainMenu, VetMenu,
-// InputForms, VetInputForms, ClientDatabase, VetArchiveMenu): a white top
-// area with a title (+ optional badge, e.g. the user's position), and a red
-// rounded card below holding a scrollable button list. Replaces six near-
-// identical hand-rolled StyleSheets, each with its own absolute-positioned
-// back/logout button and magic-number spacing.
-const MenuScreen = ({ title, badge, backgroundImage, children }) => {
+// InputForms, VetInputForms, ClientDatabase, VetArchiveMenu): solid red
+// background (matching Login/Landing/FormScreen), a white header card (title
+// + optional subtitle, e.g. the user's position), and the button list below
+// it. Header and buttons live in ONE centered group (not a fixed header +
+// independently-positioned list) — the same fix Landing_page needed: two
+// separately-positioned blocks drift apart or leave a lopsided gap depending
+// on content length, while one group centered as a whole keeps consistent
+// internal spacing and puts any leftover space symmetrically above/below
+// instead of dumping it all at the bottom. On the longer 8-9 button screens
+// (VetInputForms/VetArchiveMenu) the content simply exceeds the centered
+// space and scrolls from the top as normal.
+const MenuScreen = ({ title, badge, children }) => {
   return (
     <View style={styles.container}>
-      {backgroundImage ? <Image source={backgroundImage} style={styles.backgroundImage} /> : null}
-      <View style={styles.topArea}>
-        <Text style={styles.header}>{title}</Text>
-        {badge ? (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{badge}</Text>
-          </View>
-        ) : null}
-      </View>
-      <View style={styles.card}>
-        <ScrollView contentContainerStyle={styles.buttonList} showsVerticalScrollIndicator={false}>
-          {children}
-        </ScrollView>
-      </View>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScreenHeader title={title} subtitle={badge} />
+        <View style={styles.buttonList}>{children}</View>
+      </ScrollView>
     </View>
   );
 };
@@ -32,51 +29,18 @@ const MenuScreen = ({ title, badge, backgroundImage, children }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
-  },
-  backgroundImage: {
-    position: 'absolute',
-    width: '200%',
-    height: '42%',
-    opacity: 0.12,
-    top: -30,
-    right: '-60%',
-  },
-  topArea: {
-    paddingTop: spacing.xxxl * 1.75,
-    paddingHorizontal: spacing.xxl,
-    paddingBottom: spacing.xl,
-    alignItems: 'center',
-  },
-  header: {
-    ...typography.largeTitle,
-    color: colors.primary,
-    textAlign: 'center',
-  },
-  badge: {
-    marginTop: spacing.sm,
-    backgroundColor: colors.surface,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radii.pill,
-    ...shadow,
-  },
-  badgeText: {
-    ...typography.label,
-    color: colors.primary,
-  },
-  card: {
-    flex: 1,
     backgroundColor: colors.primary,
-    borderTopLeftRadius: radii.md * 2,
-    borderTopRightRadius: radii.md * 2,
-    paddingTop: spacing.xxxl,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
     paddingHorizontal: spacing.xxl,
-    paddingBottom: spacing.xxl,
+    paddingVertical: spacing.xxxl,
   },
   buttonList: {
     alignItems: 'center',
-    flexGrow: 1,
+    marginTop: spacing.xl,
+    width: '100%',
   },
 });
 

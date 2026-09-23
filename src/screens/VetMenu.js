@@ -27,7 +27,7 @@ const VetMenu = () => {
   const navigateToDownloadableForms = () => navigation.navigate('DownloadableForms');
 
   return (
-    <MenuScreen title="Main Menu" badge={position} backgroundImage={require('../../assets/menu_pic.png')}>
+    <MenuScreen title="Main Menu" badge={position}>
       <AppButton title="Input Forms" variant="inverse" onPress={navigateToInputForms} style={menuStyles.button} />
       <AppButton title="Form Archives" variant="inverse" onPress={navigateToVetArchiveMenu} style={menuStyles.button} />
       <AppButton title="Downloadable Forms" variant="inverse" onPress={navigateToDownloadableForms} style={menuStyles.button} />

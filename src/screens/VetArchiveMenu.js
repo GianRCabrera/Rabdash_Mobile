@@ -16,7 +16,7 @@ const VetArchiveMenu = () => {
   const navigateToVetMenu = () => navigation.navigate('VetMenu');
 
   return (
-    <MenuScreen title="Form Archives" backgroundImage={require('../../assets/archives.png')}>
+    <MenuScreen title="Form Archives">
       <View style={menuStyles.row}>
         <AppButton title="Seminars/Trainings/IEC" variant="inverse" onPress={navigateToSeminarFormarchive} style={menuStyles.rowButton} />
         <AppButton title="Rabies Field Vaccination" variant="inverse" onPress={navigateToField_vacc_archives} style={menuStyles.rowButton} />

@@ -8,13 +8,14 @@ import { colors, spacing, radii, typography, shadow } from '../theme/theme';
 // white bold text directly on the red background instead — both patterns
 // already existed across the app; this just makes each one consistent
 // instead of every screen picking its own radius/shadow/font size.
-const ScreenHeader = ({ title, variant = 'card' }) => {
+const ScreenHeader = ({ title, subtitle, variant = 'card' }) => {
   if (variant === 'plain') {
     return <Text style={styles.plainText}>{title}</Text>;
   }
   return (
     <View style={styles.card}>
       <Text style={styles.cardText}>{title}</Text>
+      {subtitle ? <Text style={styles.subtitleText}>{subtitle}</Text> : null}
     </View>
   );
 };
@@ -33,6 +34,12 @@ const styles = StyleSheet.create({
     ...typography.title,
     color: colors.primary,
     textAlign: 'center',
+  },
+  subtitleText: {
+    ...typography.label,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: spacing.xs,
   },
   plainText: {
     ...typography.title,

@@ -10,7 +10,7 @@ const ClientDatabase = () => {
   const navigateToMainMenu = () => navigation.navigate('MainMenu');
 
   return (
-    <MenuScreen title="Form Archives" backgroundImage={require('../../assets/archives.png')}>
+    <MenuScreen title="Form Archives">
       <AppButton title="Rabies Field Vaccination Form Archives" variant="inverse" onPress={navigateToField_vacc_archives} style={menuStyles.button} />
       <AppButton title="Neuter Form Archives" variant="inverse" onPress={navigateToNeuter_Form_archive} style={menuStyles.button} />
       <AppButton title="Rabies Sample Information Form" variant="inverse" onPress={navigateToSample_form_archive} style={menuStyles.button} />

@@ -10,7 +10,7 @@ const InputForms = () => {
   const navigateToMainMenu = () => navigation.navigate('MainMenu');
 
   return (
-    <MenuScreen title="Form Menu" backgroundImage={require('../../assets/forms_pic.png')}>
+    <MenuScreen title="Form Menu">
       <AppButton title="Rabies Field Vaccination Report" variant="inverse" onPress={navigateToRabies_Field_Vacc_Form} style={menuStyles.button} />
       <AppButton title="Neuter" variant="inverse" onPress={navigateToRabies_Neuter_Form} style={menuStyles.button} />
       <AppButton title="Rabies Sample Information" variant="inverse" onPress={navigateToRabies_Sample_Information_Form} style={menuStyles.button} />
