@@ -53,24 +53,44 @@ const UserProfile = () => {
             <Image source={require('../../assets/avatar.png')} style={styles.avatar} />
             <Text style={styles.name}>{`${user.name || ''} ${user.last_name || ''}`}</Text>
 
-            <View style={styles.infoRow}>
-              <Icon name="person" size={20} color={colors.primary} style={styles.icon} />
-              <Text style={styles.infoText}>{user.name || 'N/A'}</Text>
-            </View>
+            <View style={styles.infoList}>
+              <View style={styles.infoRow}>
+                <Icon name="person" size={20} color={colors.primary} style={styles.icon} />
+                <View style={styles.infoTextGroup}>
+                  <Text style={styles.infoLabel}>First Name</Text>
+                  <Text style={styles.infoValue}>{user.name || 'N/A'}</Text>
+                </View>
+              </View>
 
-            <View style={styles.infoRow}>
-              <Icon name="person-outline" size={20} color={colors.primary} style={styles.icon} />
-              <Text style={styles.infoText}>{user.last_name || 'N/A'}</Text>
-            </View>
+              <View style={styles.divider} />
 
-            <View style={styles.infoRow}>
-              <Icon name="email" size={20} color={colors.primary} style={styles.icon} />
-              <Text style={styles.infoText}>{user.email || 'N/A'}</Text>
-            </View>
+              <View style={styles.infoRow}>
+                <Icon name="person-outline" size={20} color={colors.primary} style={styles.icon} />
+                <View style={styles.infoTextGroup}>
+                  <Text style={styles.infoLabel}>Last Name</Text>
+                  <Text style={styles.infoValue}>{user.last_name || 'N/A'}</Text>
+                </View>
+              </View>
 
-            <View style={styles.infoRow}>
-              <Icon name="work" size={20} color={colors.primary} style={styles.icon} />
-              <Text style={styles.infoText}>{user.position || 'N/A'}</Text>
+              <View style={styles.divider} />
+
+              <View style={styles.infoRow}>
+                <Icon name="email" size={20} color={colors.primary} style={styles.icon} />
+                <View style={styles.infoTextGroup}>
+                  <Text style={styles.infoLabel}>Email</Text>
+                  <Text style={styles.infoValue}>{user.email || 'N/A'}</Text>
+                </View>
+              </View>
+
+              <View style={styles.divider} />
+
+              <View style={styles.infoRow}>
+                <Icon name="work" size={20} color={colors.primary} style={styles.icon} />
+                <View style={styles.infoTextGroup}>
+                  <Text style={styles.infoLabel}>Position</Text>
+                  <Text style={styles.infoValue}>{user.position || 'N/A'}</Text>
+                </View>
+              </View>
             </View>
 
             <AppButton title="Reset Password" variant="primary" onPress={handleResetPassword} style={styles.resetButton} />
@@ -116,18 +136,33 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     marginBottom: spacing.xl,
   },
+  infoList: {
+    width: '100%',
+  },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    marginBottom: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
   },
   icon: {
-    marginRight: spacing.sm,
+    marginRight: spacing.md,
   },
-  infoText: {
-    ...typography.body,
+  infoTextGroup: {
+    flex: 1,
+  },
+  infoLabel: {
+    ...typography.label,
+    color: colors.textSecondary,
+  },
+  infoValue: {
+    ...typography.bodyStrong,
     color: colors.textPrimary,
+    marginTop: spacing.xs / 2,
   },
   resetButton: {
     width: '100%',
