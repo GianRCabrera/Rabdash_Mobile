@@ -190,6 +190,8 @@ const Sample_form_archive = () => {
       {pageItems.map((item) => (
         <ArchiveListItem
           key={item.id}
+          title={item.name || 'Unnamed Owner'}
+          subtitle={`${[item.species, item.breed].filter(Boolean).join(' ') || 'Unspecified species'} • ${addOneDayToDate(item.date.split('T')[0])}`}
           fields={[
             { label: 'Email', value: item.username },
             { label: 'Name', value: item.name },

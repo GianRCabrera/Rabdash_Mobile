@@ -192,6 +192,8 @@ const Neuter_Form_archive = () => {
       {pageItems.map((item) => (
         <ArchiveListItem
           key={item.id}
+          title={item.client || 'Unnamed Client'}
+          subtitle={`${item.name || 'Unnamed patient'} • ${addOneDayToDate(item.date.split('T')[0])}`}
           fields={[
             { label: 'Username', value: item.username },
             { label: 'Date', value: addOneDayToDate(item.date.split('T')[0]) },

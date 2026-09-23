@@ -172,6 +172,8 @@ const BudgetFormArchive = () => {
       {pageItems.map((item) => (
         <ArchiveListItem
           key={item.id}
+          title={`Period ${item.year ?? 'N/A'}`}
+          subtitle={`Budget: ${item.budget ?? 'N/A'}`}
           fields={[
             { label: 'Username', value: item.username },
             { label: 'Period', value: item.year },

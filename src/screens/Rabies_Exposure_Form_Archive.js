@@ -201,6 +201,8 @@ const Rabies_Exposure_Form_Archive = () => {
       {pageItems.map((item) => (
         <ArchiveListItem
           key={item.id}
+          title={item.name || 'Unnamed Patient'}
+          subtitle={`Reg #${item.regNo ?? 'N/A'} • ${addOneDay(item.regDate.split('T')[0])}`}
           sections={[
             {
               title: 'Registration',

@@ -180,6 +180,8 @@ const AnimalControlArchives = () => {
       {pageItems.map((item) => (
         <ArchiveListItem
           key={item.id}
+          title={`Cage ${item.cageNum ?? 'N/A'}`}
+          subtitle={addOneDayToDate(item.date1.split('T')[0])}
           fields={[
             { label: 'Username', value: item.username },
             { label: 'Date', value: addOneDayToDate(item.date1.split('T')[0]) },

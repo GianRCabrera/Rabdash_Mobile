@@ -173,6 +173,8 @@ const ScheduleFormArchive = () => {
       {pageItems.map((item) => (
         <ArchiveListItem
           key={item.id}
+          title={item.title || 'Untitled'}
+          subtitle={`${item.district || 'No district'} • ${addOneDayToDate(item.date.split('T')[0])}`}
           fields={[
             { label: 'Username', value: item.username },
             { label: 'Date', value: addOneDayToDate(item.date.split('T')[0]) },

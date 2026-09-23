@@ -227,6 +227,8 @@ const Field_vacc_archives = () => {
       {pageItems.map((item) => (
         <ArchiveListItem
           key={item.id}
+          title={item.ownerName || 'Unnamed Owner'}
+          subtitle={`${item.petName || 'Unnamed pet'} • ${addOneDay(item.date.split('T')[0])}`}
           fields={[
             { label: 'Username', value: item.username },
             { label: 'Date', value: addOneDay(item.date.split('T')[0]) },
