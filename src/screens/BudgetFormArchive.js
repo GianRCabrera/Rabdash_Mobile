@@ -1,26 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, FlatList, ScrollView, ActivityIndicator, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import styles from '../../styles/Archive';
-import Modal from 'react-native-modal';
 import axios from 'axios';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {
+  AppModal,
+  ArchiveScreen,
+  ArchiveSearchBar,
+  ArchiveListItem,
+  ArchivePagination,
+  AppButton,
+  menuStyles,
+} from '../components';
 
 const BudgetFormArchive = () => {
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Add loading state
+  const [isLoading, setIsLoading] = useState(true);
   const [vaccinationForms, setVaccinationForms] = useState([]);
 
   const [isConfirmModalVisible, setConfirmModalVisible] = useState(false);
-
-  const [editableItem, setEditableItem] = useState(null); // Initialize state for storing item to edit
+  const [editableItem, setEditableItem] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredForms, setFilteredForms] = useState([]);
-  const flatListRef = useRef(); // Add this ref for the FlatList
-  
-  const [deletableItem, setDeletableItem] = useState(null); // State to store item to be deleted
-  const [isDeleteModalVisible, setDeleteModalVisible] = useState(false); // State to manage delete modal visibility
+
+  const [deletableItem, setDeletableItem] = useState(null);
+  const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
 
   const [isNotificationModalVisible, setNotificationModalVisible] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
@@ -28,44 +31,53 @@ const BudgetFormArchive = () => {
   const navigation = useNavigation();
   const apiURL = process.env.EXPO_PUBLIC_URL;
 
-  const [currentPage, setCurrentPage] = useState(1); // State to manage current page
-  const itemsPerPage = 5; // Number of items per page
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-  const navigateToVetArchiveMenu = () => {
-    navigation.navigate('VetArchiveMenu');
+  const handleBackPress = () => {
+    const position = user?.position;
+    if (position === 'CVO' || position === 'RabDash') {
+      navigation.navigate('VetArchiveMenu');
+    } else if (position === 'Private Veterinarian') {
+      navigation.navigate('ClientDatabase');
+    } else {
+      console.warn('Unknown user position:', position);
+    }
   };
 
   const toggleConfirmModal = () => {
     setConfirmModalVisible(!isConfirmModalVisible);
   };
 
-  //const NETWORK_URL = 'http://192.168.1.211:3000/getBudgetForms';
-  //const NETWORK_URL = 'http://192.168.1.7:3000/getBudgetForms';
-
   useEffect(() => {
-    const fetchVaccinationForms = async() => {
+    // getBudgetForms has no CVO-scoped counterpart on the backend, so every
+    // position still sees the same unscoped data — only the back-navigation
+    // destination is position-aware here.
+    const fetchUserAndForms = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get(`${apiURL}/getBudgetForms`);
-        setVaccinationForms(response.data);
-        setFilteredForms(response.data); // Initialize filteredForms with all forms
+        const [positionResponse, formsResponse] = await Promise.all([
+          axios.get(`${apiURL}/Position`),
+          axios.get(`${apiURL}/getBudgetForms`),
+        ]);
+        setUser(positionResponse.data);
+        setVaccinationForms(formsResponse.data);
       } catch (error) {
         console.error('Error fetching Budget Form Archives:', error);
       } finally {
         setIsLoading(false);
       }
-    }
+    };
 
-    fetchVaccinationForms();
+    fetchUserAndForms();
   }, []);
 
   useEffect(() => {
     const filtered = vaccinationForms.filter(form => {
-      // Ensure values are strings before calling string-specific methods
       const yearStr = form.year?.toString();
       const budgetStr = form.budget?.toString().toLowerCase();
       const costvaxStr = form.costvax?.toString().toLowerCase();
-  
+
       return (
         form.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         yearStr?.includes(searchTerm) ||
@@ -73,70 +85,48 @@ const BudgetFormArchive = () => {
         costvaxStr?.includes(searchTerm.toLowerCase())
       );
     });
-  
-    if (filtered.length > 0) {
-      setFilteredForms(filtered);
-    } else {
-      console.log('No match found');
-      setFilteredForms(vaccinationForms); // Show all items if no match or empty search
-    }
+
+    // Previously fell back to the full unfiltered list on zero matches —
+    // fixed to show an actual empty state instead.
+    setFilteredForms(filtered);
   }, [searchTerm, vaccinationForms]);
 
-  // Function to find the first matched item index and scroll to it
-  const handleSearchSubmit = () => {
-    if (filteredForms.length > 0) {
-      // If there are filtered forms, attempt to scroll to the top of the list
-      flatListRef.current?.scrollToIndex({ animated: true, index: 0 });
-    } else {
-      console.log('No filtered items to scroll to');
-    }
- };
-
- // Function to open modal and set the item to be edited
- const handleEditPress = (item) => {
-  setEditableItem(item); // Store the item to be edited
-  toggleConfirmModal();
- };
-
- const submitForm = () => {
-  if (editableItem) {
-    navigation.navigate('BudgetForm', {
-      item: editableItem,
-      fromArchive: true
-    });
+  const handleEditPress = (item) => {
+    setEditableItem(item);
     toggleConfirmModal();
-  }
- };
+  };
 
-  // Function to handle next page button press
+  const submitForm = () => {
+    if (editableItem) {
+      navigation.navigate('BudgetForm', {
+        item: editableItem,
+        fromArchive: true
+      });
+      toggleConfirmModal();
+    }
+  };
+
   const handleNextPage = () => {
     setCurrentPage(currentPage + 1);
   };
 
-  // Calculate the slice range based on currentPage and itemsPerPage
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-
-  // Function to handle previous page button press
   const handlePreviousPage = () => {
     setCurrentPage(currentPage - 1);
   };
 
-  // Function to handle deletion of item
   const handleDeletePress = (item) => {
-    setDeletableItem(item); // Store the item to be deleted
-    toggleDeleteModal(); // Open the delete confirmation modal
-  };  
+    setDeletableItem(item);
+    toggleDeleteModal();
+  };
 
-  // Function to toggle delete confirmation modal visibility
   const toggleDeleteModal = () => {
     setDeleteModalVisible(!isDeleteModalVisible);
   };
 
   const deleteItem = () => {
-    if (!deletableItem) return; // Ensure there is an item to delete
-  
-    setIsLoading(true); // Start loading indicator
+    if (!deletableItem) return;
+
+    setIsLoading(true);
     axios.delete(`${apiURL}/deleteBudgetForm/${deletableItem.id}`)
       .then(response => {
         if (response.data.success) {
@@ -151,10 +141,10 @@ const BudgetFormArchive = () => {
         setNotificationMessage('An error occurred while deleting the entry.');
       })
       .finally(() => {
-        setIsLoading(false); // Stop loading indicator
-        toggleDeleteModal(false); // Close the delete confirmation modal
-        toggleNotificationModal(); // Show notification modal
-        setDeletableItem(null); // Clear the deletable item state
+        setIsLoading(false);
+        toggleDeleteModal(false);
+        toggleNotificationModal();
+        setDeletableItem(null);
       });
   };
 
@@ -162,119 +152,80 @@ const BudgetFormArchive = () => {
     setNotificationModalVisible(!isNotificationModalVisible);
   };
 
-  if (isLoading) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
-  }
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const pageItems = filteredForms.slice(startIndex, endIndex);
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-      <View style={styles.container}>
-        <View style={styles.headerContainer}>
-          <Text style={styles.header}>Budget Form Archive</Text>
-        </View>
-        <View style={styles.searchContainer}>
-          <Icon name="search" size={20} color="#000" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchBar}
-            placeholder="Search by owner, pet name, or date..."
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            returnKeyType="search"
-            onSubmitEditing={handleSearchSubmit}
-          />
-        </View>
-        <View style={styles.divider} />
-         {isLoading ? (
-          <ActivityIndicator size="large" color="#0000ff" />
-        ) : (
-        <FlatList
-          ref={flatListRef} // Assign the ref to FlatList
-          scrollEnabled={false}
-          data={filteredForms.slice(startIndex, endIndex)} // Render only the current page items
-          //data={filteredForms}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.itemContainer}>
-              <Text style={styles.itemText}>Username: <Text style={styles.itemDataText}>{item.username}</Text></Text>
-              <Text style={styles.itemText}>Period: <Text style={styles.itemDataText}>{item.year}</Text></Text>
-              <Text style={styles.itemText}>Annual Budget: <Text style={styles.itemDataText}>{item.budget}</Text></Text>
-              <Text style={styles.itemText}>Annual Cost of Vaccine: <Text style={styles.itemDataText}>{item.costvax}</Text></Text>
+    <ArchiveScreen
+      title="Budget Form Archive"
+      loading={isLoading}
+      isEmpty={filteredForms.length === 0}
+      emptyMessage="No budget records found."
+    >
+      <ArchiveSearchBar
+        value={searchTerm}
+        onChangeText={setSearchTerm}
+        placeholder="Search by username or year..."
+      />
 
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.editButton} onPress={() => handleEditPress(item)}>
-                  <Text style={styles.modalButtonText}>Edit</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeletePress(item)}>
-                  <Text style={styles.modalButtonText}>Delete</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.divider} />
-            </View>
-          )}
+      {pageItems.map((item) => (
+        <ArchiveListItem
+          key={item.id}
+          fields={[
+            { label: 'Username', value: item.username },
+            { label: 'Period', value: item.year },
+            { label: 'Annual Budget', value: item.budget },
+            { label: 'Annual Cost of Vaccine', value: item.costvax },
+          ]}
+          onEdit={() => handleEditPress(item)}
+          onDelete={() => handleDeletePress(item)}
         />
-        )}
-        <Text style={styles.pageText}>Page: <Text>{currentPage}</Text></Text> 
-        <View style={styles.buttonContainer}>
-          {currentPage > 1 && (
-            <TouchableOpacity style={styles.button} onPress={handlePreviousPage}>
-              <Text style={styles.buttonText}>Previous Page</Text>
-            </TouchableOpacity>
-          )}
+      ))}
 
-          {filteredForms.length > endIndex && (
-            <TouchableOpacity style={styles.button} onPress={handleNextPage}>
-              <Text style={styles.buttonText}>Next Page</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+      <ArchivePagination
+        page={currentPage}
+        hasPrev={currentPage > 1}
+        hasNext={filteredForms.length > endIndex}
+        onPrev={handlePreviousPage}
+        onNext={handleNextPage}
+      />
 
-        <TouchableOpacity style={styles.button} onPress={navigateToVetArchiveMenu}>
-          <Text style={styles.buttonText}>Archives Menu</Text>
-        </TouchableOpacity>
+      <AppButton
+        title="Archives Menu"
+        variant="ghost"
+        onPress={handleBackPress}
+        style={menuStyles.backButton}
+        textStyle={menuStyles.backButtonText}
+      />
 
-        {/* Modal to check if all fields are inputted */}
-        <Modal isVisible={isConfirmModalVisible}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>Do you want to proceed editing the Budget Form?</Text>
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity style={styles.modalButton} onPress={() => submitForm(editableItem)}>
-                <Text style={styles.modalButtonText}>Yes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalButton} onPress={toggleConfirmModal}>
-                <Text style={styles.modalButtonText}>No</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+      <AppModal
+        isVisible={isConfirmModalVisible}
+        message="Do you want to proceed editing the Budget Form?"
+        onBackdropPress={toggleConfirmModal}
+        actions={[
+          { label: 'No', variant: 'secondary', onPress: toggleConfirmModal },
+          { label: 'Yes', onPress: submitForm },
+        ]}
+      />
 
-        <Modal isVisible={isDeleteModalVisible}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>Are you sure you want to delete this entry?</Text>
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity style={styles.modalButton} onPress={deleteItem}>
-                <Text style={styles.modalButtonText}>Yes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalButton} onPress={toggleDeleteModal}>
-                <Text style={styles.modalButtonText}>No</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+      <AppModal
+        isVisible={isDeleteModalVisible}
+        message="Are you sure you want to delete this entry?"
+        onBackdropPress={toggleDeleteModal}
+        actions={[
+          { label: 'No', variant: 'secondary', onPress: toggleDeleteModal },
+          { label: 'Yes', variant: 'danger', onPress: deleteItem },
+        ]}
+      />
 
-        <Modal isVisible={isNotificationModalVisible}>
-                <View style={styles.modalContainer}>
-                    <Text style={styles.modalText}>{notificationMessage}</Text>
-                    <TouchableOpacity style={styles.modalButton} onPress={toggleNotificationModal}>
-                        <Text style={styles.modalButtonText}>OK</Text>
-                    </TouchableOpacity>
-                </View>
-        </Modal>
-      </View>
-    </ScrollView>
+      <AppModal
+        isVisible={isNotificationModalVisible}
+        message={notificationMessage}
+        onBackdropPress={toggleNotificationModal}
+        actions={[{ label: 'OK', onPress: toggleNotificationModal }]}
+      />
+    </ArchiveScreen>
   );
 };
 

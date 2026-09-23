@@ -1,26 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, FlatList, ScrollView, ActivityIndicator,  TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import styles from '../../styles/Archive';
-import Modal from 'react-native-modal';
 import axios from 'axios';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {
+  AppModal,
+  ArchiveScreen,
+  ArchiveSearchBar,
+  ArchiveListItem,
+  ArchivePagination,
+  AppButton,
+  menuStyles,
+} from '../components';
 
 const ScheduleFormArchive = () => {
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Add loading state
+  const [isLoading, setIsLoading] = useState(true);
   const [vaccinationForms, setVaccinationForms] = useState([]);
 
   const [isConfirmModalVisible, setConfirmModalVisible] = useState(false);
-
-  const [editableItem, setEditableItem] = useState(null); // Initialize state for storing item to edit
+  const [editableItem, setEditableItem] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredForms, setFilteredForms] = useState([]);
-  const flatListRef = useRef(); // Add this ref for the FlatList  const navigation = useNavigation();
 
-  const [deletableItem, setDeletableItem] = useState(null); // State to store item to be deleted
-  const [isDeleteModalVisible, setDeleteModalVisible] = useState(false); // State to manage delete modal visibility
+  const [deletableItem, setDeletableItem] = useState(null);
+  const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
 
   const [isNotificationModalVisible, setNotificationModalVisible] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
@@ -28,11 +31,18 @@ const ScheduleFormArchive = () => {
   const navigation = useNavigation();
   const apiURL = process.env.EXPO_PUBLIC_URL;
 
-  const [currentPage, setCurrentPage] = useState(1); // State to manage current page
-  const itemsPerPage = 5; // Number of items per page
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-  const navigateToVetArchiveMenu = () => {
-    navigation.navigate('VetArchiveMenu');
+  const handleBackPress = () => {
+    const position = user?.position;
+    if (position === 'CVO' || position === 'RabDash') {
+      navigation.navigate('VetArchiveMenu');
+    } else if (position === 'Private Veterinarian') {
+      navigation.navigate('ClientDatabase');
+    } else {
+      console.warn('Unknown user position:', position);
+    }
   };
 
   const toggleConfirmModal = () => {
@@ -40,242 +50,185 @@ const ScheduleFormArchive = () => {
   };
 
   useEffect(() => {
-    const fetchVaccinationForms = async() => {
+    // getScheduleForms has no CVO-scoped counterpart on the backend, so
+    // every position still sees the same unscoped data — only the
+    // back-navigation destination is position-aware here.
+    const fetchUserAndForms = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get(`${apiURL}/getScheduleForms`);
-        setVaccinationForms(response.data);
-        setFilteredForms(response.data); // Initialize filteredForms with all forms
+        const [positionResponse, formsResponse] = await Promise.all([
+          axios.get(`${apiURL}/Position`),
+          axios.get(`${apiURL}/getScheduleForms`),
+        ]);
+        setUser(positionResponse.data);
+        setVaccinationForms(formsResponse.data);
       } catch (error) {
         console.error('Error fetching Schedule/Events Form Archives:', error);
       } finally {
         setIsLoading(false);
       }
-    }
+    };
 
-    fetchVaccinationForms();
+    fetchUserAndForms();
   }, []);
 
   useEffect(() => {
-    const filtered = vaccinationForms.filter(form => 
+    const filtered = vaccinationForms.filter(form =>
       form.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       form.date?.includes(searchTerm) ||
       form.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       form.district?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       form.barangay?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.purok?.toLowerCase().includes(searchTerm.toLowerCase()) 
+      form.purok?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    if (filtered.length > 0) {
-      setFilteredForms(filtered);
-    } else {
-      console.log('No match found');
-      setFilteredForms(vaccinationForms); // Show all items if no match or empty search
-    }
+    // Previously fell back to the full unfiltered list on zero matches —
+    // fixed to show an actual empty state instead.
+    setFilteredForms(filtered);
   }, [searchTerm, vaccinationForms]);
 
-   // Function to find the first matched item index and scroll to it
- const handleSearchSubmit = () => {
-  if (filteredForms.length > 0) {
-    // If there are filtered forms, attempt to scroll to the top of the list
-    flatListRef.current?.scrollToIndex({ animated: true, index: 0 });
-  } else {
-    console.log('No filtered items to scroll to');
-  }
- };
-
- // Function to open modal and set the item to be edited
- const handleEditPress = (item) => {
-  setEditableItem(item); // Store the item to be edited
-  toggleConfirmModal();
-};
-
-// Function to handle deletion of item
-const handleDeletePress = (item) => {
-  setDeletableItem(item); // Store the item to be deleted
-  toggleDeleteModal(); // Open the delete confirmation modal
-};
-
-// Function to toggle delete confirmation modal visibility
-const toggleDeleteModal = () => {
-  setDeleteModalVisible(!isDeleteModalVisible);
-};
-
-const deleteItem = () => {
-  if (!deletableItem) return; // Ensure there is an item to delete
-
-  setIsLoading(true); // Start loading indicator
-  axios.delete(`${apiURL}/deleteScheduleForm/${deletableItem.id}`)
-    .then(response => {
-      if (response.data.success) {
-        setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
-        setNotificationMessage('Entry deleted successfully!');
-      } else {
-        setNotificationMessage('Failed to delete entry. ' + response.data.message);
-      }
-    })
-    .catch(error => {
-      console.error('Error deleting item:', error);
-      setNotificationMessage('An error occurred while deleting the entry.');
-    })
-    .finally(() => {
-      setIsLoading(false); // Stop loading indicator
-      toggleDeleteModal(false); // Close the delete confirmation modal
-      toggleNotificationModal(); // Show notification modal
-      setDeletableItem(null); // Clear the deletable item state
-    });
-};
-
-const toggleNotificationModal = () => {
-  setNotificationModalVisible(!isNotificationModalVisible);
-};
-
-// Function to add one day to the date
-const addOneDayToDate = (dateStr) => {
-  const date = new Date(dateStr);
-  date.setDate(date.getDate() + 1);
-  return date.toISOString().split('T')[0]; // Return the date in YYYY-MM-DD format
-};
-
-const submitForm = () => {
-  if (editableItem) {
-    navigation.navigate('ScheduleForm', {
-      item: editableItem,
-      fromArchive: true
-    });
+  const handleEditPress = (item) => {
+    setEditableItem(item);
     toggleConfirmModal();
-  }
-};
+  };
 
-// Function to handle next page button press
-const handleNextPage = () => {
-  setCurrentPage(currentPage + 1);
-};
+  const handleDeletePress = (item) => {
+    setDeletableItem(item);
+    toggleDeleteModal();
+  };
 
-// Calculate the slice range based on currentPage and itemsPerPage
-const startIndex = (currentPage - 1) * itemsPerPage;
-const endIndex = startIndex + itemsPerPage;
+  const toggleDeleteModal = () => {
+    setDeleteModalVisible(!isDeleteModalVisible);
+  };
 
-// Function to handle previous page button press
-const handlePreviousPage = () => {
-  setCurrentPage(currentPage - 1);
-};
+  const deleteItem = () => {
+    if (!deletableItem) return;
 
+    setIsLoading(true);
+    axios.delete(`${apiURL}/deleteScheduleForm/${deletableItem.id}`)
+      .then(response => {
+        if (response.data.success) {
+          setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
+          setNotificationMessage('Entry deleted successfully!');
+        } else {
+          setNotificationMessage('Failed to delete entry. ' + response.data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error deleting item:', error);
+        setNotificationMessage('An error occurred while deleting the entry.');
+      })
+      .finally(() => {
+        setIsLoading(false);
+        toggleDeleteModal(false);
+        toggleNotificationModal();
+        setDeletableItem(null);
+      });
+  };
 
-if (isLoading) {
+  const toggleNotificationModal = () => {
+    setNotificationModalVisible(!isNotificationModalVisible);
+  };
+
+  const addOneDayToDate = (dateStr) => {
+    const date = new Date(dateStr);
+    date.setDate(date.getDate() + 1);
+    return date.toISOString().split('T')[0];
+  };
+
+  const submitForm = () => {
+    if (editableItem) {
+      navigation.navigate('ScheduleForm', {
+        item: editableItem,
+        fromArchive: true
+      });
+      toggleConfirmModal();
+    }
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(currentPage + 1);
+  };
+
+  const handlePreviousPage = () => {
+    setCurrentPage(currentPage - 1);
+  };
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const pageItems = filteredForms.slice(startIndex, endIndex);
+
   return (
-    <View style={[styles.container, { justifyContent: 'center' }]}>
-      <ActivityIndicator size="large" color="#0000ff" />
-    </View>
-  );
-}
+    <ArchiveScreen
+      title="Schedule Form Archive"
+      loading={isLoading}
+      isEmpty={filteredForms.length === 0}
+      emptyMessage="No schedule records found."
+    >
+      <ArchiveSearchBar
+        value={searchTerm}
+        onChangeText={setSearchTerm}
+        placeholder="Search by title, district, or date..."
+      />
 
-  return (
-    <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-      <View style={styles.container}>
-        <View style={styles.headerContainer}>
-          <Text style={styles.header}>Schedule Form Archive</Text>
-        </View>
-        <View style={styles.searchContainer}>
-          <Icon name="search" size={20} color="#000" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchBar}
-            placeholder="Search by owner, pet name, or date..."
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            returnKeyType="search"
-            onSubmitEditing={handleSearchSubmit}
-          />
-        </View>
-        <View style={styles.divider} />
-        {isLoading ? (
-          <ActivityIndicator size="large" color="#0000ff" />
-        ) : (
-        <FlatList
-          ref={flatListRef} // Assign the ref to FlatList
-          scrollEnabled={false}
-          data={filteredForms.slice(startIndex, endIndex)} // Render only the data within the current page range
-          //data={filteredForms} 
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.itemContainer}>
-              <Text style={styles.itemText}>Username:  <Text style={styles.itemDataText}>{item.username}</Text></Text>
-              <Text style={styles.itemText}>Date: <Text style={styles.itemDataText}>{addOneDayToDate(item.date.split('T')[0])}</Text></Text>
-              <Text style={styles.itemText}>Title:  <Text style={styles.itemDataText}>{item.title}</Text></Text>
-              <Text style={styles.itemText}>District:  <Text style={styles.itemDataText}>{item.district}</Text></Text>
-              <Text style={styles.itemText}>Barangay:  <Text style={styles.itemDataText}>{item.barangay}</Text></Text>
-              <Text style={styles.itemText}>Purok:  <Text style={styles.itemDataText}>{item.purok}</Text></Text>
-
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.editButton} onPress={() => handleEditPress(item)}>
-                  <Text style={styles.modalButtonText}>Edit</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeletePress(item)}>
-                  <Text style={styles.modalButtonText}>Delete</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.divider} />
-            </View>
-          )}
+      {pageItems.map((item) => (
+        <ArchiveListItem
+          key={item.id}
+          fields={[
+            { label: 'Username', value: item.username },
+            { label: 'Date', value: addOneDayToDate(item.date.split('T')[0]) },
+            { label: 'Title', value: item.title },
+            { label: 'District', value: item.district },
+            { label: 'Barangay', value: item.barangay },
+            { label: 'Purok', value: item.purok },
+          ]}
+          onEdit={() => handleEditPress(item)}
+          onDelete={() => handleDeletePress(item)}
         />
-        )}
-        <Text style={styles.pageText}>Page: <Text>{currentPage}</Text></Text> 
-        <View style={styles.buttonContainer}>
-          {currentPage > 1 && (
-            <TouchableOpacity style={styles.button} onPress={handlePreviousPage}>
-              <Text style={styles.buttonText}>Previous Page</Text>
-            </TouchableOpacity>
-          )}
+      ))}
 
-          {filteredForms.length > endIndex && (
-            <TouchableOpacity style={styles.button} onPress={handleNextPage}>
-              <Text style={styles.buttonText}>Next Page</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+      <ArchivePagination
+        page={currentPage}
+        hasPrev={currentPage > 1}
+        hasNext={filteredForms.length > endIndex}
+        onPrev={handlePreviousPage}
+        onNext={handleNextPage}
+      />
 
-        <TouchableOpacity style={styles.button} onPress={navigateToVetArchiveMenu}>
-          <Text style={styles.buttonText}>Archives Menu</Text>
-        </TouchableOpacity>
+      <AppButton
+        title="Archives Menu"
+        variant="ghost"
+        onPress={handleBackPress}
+        style={menuStyles.backButton}
+        textStyle={menuStyles.backButtonText}
+      />
 
-        {/* Modal to check if all fields are inputted */}
-        <Modal isVisible={isConfirmModalVisible}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>Do you want to proceed editing the Schedule Form?</Text>
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity style={styles.modalButton} onPress={() => submitForm(editableItem)}>
-                <Text style={styles.modalButtonText}>Yes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalButton} onPress={toggleConfirmModal}>
-                <Text style={styles.modalButtonText}>No</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+      <AppModal
+        isVisible={isConfirmModalVisible}
+        message="Do you want to proceed editing the Schedule Form?"
+        onBackdropPress={toggleConfirmModal}
+        actions={[
+          { label: 'No', variant: 'secondary', onPress: toggleConfirmModal },
+          { label: 'Yes', onPress: submitForm },
+        ]}
+      />
 
-        <Modal isVisible={isDeleteModalVisible}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>Are you sure you want to delete this entry?</Text>
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity style={styles.modalButton} onPress={deleteItem}>
-                <Text style={styles.modalButtonText}>Yes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalButton} onPress={toggleDeleteModal}>
-                <Text style={styles.modalButtonText}>No</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+      <AppModal
+        isVisible={isDeleteModalVisible}
+        message="Are you sure you want to delete this entry?"
+        onBackdropPress={toggleDeleteModal}
+        actions={[
+          { label: 'No', variant: 'secondary', onPress: toggleDeleteModal },
+          { label: 'Yes', variant: 'danger', onPress: deleteItem },
+        ]}
+      />
 
-        <Modal isVisible={isNotificationModalVisible}>
-                <View style={styles.modalContainer}>
-                    <Text style={styles.modalText}>{notificationMessage}</Text>
-                    <TouchableOpacity style={styles.modalButton} onPress={toggleNotificationModal}>
-                        <Text style={styles.modalButtonText}>OK</Text>
-                    </TouchableOpacity>
-                </View>
-        </Modal>
-      </View>
-    </ScrollView>
+      <AppModal
+        isVisible={isNotificationModalVisible}
+        message={notificationMessage}
+        onBackdropPress={toggleNotificationModal}
+        actions={[{ label: 'OK', onPress: toggleNotificationModal }]}
+      />
+    </ArchiveScreen>
   );
 };
 
