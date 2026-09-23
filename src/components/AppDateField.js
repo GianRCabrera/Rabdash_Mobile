@@ -37,8 +37,10 @@ const AppDateField = ({ label, value, mode = 'date', placeholder, onPress }) => 
     <View style={styles.container}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <TouchableOpacity style={styles.inputRow} onPress={onPress} activeOpacity={0.75}>
-        <Text style={[styles.text, !displayValue && styles.placeholder]}>{displayValue || resolvedPlaceholder}</Text>
-        <Icon name={ICONS[mode] || ICONS.date} size={18} color={colors.textOnSurfaceMuted} />
+        <Text style={[styles.text, !displayValue && styles.placeholder]} numberOfLines={1}>
+          {displayValue || resolvedPlaceholder}
+        </Text>
+        <Icon style={styles.icon} name={ICONS[mode] || ICONS.date} size={18} color={colors.textOnSurfaceMuted} />
       </TouchableOpacity>
     </View>
   );
@@ -71,6 +73,11 @@ const styles = StyleSheet.create({
   text: {
     ...typography.body,
     color: colors.textPrimary,
+    flexShrink: 1,
+    marginRight: spacing.sm,
+  },
+  icon: {
+    flexShrink: 0,
   },
   placeholder: {
     color: colors.textOnSurfaceMuted,
