@@ -203,14 +203,8 @@ const Rabies_Exposure_Form = () => {
   return (
     <FormScreen title="Rabies Exposure Form">
       <FormSectionLabel title="Registration" first />
-      <View style={menuStyles.row}>
-        <View style={menuStyles.rowButton}>
-          <AppInput label="No." placeholder="" value={regNoValue} onChangeText={setRegNoValue} />
-        </View>
-        <View style={menuStyles.rowButton}>
-          <AppDateField label="Date" mode="datetime" value={selectedDateTime} onPress={showDateTimePicker} />
-        </View>
-      </View>
+      <AppInput label="No." placeholder="" value={regNoValue} onChangeText={setRegNoValue} />
+      <AppDateField label="Date" mode="datetime" value={selectedDateTime} onPress={showDateTimePicker} />
       <DateTimePickerModal
         isVisible={isDateTimePickerVisible}
         mode="datetime"

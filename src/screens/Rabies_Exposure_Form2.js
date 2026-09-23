@@ -336,14 +336,8 @@ const Rabies_Exposure_Form2 = () => {
       />
 
       <FormSectionLabel title="Tissue Culture Vaccine (Date Given)" />
-      <View style={menuStyles.row}>
-        <View style={menuStyles.rowButton}>
-          <AppInput label="Route" placeholder="" value={route1} onChangeText={setRoute1} />
-        </View>
-        <View style={menuStyles.rowButton}>
-          <AppDateField label="D0" mode="datetime" value={selectedDateTime2} onPress={showDateTimePicker2} />
-        </View>
-      </View>
+      <AppInput label="Route" placeholder="" value={route1} onChangeText={setRoute1} />
+      <AppDateField label="D0" mode="datetime" value={selectedDateTime2} onPress={showDateTimePicker2} />
       <DateTimePickerModal
         isVisible={isDateTimePickerVisible2}
         mode="datetime"
@@ -351,20 +345,15 @@ const Rabies_Exposure_Form2 = () => {
         onCancel={hideDateTimePicker2}
       />
 
-      <View style={menuStyles.row}>
-        <View style={menuStyles.rowButton}>
-          <AppDateField label="D3" mode="datetime" value={selectedDateTime3} onPress={showDateTimePicker3} />
-        </View>
-        <View style={menuStyles.rowButton}>
-          <AppDateField label="D7" mode="datetime" value={selectedDateTime4} onPress={showDateTimePicker4} />
-        </View>
-      </View>
+      <AppDateField label="D3" mode="datetime" value={selectedDateTime3} onPress={showDateTimePicker3} />
       <DateTimePickerModal
         isVisible={isDateTimePickerVisible3}
         mode="datetime"
         onConfirm={handleDateTimeConfirm3}
         onCancel={hideDateTimePicker3}
       />
+
+      <AppDateField label="D7" mode="datetime" value={selectedDateTime4} onPress={showDateTimePicker4} />
       <DateTimePickerModal
         isVisible={isDateTimePickerVisible4}
         mode="datetime"
@@ -372,20 +361,15 @@ const Rabies_Exposure_Form2 = () => {
         onCancel={hideDateTimePicker4}
       />
 
-      <View style={menuStyles.row}>
-        <View style={menuStyles.rowButton}>
-          <AppDateField label="D14" mode="datetime" value={selectedDateTime5} onPress={showDateTimePicker5} />
-        </View>
-        <View style={menuStyles.rowButton}>
-          <AppDateField label="D28" mode="datetime" value={selectedDateTime6} onPress={showDateTimePicker6} />
-        </View>
-      </View>
+      <AppDateField label="D14" mode="datetime" value={selectedDateTime5} onPress={showDateTimePicker5} />
       <DateTimePickerModal
         isVisible={isDateTimePickerVisible5}
         mode="datetime"
         onConfirm={handleDateTimeConfirm5}
         onCancel={hideDateTimePicker5}
       />
+
+      <AppDateField label="D28" mode="datetime" value={selectedDateTime6} onPress={showDateTimePicker6} />
       <DateTimePickerModal
         isVisible={isDateTimePickerVisible6}
         mode="datetime"
