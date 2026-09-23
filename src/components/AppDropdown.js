@@ -9,7 +9,7 @@ import { colors, spacing, radii, typography, shadow } from '../theme/theme';
 // absolute-positioned overlay mode isn't safe to use inside a form's
 // ScrollView, so every form screen already relied on SCROLLVIEW mode before
 // this component existed; keep doing that instead of reintroducing the bug.
-const AppDropdown = ({ label, open, value, items, setOpen, setValue, placeholder }) => (
+const AppDropdown = ({ label, open, value, items, setOpen, setValue, placeholder, ...rest }) => (
   <View style={styles.container}>
     {label ? <Text style={styles.label}>{label}</Text> : null}
     <DropDownPicker
@@ -24,6 +24,7 @@ const AppDropdown = ({ label, open, value, items, setOpen, setValue, placeholder
       textStyle={styles.pickerText}
       dropDownContainerStyle={styles.dropdownContainer}
       placeholderStyle={styles.placeholder}
+      {...rest}
     />
   </View>
 );

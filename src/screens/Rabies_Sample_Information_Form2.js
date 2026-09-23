@@ -1,43 +1,103 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import DropDownPicker from 'react-native-dropdown-picker';
-import Modal from 'react-native-modal';
 import axios from 'axios';
-import styles from '../../styles/submitform';
+import {
+  AppButton,
+  AppDropdown,
+  AppModal,
+  FormScreen,
+  FormSectionLabel,
+  menuStyles,
+} from '../components';
+
+const YES_NO = [
+  { label: 'Yes', value: 'Yes' },
+  { label: 'No', value: 'No' },
+];
+
+const SEXES = [
+  { label: 'Male', value: 'Male' },
+  { label: 'Female', value: 'Female' },
+];
+
+const SPECIMENS = [
+  { label: 'Head', value: 'Head' },
+  { label: 'Whole Carcass', value: 'Whole Carcass' },
+  { label: 'Brain', value: 'Brain' },
+];
+
+const OWNERSHIP = [
+  { label: 'Household Pet', value: 'Household Pet' },
+  { label: 'Stray', value: 'Stray' },
+];
+
+const VACCINATED = [
+  { label: 'Yes', value: 'Yes' },
+  { label: 'No', value: 'No' },
+  { label: 'Unknown', value: 'Unknown' },
+];
+
+const CONTACT_OPTIONS = [
+  { label: 'Yes', value: 'Yes' },
+  { label: 'No', value: 'No' },
+  { label: 'Not sure', value: 'Not sure' },
+];
+
+const PET_MANAGEMENT = [
+  { label: 'Stray', value: 'Stray' },
+  { label: 'Free', value: 'Free' },
+  { label: 'Leashed', value: 'Leashed' },
+];
+
+const CAUSE_OF_DEATH = [
+  { label: 'Euthanasia', value: 'Euthanasia' },
+  { label: 'Illness', value: 'Illness' },
+  { label: 'Accident', value: 'Accident' },
+  { label: 'Others', value: 'Others' },
+];
+
+const BEHAVIORAL_CHANGES = [
+  { label: 'None', value: 'None' },
+  { label: 'Restlessness', value: 'Restlessness' },
+  { label: 'Apprehensive Watchful Look', value: 'Apprehensive Watchful Look' },
+  { label: 'Unprovoked Aggressiveness', value: 'Unprovoked Aggressiveness' },
+  { label: 'Aimless Running', value: 'Aimless Running' },
+  { label: 'Eating Inanimate Objects', value: 'Eating Inanimate Objects' },
+  { label: 'Drooling Saliva', value: 'Drooling Saliva' },
+  { label: 'Paralysis', value: 'Paralysis' },
+];
+
+const OTHER_ILLNESS_SIGNS = [
+  { label: 'Diarrhea', value: 'Diarrhea' },
+  { label: 'Vomiting', value: 'Vomiting' },
+  { label: 'Inappetence', value: 'Inappetence' },
+  { label: 'Jaundice', value: 'Jaundice' },
+  { label: 'Skin Lesions', value: 'Skin Lesions' },
+  { label: 'Lethargy/Weakness', value: 'Lethargy/Weakness' },
+  { label: 'Nasal/Ocular Discharge', value: 'Nasal/Ocular Discharge' },
+  { label: 'Convulsions/Seizures', value: 'Convulsions/Seizures' },
+  { label: 'Others', value: 'Others' },
+];
+
+const FAT_RESULTS = [
+  { label: 'Positive', value: 'Positive' },
+  { label: 'Negative', value: 'Negative' },
+];
 
 const Rabies_Sample_Information_Form2 = () => {
   const [user, setUser] = useState(null);
   const route = useRoute();
 
-  const [isSpecimenOpen, setIsSpecimenOpen] = useState(false);
   const [specimenValue, setSpecimenValue] = useState(null);
-
-  const [isSexOpen, setIsSexOpen] = useState(false);
   const [sexValue, setSexValue] = useState(null);
-
-  const [isTypeofOwnershipOpen, setIsTypeofOwnershipOpen] = useState(false);
   const [typeofOwnershipValue, setTypeofOwnershipValue] = useState(null);
-
-  const [isDogvaccinatedOpen, setIsDogvaccinatedOpen] = useState(false);
   const [dogvaccinatedValue, setDogvaccinatedValue] = useState(null);
-
-  const [isContactOpen, setIsContactOpen] = useState(false);
   const [contactValue, setContactValue] = useState(null);
-
-  const [isPetmanagementOpen, setIsPetmanagementOpen] = useState(false);
   const [petmanagementValue, setPetmanagementValue] = useState(null);
-
-  const [isCauseOpen, setIsCauseOpen] = useState(false);
   const [causeValue, setCauseValue] = useState(null);
-
-  const [isChangesOpen, setIsChangesOpen] = useState(false);
   const [changesValue, setChangesValue] = useState(null);
-
-  const [isIllnessOpen, setIsIllnessOpen] = useState(false);
   const [illnessValue, setIllnessValue] = useState(null);
-
-  const [isFATOpen, setIsFATOpen] = useState(false);
   const [FATValue, setFATValue] = useState(null);
 
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -65,61 +125,11 @@ const Rabies_Sample_Information_Form2 = () => {
     setActiveDropdown((prev) => (prev === dropdownName ? null : dropdownName));
   };
 
-  const handleSexOpen = () => handleDropdownOpen('sex');
-  const handleSpecimenOpen = () => handleDropdownOpen('specimen');
-  const handleTypeofOwnershipOpen = () => handleDropdownOpen('typeofOwnership');
-  const handleDogvaccinatedOpen = () => handleDropdownOpen('dogvaccinated');
-  const handleContactOpen = () => handleDropdownOpen('contact');
-  const handlePetmanagementOpen = () => handleDropdownOpen('petmanagement');
-  const handleCauseOpen = () => handleDropdownOpen('cause');
-  const handleChangesOpen = () => handleDropdownOpen('changes');
-  const handleIllnessOpen = () => handleDropdownOpen('illness');
-  const handleFATOpen = () => handleDropdownOpen('FAT');
-
-  const handleSexChange = (value) => setSexValue(value);
-  const handleSpecimenChange = (value) => setSpecimenValue(value);
-  const handleTypeofOwnershipChange = (value) => setTypeofOwnershipValue(value);
-  const handleDogvaccinatedChange = (value) => setDogvaccinatedValue(value);
-  const handleContactChange = (value) => setContactValue(value);
-  const handlePetmanagementChange = (value) => setPetmanagementValue(value);
-  const handleCauseChange = (value) => setCauseValue(value);
-  const handleChangesChange = (value) => setChangesValue(value);
-  const handleIllnessChange = (value) => setIllnessValue(value);
-  const handleFATChange = (value) => setFATValue(value);
-
   useEffect(() => {
     axios
       .get(`${apiURL}/Position`)
       .then((response) => setUser(response.data))
       .catch((error) => console.error('Error fetching position:', error));
-
-    if (route.params) {
-      const { name, sex, address, number, district, barangay, date, species, breed, age } = route.params;
-      console.log('Name:', name);
-      console.log('Sex:', sex);
-      console.log('Address:', address);
-      console.log('Contact Number:', number);
-      console.log('District:', district);
-      console.log('Barangay:', barangay);
-      console.log('Date:', date);
-      console.log('Species:', species);
-      console.log('Breed:', breed);
-      console.log('Age:', age);
-    }
-
-    if (route.params?.formData) {
-      const { id, name, sex, address, number, district, barangay, date, species, breed, age } = route.params.formData;
-      console.log('Name:', name);
-      console.log('Sex:', sex);
-      console.log('Address:', address);
-      console.log('Contact Number:', number);
-      console.log('District:', district);
-      console.log('Barangay:', barangay);
-      console.log('Date:', date);
-      console.log('Species:', species);
-      console.log('Breed:', breed);
-      console.log('Age:', age);
-    }
 
     const { petData } = route.params || {};
     if (petData) {
@@ -157,10 +167,10 @@ const Rabies_Sample_Information_Form2 = () => {
 
   const submitForm = () => {
     const formData = route.params?.formData || {};
-    const isEdit = Boolean(formData?.id);
+    const isEditing = Boolean(formData?.id);
     let submissionData = {};
 
-    if (isEdit) {
+    if (isEditing) {
       submissionData = {
         id: formData.id,
         name: formData.name,
@@ -209,18 +219,13 @@ const Rabies_Sample_Information_Form2 = () => {
       };
     }
 
-    const endpoint = isEdit ? `${apiURL}/editRabiesSampleForms` : `${apiURL}/submitRabiesSampleForms`;
-
-    if (isEdit) {
-      formData.id = route.params.formData.id;
-    }
+    const endpoint = isEditing ? `${apiURL}/editRabiesSampleForms` : `${apiURL}/submitRabiesSampleForms`;
 
     axios
       .post(endpoint, submissionData)
       .then((response) => {
         if (response.data.success) {
-          console.log(isEdit ? 'Rabies Sample Form updated successfully.' : 'Rabies Sample Form submitted successfully.');
-          if (isEdit) {
+          if (isEditing) {
             setUpdateSuccessModalVisible(true);
           } else {
             setSuccessModalVisible(true);
@@ -236,282 +241,185 @@ const Rabies_Sample_Information_Form2 = () => {
     const position = user?.position;
     if (isEdit) {
       navigation.navigate('Sample_form_archive');
+    } else if (position === 'CVO' || position === 'RabDash') {
+      navigation.navigate('VetInputForms');
+    } else if (position === 'Private Veterinarian') {
+      navigation.navigate('InputForms');
     } else {
-      if (position === 'CVO' || position === 'RabDash') {
-        navigation.navigate('VetInputForms');
-      } else if (position === 'Private Veterinarian') {
-        navigation.navigate('InputForms');
-      } else {
-        console.warn('Unknown user position:', position);
-      }
+      console.warn('Unknown user position:', position);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.headerContaineranimal}>
-        <Text style={styles.header}>Rabies Sample Information (Part 2)</Text>
+    <FormScreen title="Rabies Sample Information (Part 2)">
+      <FormSectionLabel title="Sample Details" first />
+      <View style={menuStyles.row}>
+        <AppDropdown
+          label="Sex"
+          open={activeDropdown === 'sex'}
+          value={sexValue}
+          items={SEXES}
+          setOpen={() => handleDropdownOpen('sex')}
+          setValue={setSexValue}
+          placeholder="Select sex"
+        />
+        <AppDropdown
+          label="Specimen"
+          open={activeDropdown === 'specimen'}
+          value={specimenValue}
+          items={SPECIMENS}
+          setOpen={() => handleDropdownOpen('specimen')}
+          setValue={setSpecimenValue}
+          placeholder="Select specimen"
+        />
       </View>
-      <View style={styles.whiteContainer}>
-        <ScrollView contentContainerStyle={styles.scrollViewContainer} nestedScrollEnabled={true}>
-          <View style={styles.greenContainer}>
-            <Text style={styles.greenText}>Input "N/A" if information is unavailable</Text>
-          </View>
-          <View style={styles.rowContainer}>
-            <View style={[styles.dropdownContainer, { zIndex: activeDropdown === 'sex' ? 10 : 1 }]}>
-              <Text style={styles.labelText}>Sex</Text>
-              <DropDownPicker
-                open={activeDropdown === 'sex'}
-                value={sexValue}
-                items={[
-                  { label: 'Male', value: 'Male' },
-                  { label: 'Female', value: 'Female' },
-                ]}
-                placeholder="Please select first"
-                setOpen={handleSexOpen}
-                setValue={handleSexChange}
-                listMode="SCROLLVIEW"
-              />
-            </View>
-            <View style={[styles.dropdownContainer, { zIndex: activeDropdown === 'specimen' ? 10 : 1 }]}>
-              <Text style={styles.labelText}>Specimen</Text>
-              <DropDownPicker
-                open={activeDropdown === 'specimen'}
-                value={specimenValue}
-                items={[
-                  { label: 'Head', value: 'Head' },
-                  { label: 'Whole Carcass', value: 'Whole Carcass' },
-                  { label: 'Brain', value: 'Brain' },
-                ]}
-                placeholder="Please select first"
-                setOpen={handleSpecimenOpen}
-                setValue={handleSpecimenChange}
-                listMode="SCROLLVIEW"
-              />
-            </View>
-          </View>
-          <View style={styles.rowContainer2}>
-            <View style={[styles.dropdownContainer, { zIndex: activeDropdown === 'typeofOwnership' ? 10 : 1 }]}>
-              <Text style={styles.labelText}>Type of Ownership</Text>
-              <DropDownPicker
-                open={activeDropdown === 'typeofOwnership'}
-                value={typeofOwnershipValue}
-                items={[
-                  { label: 'Household Pet', value: 'Household Pet' },
-                  { label: 'Stray', value: 'Stray' },
-                ]}
-                placeholder="Please select first"
-                setOpen={handleTypeofOwnershipOpen}
-                setValue={handleTypeofOwnershipChange}
-                listMode="SCROLLVIEW"
-              />
-            </View>
-            <View style={[styles.dropdownContainer, { zIndex: activeDropdown === 'dogvaccinated' ? 10 : 1 }]}>
-              <Text style={styles.labelText}>Dog Vaccinated</Text>
-              <DropDownPicker
-                open={activeDropdown === 'dogvaccinated'}
-                value={dogvaccinatedValue}
-                items={[
-                  { label: 'Yes', value: 'Yes' },
-                  { label: 'No', value: 'No' },
-                  { label: 'Unknown', value: 'Unknown' },
-                ]}
-                placeholder="Please select first"
-                setOpen={handleDogvaccinatedOpen}
-                setValue={handleDogvaccinatedChange}
-                listMode="SCROLLVIEW"
-              />
-            </View>
-          </View>
-          <View style={styles.rowContainer2}>
-            <View style={[styles.dropdownContainer, { zIndex: activeDropdown === 'contact' ? 10 : 1 }]}>
-              <Text style={styles.labelText}>Pos. contact with oth. animals</Text>
-              <DropDownPicker
-                open={activeDropdown === 'contact'}
-                value={contactValue}
-                items={[
-                  { label: 'Yes', value: 'Yes' },
-                  { label: 'No', value: 'No' },
-                  { label: 'Not sure', value: 'Not sure' },
-                ]}
-                placeholder="Please select first"
-                setOpen={handleContactOpen}
-                setValue={handleContactChange}
-                listMode="SCROLLVIEW"
-              />
-            </View>
-            <View style={[styles.dropdownContainer, { zIndex: activeDropdown === 'petmanagement' ? 10 : 1 }]}>
-              <Text style={styles.labelText}>Pet Management</Text>
-              <DropDownPicker
-                open={activeDropdown === 'petmanagement'}
-                value={petmanagementValue}
-                items={[
-                  { label: 'Stray', value: 'Stray' },
-                  { label: 'Free', value: 'Free' },
-                  { label: 'Leashed', value: 'Leashed' },
-                ]}
-                placeholder="Please select first"
-                setOpen={handlePetmanagementOpen}
-                setValue={handlePetmanagementChange}
-                listMode="SCROLLVIEW"
-              />
-            </View>
-          </View>
-          <View style={styles.rowContainer2}>
-            <View style={[styles.dropdownContainer, { zIndex: activeDropdown === 'cause' ? 10 : 1 }]}>
-              <Text style={styles.labelText}>Caused of Death</Text>
-              <DropDownPicker
-                open={activeDropdown === 'cause'}
-                value={causeValue}
-                items={[
-                  { label: 'Euthanasia', value: 'Euthanasia' },
-                  { label: 'Illness', value: 'Illness' },
-                  { label: 'Accident', value: 'Accident' },
-                  { label: 'Others', value: 'Others' },
-                ]}
-                placeholder="Please select first"
-                setOpen={handleCauseOpen}
-                setValue={handleCauseChange}
-                listMode="SCROLLVIEW"
-              />
-            </View>
-            <View style={[styles.dropdownContainer, { zIndex: activeDropdown === 'changes' ? 10 : 1 }]}>
-              <Text style={styles.labelText}>Behavioral Changes</Text>
-              <DropDownPicker
-                open={activeDropdown === 'changes'}
-                value={changesValue}
-                items={[
-                  { label: 'None', value: 'None' },
-                  { label: 'Restlessness', value: 'Restlessness' },
-                  { label: 'Apprehensive Watchful Look', value: 'Apprehensive Watchful Look' },
-                  { label: 'Unprovoked Aggressiveness', value: 'Unprovoked Aggressiveness' },
-                  { label: 'Aimless Running', value: 'Aimless Running' },
-                  { label: 'Eating Inanimate Objects', value: 'Eating Inanimate Objects' },
-                  { label: 'Drooling Saliva', value: 'Drooling Saliva' },
-                  { label: 'Paralysis', value: 'Paralysis' },
-                ]}
-                placeholder="Please select first"
-                setOpen={handleChangesOpen}
-                setValue={handleChangesChange}
-                listMode="SCROLLVIEW"
-                maxHeight={500}
-                dropDownDirection="AUTO"
-                scrollViewProps={{
-                  nestedScrollEnabled: true,
-                }}
-              />
-            </View>
-          </View>
-          <View style={styles.rowContainer2}>
-            <View style={[styles.dropdownContainer, { zIndex: activeDropdown === 'illness' ? 10 : 1 }]}>
-              <Text style={styles.labelText}>Other Signs of Illness:</Text>
-              <DropDownPicker
-                open={activeDropdown === 'illness'}
-                value={illnessValue}
-                items={[
-                  { label: 'Diarrhea', value: 'Diarrhea' },
-                  { label: 'Vomiting', value: 'Vomiting' },
-                  { label: 'Inappetence', value: 'Inappetence' },
-                  { label: 'Jaundice', value: 'Jaundice' },
-                  { label: 'Skin Lesions', value: 'Skin Lesions' },
-                  { label: 'Lethargy/Weakness', value: 'Lethargy/Weakness' },
-                  { label: 'Nasal/Ocular Discharge', value: 'Nasal/Ocular Discharge' },
-                  { label: 'Convulsions/Seizures', value: 'Convulsions/Seizures' },
-                  { label: 'Others', value: 'Others' },
-                ]}
-                placeholder="Please select first"
-                setOpen={handleIllnessOpen}
-                setValue={handleIllnessChange}
-                listMode="SCROLLVIEW"
-                maxHeight={200}
-                dropDownDirection="AUTO"
-                scrollViewProps={{
-                  nestedScrollEnabled: true,
-                }}
-              />
-            </View>
-            <View style={[styles.dropdownContainer, { zIndex: activeDropdown === 'FAT' ? 10 : 1 }]}>
-              <Text style={styles.labelText}>FAT Result</Text>
-              <DropDownPicker
-                open={activeDropdown === 'FAT'}
-                value={FATValue}
-                items={[
-                  { label: 'Positive', value: 'Positive' },
-                  { label: 'Negative', value: 'Negative' },
-                ]}
-                placeholder="Please select first"
-                setOpen={handleFATOpen}
-                setValue={handleFATChange}
-                listMode="SCROLLVIEW"
-              />
-            </View>
-          </View>
-          <View style={styles.rowContainer2}>
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Rabies_Sample_Information_Form')}>
-              <Text style={styles.buttonText}>Back</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={handleSubmitPress}>
-              <Text style={styles.buttonText}>Submit</Text>
-            </TouchableOpacity>
-          </View>
-          <Modal isVisible={isModalVisible}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalText}>Please fill in all fields before proceeding.</Text>
-              <TouchableOpacity style={styles.modalButton} onPress={toggleModal}>
-                <Text style={styles.modalButtonText}>OK</Text>
-              </TouchableOpacity>
-            </View>
-          </Modal>
-          <Modal isVisible={isConfirmModalVisible}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalText}>Are you sure of your answers?</Text>
-              <View style={styles.modalButtonContainer}>
-                <TouchableOpacity
-                  style={styles.modalButton}
-                  onPress={() => {
-                    toggleConfirmModal();
-                    submitForm();
-                  }}
-                >
-                  <Text style={styles.modalButtonText}>Yes</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.modalButton} onPress={toggleConfirmModal}>
-                  <Text style={styles.modalButtonText}>No</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Modal>
-          <Modal isVisible={isSuccessModalVisible}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalText}>Form submitted successfully!</Text>
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={() => {
-                  setSuccessModalVisible(false);
-                  navigateAfterSubmit();
-                }}
-              >
-                <Text style={styles.modalButtonText}>OK</Text>
-              </TouchableOpacity>
-            </View>
-          </Modal>
-          <Modal isVisible={isUpdateSuccessModalVisible}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalText}>Form updated successfully!</Text>
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={() => {
-                  setUpdateSuccessModalVisible(false);
-                  navigateAfterSubmit();
-                }}
-              >
-                <Text style={styles.modalButtonText}>OK</Text>
-              </TouchableOpacity>
-            </View>
-          </Modal>
-        </ScrollView>
+      <AppDropdown
+        label="Type of Ownership"
+        open={activeDropdown === 'typeofOwnership'}
+        value={typeofOwnershipValue}
+        items={OWNERSHIP}
+        setOpen={() => handleDropdownOpen('typeofOwnership')}
+        setValue={setTypeofOwnershipValue}
+        placeholder="Select ownership type"
+      />
+
+      <FormSectionLabel title="Health History" />
+      <AppDropdown
+        label="Dog Vaccinated"
+        open={activeDropdown === 'dogvaccinated'}
+        value={dogvaccinatedValue}
+        items={VACCINATED}
+        setOpen={() => handleDropdownOpen('dogvaccinated')}
+        setValue={setDogvaccinatedValue}
+        placeholder="Select status"
+      />
+      <AppDropdown
+        label="Pos. contact with oth. animals"
+        open={activeDropdown === 'contact'}
+        value={contactValue}
+        items={CONTACT_OPTIONS}
+        setOpen={() => handleDropdownOpen('contact')}
+        setValue={setContactValue}
+        placeholder="Select answer"
+      />
+      <AppDropdown
+        label="Pet Management"
+        open={activeDropdown === 'petmanagement'}
+        value={petmanagementValue}
+        items={PET_MANAGEMENT}
+        setOpen={() => handleDropdownOpen('petmanagement')}
+        setValue={setPetmanagementValue}
+        placeholder="Select management"
+      />
+      <AppDropdown
+        label="Caused of Death"
+        open={activeDropdown === 'cause'}
+        value={causeValue}
+        items={CAUSE_OF_DEATH}
+        setOpen={() => handleDropdownOpen('cause')}
+        setValue={setCauseValue}
+        placeholder="Select cause"
+      />
+      <AppDropdown
+        label="Behavioral Changes"
+        open={activeDropdown === 'changes'}
+        value={changesValue}
+        items={BEHAVIORAL_CHANGES}
+        setOpen={() => handleDropdownOpen('changes')}
+        setValue={setChangesValue}
+        placeholder="Select behavior"
+        maxHeight={500}
+        dropDownDirection="AUTO"
+        scrollViewProps={{ nestedScrollEnabled: true }}
+      />
+      <AppDropdown
+        label="Other Signs of Illness"
+        open={activeDropdown === 'illness'}
+        value={illnessValue}
+        items={OTHER_ILLNESS_SIGNS}
+        setOpen={() => handleDropdownOpen('illness')}
+        setValue={setIllnessValue}
+        placeholder="Select sign"
+        maxHeight={200}
+        dropDownDirection="AUTO"
+        scrollViewProps={{ nestedScrollEnabled: true }}
+      />
+
+      <FormSectionLabel title="Lab Result" />
+      <AppDropdown
+        label="FAT Result"
+        open={activeDropdown === 'FAT'}
+        value={FATValue}
+        items={FAT_RESULTS}
+        setOpen={() => handleDropdownOpen('FAT')}
+        setValue={setFATValue}
+        placeholder="Select result"
+      />
+
+      <View style={menuStyles.formActionsRow}>
+        <AppButton title="Back" variant="secondary" onPress={() => navigation.navigate('Rabies_Sample_Information_Form')} style={menuStyles.rowButton} />
+        <AppButton title="Submit" variant="primary" onPress={handleSubmitPress} style={menuStyles.rowButton} />
       </View>
-    </View>
+
+      <AppModal
+        isVisible={isModalVisible}
+        message="Please fill in all fields before proceeding."
+        onBackdropPress={toggleModal}
+        actions={[{ label: 'OK', onPress: toggleModal }]}
+      />
+
+      <AppModal
+        isVisible={isConfirmModalVisible}
+        message="Are you sure of your answers?"
+        onBackdropPress={toggleConfirmModal}
+        actions={[
+          { label: 'No', variant: 'secondary', onPress: toggleConfirmModal },
+          {
+            label: 'Yes',
+            onPress: () => {
+              toggleConfirmModal();
+              submitForm();
+            },
+          },
+        ]}
+      />
+
+      <AppModal
+        isVisible={isSuccessModalVisible}
+        message="Form submitted successfully!"
+        onBackdropPress={() => {
+          setSuccessModalVisible(false);
+          navigateAfterSubmit();
+        }}
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setSuccessModalVisible(false);
+              navigateAfterSubmit();
+            },
+          },
+        ]}
+      />
+
+      <AppModal
+        isVisible={isUpdateSuccessModalVisible}
+        message="Form updated successfully!"
+        onBackdropPress={() => {
+          setUpdateSuccessModalVisible(false);
+          navigateAfterSubmit();
+        }}
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setUpdateSuccessModalVisible(false);
+              navigateAfterSubmit();
+            },
+          },
+        ]}
+      />
+    </FormScreen>
   );
 };
 
