@@ -140,8 +140,8 @@ const BudgetForm = () => {
     <FormScreen title="Budget Form">
       <AppDateField
         label="Period"
-        value={selectedYear instanceof Date ? selectedYear.getFullYear().toString() : null}
-        placeholder="Select Year"
+        mode="year"
+        value={selectedYear}
         onPress={showDatePicker}
       />
       <DateTimePickerModal

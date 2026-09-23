@@ -159,8 +159,7 @@ const IECForm = () => {
       <FormSectionLabel title="Event Details" first />
       <AppDateField
         label="Date"
-        value={selectedDate ? selectedDate.toDateString() : null}
-        placeholder="Select Date"
+        value={selectedDate}
         onPress={showDatePicker}
       />
       <DateTimePickerModal

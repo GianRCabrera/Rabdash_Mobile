@@ -7,12 +7,14 @@ const ICONS = {
   date: 'calendar-today',
   time: 'access-time',
   datetime: 'event',
+  year: 'calendar-today',
 };
 
 const formatValue = (value, mode) => {
   if (!value) return null;
   if (mode === 'time') return value.toLocaleTimeString();
   if (mode === 'datetime') return `${value.toLocaleDateString()} ${value.toLocaleTimeString()}`;
+  if (mode === 'year') return value.getFullYear().toString();
   return value.toDateString();
 };
 
@@ -26,7 +28,9 @@ const formatValue = (value, mode) => {
 // Vacc, Rabies Exposure) need time-only or combined date+time fields
 // alongside plain date fields.
 const AppDateField = ({ label, value, mode = 'date', placeholder, onPress }) => {
-  const resolvedPlaceholder = placeholder || (mode === 'time' ? 'Select time' : mode === 'datetime' ? 'Select date & time' : 'Select date');
+  const resolvedPlaceholder =
+    placeholder ||
+    (mode === 'time' ? 'Select time' : mode === 'datetime' ? 'Select date & time' : mode === 'year' ? 'Select year' : 'Select date');
   const displayValue = formatValue(value, mode);
 
   return (
