@@ -254,24 +254,28 @@ const Rabies_Sample_Information_Form2 = () => {
     <FormScreen title="Rabies Sample Information (Part 2)">
       <FormSectionLabel title="Sample Details" first />
       <View style={menuStyles.row}>
-        <AppDropdown
-          label="Sex"
-          open={activeDropdown === 'sex'}
-          value={sexValue}
-          items={SEXES}
-          setOpen={() => handleDropdownOpen('sex')}
-          setValue={setSexValue}
-          placeholder="Select sex"
-        />
-        <AppDropdown
-          label="Specimen"
-          open={activeDropdown === 'specimen'}
-          value={specimenValue}
-          items={SPECIMENS}
-          setOpen={() => handleDropdownOpen('specimen')}
-          setValue={setSpecimenValue}
-          placeholder="Select specimen"
-        />
+        <View style={menuStyles.rowButton}>
+          <AppDropdown
+            label="Sex"
+            open={activeDropdown === 'sex'}
+            value={sexValue}
+            items={SEXES}
+            setOpen={() => handleDropdownOpen('sex')}
+            setValue={setSexValue}
+            placeholder="Select sex"
+          />
+        </View>
+        <View style={menuStyles.rowButton}>
+          <AppDropdown
+            label="Specimen"
+            open={activeDropdown === 'specimen'}
+            value={specimenValue}
+            items={SPECIMENS}
+            setOpen={() => handleDropdownOpen('specimen')}
+            setValue={setSpecimenValue}
+            placeholder="Select specimen"
+          />
+        </View>
       </View>
       <AppDropdown
         label="Type of Ownership"

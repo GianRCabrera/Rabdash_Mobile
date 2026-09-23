@@ -234,24 +234,28 @@ const Rabies_Field_Vacc_Form2 = () => {
       <AppInput label="Age" placeholder="8 months Old" value={petAge} onChangeText={setpetAge} />
 
       <View style={menuStyles.row}>
-        <AppDropdown
-          label="Species"
-          open={isSpeciesOpen}
-          value={speciesValue}
-          items={SPECIES}
-          setOpen={handleSpeciesOpen}
-          setValue={setSpeciesValue}
-          placeholder="Select species"
-        />
-        <AppDropdown
-          label="Sex"
-          open={isAnimalSexOpen}
-          value={AnimalSexValue}
-          items={SEXES}
-          setOpen={handleAnimalSexOpen}
-          setValue={setAnimalSexValue}
-          placeholder="Select sex"
-        />
+        <View style={menuStyles.rowButton}>
+          <AppDropdown
+            label="Species"
+            open={isSpeciesOpen}
+            value={speciesValue}
+            items={SPECIES}
+            setOpen={handleSpeciesOpen}
+            setValue={setSpeciesValue}
+            placeholder="Select species"
+          />
+        </View>
+        <View style={menuStyles.rowButton}>
+          <AppDropdown
+            label="Sex"
+            open={isAnimalSexOpen}
+            value={AnimalSexValue}
+            items={SEXES}
+            setOpen={handleAnimalSexOpen}
+            setValue={setAnimalSexValue}
+            placeholder="Select sex"
+          />
+        </View>
       </View>
 
       <AppInput label="Color/Markings" placeholder="White" value={colorMarkings} onChangeText={setcolorMarkings} />
