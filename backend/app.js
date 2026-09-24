@@ -1071,13 +1071,13 @@ app.get('/getVaccinationForms', async (req, res) => {
 
 // New endpoint to fetch vaccination_form data from both mobile and web databases
 app.get('/getVaccinationFormsCVO', requireReviewer, async (req, res) => {
-  // No LIMIT/OFFSET: this used to default to the 10 newest rows whenever the
-  // frontend didn't pass page/limit (which it never did), silently hiding
-  // everything older from reviewers. Every other list endpoint in this file
-  // already returns its full scoped result set and leaves paging to the
-  // frontend's own client-side slicing — matching that here instead of
-  // building real server-side pagination for just these three routes.
-  const query = 'SELECT * FROM vaccination_form ORDER BY created_at DESC';
+  // Used to default to LIMIT 10 OFFSET 0, silently hiding everything older
+  // from reviewers. Removing the limit entirely OOM-crashed the whole Render
+  // process (both DBs' full result sets held in memory at once, then
+  // JSON-serialized) — this bounded cap stops that while still comfortably
+  // covering realistic table sizes. Real server-side pagination is the
+  // proper long-term fix; this is a stopgap.
+  const query = 'SELECT * FROM vaccination_form ORDER BY created_at DESC LIMIT 500';
 
   try {
     const mobileResults = await queryDatabase(pool, query, []);
@@ -1132,8 +1132,8 @@ app.get('/getNeuterForms', async (req, res) => {
 
 // New endpoint to fetch neuter form data from both mobile and web databases
 app.get('/getNeuterFormsCVO', requireReviewer, async (req, res) => {
-  // No LIMIT/OFFSET — see the comment on getVaccinationFormsCVO above.
-  const query = 'SELECT * FROM consent_form ORDER BY created_at DESC';
+  // Bounded LIMIT — see the comment on getVaccinationFormsCVO above.
+  const query = 'SELECT * FROM consent_form ORDER BY created_at DESC LIMIT 500';
 
   try {
     const mobileResults = await queryDatabase(pool, query, []);
@@ -1189,8 +1189,8 @@ app.get('/getRabiesSampleForms', async (req, res) => {
 
 // Add a new endpoint to fetch rabies sample form data from both mobile and web databases
 app.get('/getRabiesSampleFormsCVO', requireReviewer, async (req, res) => {
-  // No LIMIT/OFFSET — see the comment on getVaccinationFormsCVO above.
-  const query = 'SELECT * FROM bite_form ORDER BY created_at DESC';
+  // Bounded LIMIT — see the comment on getVaccinationFormsCVO above.
+  const query = 'SELECT * FROM bite_form ORDER BY created_at DESC LIMIT 500';
 
   try {
     const mobileResults = await queryDatabase(pool, query, []);
@@ -1895,7 +1895,7 @@ app.get('/getAnimalControlForms', requireAuth, async (req, res) => {
   const { user } = req.session;
   const isReviewer = REVIEWER_POSITIONS.includes(user.position);
   const query = isReviewer
-    ? 'SELECT * FROM control_form ORDER BY created_at DESC'
+    ? 'SELECT * FROM control_form ORDER BY created_at DESC LIMIT 500'
     : 'SELECT * FROM control_form WHERE username = ? ORDER BY created_at DESC';
   const params = isReviewer ? [] : [user.email];
 
@@ -1921,7 +1921,7 @@ app.get('/getIECForms', requireAuth, async (req, res) => {
   const { user } = req.session;
   const isReviewer = REVIEWER_POSITIONS.includes(user.position);
   const query = isReviewer
-    ? 'SELECT * FROM iec_form ORDER BY created_at DESC'
+    ? 'SELECT * FROM iec_form ORDER BY created_at DESC LIMIT 500'
     : 'SELECT * FROM iec_form WHERE username = ? ORDER BY created_at DESC';
   const params = isReviewer ? [] : [user.email];
 
@@ -1947,7 +1947,7 @@ app.get('/getScheduleForms', requireAuth, async (req, res) => {
   const { user } = req.session;
   const isReviewer = REVIEWER_POSITIONS.includes(user.position);
   const query = isReviewer
-    ? 'SELECT * FROM schedule_form ORDER BY created_at DESC'
+    ? 'SELECT * FROM schedule_form ORDER BY created_at DESC LIMIT 500'
     : 'SELECT * FROM schedule_form WHERE username = ? ORDER BY created_at DESC';
   const params = isReviewer ? [] : [user.email];
 
@@ -1973,7 +1973,7 @@ app.get('/getBudgetForms', requireAuth, async (req, res) => {
   const { user } = req.session;
   const isReviewer = REVIEWER_POSITIONS.includes(user.position);
   const query = isReviewer
-    ? 'SELECT * FROM budget_form ORDER BY created_at DESC'
+    ? 'SELECT * FROM budget_form ORDER BY created_at DESC LIMIT 500'
     : 'SELECT * FROM budget_form WHERE username = ? ORDER BY created_at DESC';
   const params = isReviewer ? [] : [user.email];
 
@@ -2023,7 +2023,7 @@ app.get('/getRabiesExposureForms', requireAuth, async (req, res) => {
   const { user } = req.session;
   const isReviewer = REVIEWER_POSITIONS.includes(user.position);
   const query = isReviewer
-    ? 'SELECT * FROM exposure_form ORDER BY created_at DESC'
+    ? 'SELECT * FROM exposure_form ORDER BY created_at DESC LIMIT 500'
     : 'SELECT * FROM exposure_form WHERE username = ? ORDER BY created_at DESC';
   const params = isReviewer ? [] : [user.email];
 
