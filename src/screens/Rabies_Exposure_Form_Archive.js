@@ -143,7 +143,7 @@ const Rabies_Exposure_Form_Archive = () => {
     if (!deletableItem) return;
 
     setIsLoading(true);
-    axios.delete(`${apiURL}/deleteRabiesExposureForm/${deletableItem.id}`)
+    axios.delete(`${apiURL}/deleteRabiesExposureForm/${deletableItem.id}`, { params: { dbOrigin: deletableItem.dbOrigin } })
       .then(response => {
         if (response.data.success) {
           setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
@@ -200,9 +200,10 @@ const Rabies_Exposure_Form_Archive = () => {
 
       {pageItems.map((item) => (
         <ArchiveListItem
-          key={item.id}
+          key={`${item.dbOrigin}-${item.id}`}
           title={item.name || 'Unnamed Patient'}
           subtitle={`Reg #${item.regNo ?? 'N/A'} • ${addOneDay(item.regDate.split('T')[0])}`}
+          dbOrigin={item.dbOrigin}
           sections={[
             {
               title: 'Registration',

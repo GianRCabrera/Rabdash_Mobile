@@ -127,7 +127,7 @@ const BudgetFormArchive = () => {
     if (!deletableItem) return;
 
     setIsLoading(true);
-    axios.delete(`${apiURL}/deleteBudgetForm/${deletableItem.id}`)
+    axios.delete(`${apiURL}/deleteBudgetForm/${deletableItem.id}`, { params: { dbOrigin: deletableItem.dbOrigin } })
       .then(response => {
         if (response.data.success) {
           setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
@@ -171,9 +171,10 @@ const BudgetFormArchive = () => {
 
       {pageItems.map((item) => (
         <ArchiveListItem
-          key={item.id}
+          key={`${item.dbOrigin}-${item.id}`}
           title={`Period ${item.year ?? 'N/A'}`}
           subtitle={`Budget: ${item.budget ?? 'N/A'}`}
+          dbOrigin={item.dbOrigin}
           fields={[
             { label: 'Username', value: item.username },
             { label: 'Period', value: item.year },

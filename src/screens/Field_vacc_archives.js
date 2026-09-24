@@ -149,7 +149,10 @@ const Field_vacc_archives = () => {
     if (!deletableItem) return;
 
     setIsLoading(true);
-    axios.delete(`${apiURL}/deleteVaccinationForm/${deletableItem.id}`, { withCredentials: true })
+    axios.delete(`${apiURL}/deleteVaccinationForm/${deletableItem.id}`, {
+      withCredentials: true,
+      params: { dbOrigin: deletableItem.dbOrigin },
+    })
       .then(response => {
         if (response.data.success) {
           setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
@@ -226,9 +229,10 @@ const Field_vacc_archives = () => {
 
       {pageItems.map((item) => (
         <ArchiveListItem
-          key={item.id}
+          key={`${item.dbOrigin}-${item.id}`}
           title={item.ownerName || 'Unnamed Owner'}
           subtitle={`${item.petName || 'Unnamed pet'} • ${addOneDay(item.date.split('T')[0])}`}
+          dbOrigin={item.dbOrigin}
           fields={[
             { label: 'Username', value: item.username },
             { label: 'Date', value: addOneDay(item.date.split('T')[0]) },

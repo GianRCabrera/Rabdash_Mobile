@@ -80,6 +80,27 @@ describe('Ownership check on edit/delete (the IDOR fix)', () => {
     expect(res.body.success).toBe(true);
   });
 
+  // Field Vacc/Neuter/Sample archives merge rows from two independent
+  // databases (mobile `pool` + the companion website's `webPool`), whose
+  // auto-increment ids can collide. Every edit/delete only ever mutates
+  // `pool` by id, so without this check a reviewer "editing" a web-sourced
+  // row would silently mutate an unrelated mobile row sharing that id
+  // instead — id 1 here belongs to owner@example.invalid on the mobile side,
+  // so a false negative here would show up as that record getting mutated.
+  test('a reviewer "editing" a web-sourced record is rejected, even though they would pass the ownership check', async () => {
+    const reviewer = await loginAs('reviewer@example.invalid');
+    const res = await reviewer.post('/editVaccinationForm').send({ id: 1, dbOrigin: 'web', ownerName: 'Should not touch mobile row 1' });
+    expect(res.status).toBe(403);
+    expect(res.body.message).toMatch(/website/i);
+  });
+
+  test('a reviewer "deleting" a web-sourced record is rejected, even though they would pass the ownership check', async () => {
+    const reviewer = await loginAs('reviewer@example.invalid');
+    const res = await reviewer.delete('/deleteVaccinationForm/1').query({ dbOrigin: 'web' });
+    expect(res.status).toBe(403);
+    expect(res.body.message).toMatch(/website/i);
+  });
+
   // PROVISIONAL (see CLAUDE.md): CVO is not currently a reviewer — it does
   // NOT get the ownership-override RabDash gets, same as any other non-owner.
   test('a CVO account editing a record it does not own still gets 403', async () => {

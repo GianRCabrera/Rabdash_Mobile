@@ -131,7 +131,7 @@ const Sample_form_archive = () => {
     if (!deletableItem) return;
 
     setIsLoading(true);
-    axios.delete(`${apiURL}/deleteRabiesSampleForm/${deletableItem.id}`)
+    axios.delete(`${apiURL}/deleteRabiesSampleForm/${deletableItem.id}`, { params: { dbOrigin: deletableItem.dbOrigin } })
       .then(response => {
         if (response.data.success) {
           setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
@@ -189,9 +189,10 @@ const Sample_form_archive = () => {
 
       {pageItems.map((item) => (
         <ArchiveListItem
-          key={item.id}
+          key={`${item.dbOrigin}-${item.id}`}
           title={item.name || 'Unnamed Owner'}
           subtitle={`${[item.species, item.breed].filter(Boolean).join(' ') || 'Unspecified species'} • ${addOneDayToDate(item.date.split('T')[0])}`}
+          dbOrigin={item.dbOrigin}
           fields={[
             { label: 'Email', value: item.username },
             { label: 'Name', value: item.name },

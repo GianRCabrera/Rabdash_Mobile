@@ -25,8 +25,16 @@ const FieldRow = ({ label, value }) => (
 // PEP / Tissue Culture Vaccine) — reuses FormSectionLabel for that
 // grouping since the card is a white surface, the same context
 // FormSectionLabel already assumes inside FormScreen.
-const ArchiveListItem = ({ title, subtitle, fields, sections, onEdit, onDelete }) => {
+//
+// `dbOrigin` ('mobile' | 'web') marks which database this record came from —
+// several archive lists merge results from the mobile app's own database and
+// a companion website's database, and the two have independent, colliding
+// id sequences. Editing/deleting is backend-rejected for web-sourced rows
+// (see authorizeFormMutation in backend/app.js), so Edit/Delete are hidden
+// here instead of showing a confusing error after the fact.
+const ArchiveListItem = ({ title, subtitle, dbOrigin, fields, sections, onEdit, onDelete }) => {
   const [expanded, setExpanded] = useState(false);
+  const isWebSourced = dbOrigin === 'web';
 
   return (
     <View style={styles.card}>
@@ -53,10 +61,14 @@ const ArchiveListItem = ({ title, subtitle, fields, sections, onEdit, onDelete }
               ))
             : fields.map((field) => <FieldRow key={field.label} {...field} />)}
 
-          <View style={styles.actions}>
-            <AppButton title="Edit" variant="secondary" onPress={onEdit} style={styles.actionButton} />
-            <AppButton title="Delete" variant="danger" onPress={onDelete} style={styles.actionButton} />
-          </View>
+          {isWebSourced ? (
+            <Text style={styles.webNotice}>Submitted via the website — manage this record there.</Text>
+          ) : (
+            <View style={styles.actions}>
+              <AppButton title="Edit" variant="secondary" onPress={onEdit} style={styles.actionButton} />
+              <AppButton title="Delete" variant="danger" onPress={onDelete} style={styles.actionButton} />
+            </View>
+          )}
         </View>
       )}
     </View>
@@ -121,6 +133,12 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
+  },
+  webNotice: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+    marginTop: spacing.md,
   },
 });
 

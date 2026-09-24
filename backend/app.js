@@ -179,8 +179,24 @@ const REVIEWER_POSITIONS = ['RabDash'];
 // Guards edit/delete on a form record: only the submitter (matched by username) or a
 // reviewer may modify it. `table` is always a hardcoded literal from the call site,
 // never user input, so it's safe to interpolate into the query.
+//
+// `dbOrigin` ('mobile' | 'web' | undefined) is which database the caller believes this
+// row came from — see the get*FormsCVO/isReviewer list endpoints, which tag every row
+// they return with dbOrigin since they merge results from `pool` and `webPool`. Mobile
+// and web rows are independent auto-increment sequences, so the same numeric `id` can
+// legitimately exist in both databases at once. Every mutation below only ever touches
+// `pool` by `id`, so without this check, a reviewer editing/deleting a web-sourced row
+// would silently mutate an unrelated mobile row that happens to share its id, instead of
+// failing or doing nothing. Rejecting dbOrigin==='web' outright (rather than attempting
+// the mutation against `webPool`) is deliberate: we haven't verified the web DB's schema
+// matches column-for-column, and it has its own independent admin/edit workflow via the
+// companion website.
 // Sends the response and returns false when the caller should stop; true means proceed.
-const authorizeFormMutation = async (req, res, table, id) => {
+const authorizeFormMutation = async (req, res, table, id, dbOrigin) => {
+  if (dbOrigin === 'web') {
+    res.status(403).json({ message: 'This record was submitted through the website and cannot be edited or deleted from the mobile app.' });
+    return false;
+  }
   const { user } = req.session;
   const rows = await queryDatabase(pool, `SELECT username FROM ${table} WHERE id = ?`, [id]);
   if (rows.length === 0) {
@@ -193,6 +209,14 @@ const authorizeFormMutation = async (req, res, table, id) => {
   }
   return true;
 };
+
+// Tags every row from a merged mobile+web list query with which database it came from,
+// so the frontend can hide edit/delete for web-sourced rows and pass dbOrigin back on
+// mutation requests — see authorizeFormMutation above for why this matters.
+const tagOrigin = (mobileRows, webRows) => [
+  ...mobileRows.map((row) => ({ ...row, dbOrigin: 'mobile' })),
+  ...webRows.map((row) => ({ ...row, dbOrigin: 'web' })),
+];
 
 const verifyPassword = async (password, hash) => {
   try {
@@ -688,9 +712,10 @@ app.post('/editVaccinationForm', async (req, res) => {
     sex=?, contactNo=?, petName=?, petAge=?, species=?, petSex=?, color=?, cardNo=?, vaccine=?,
     source=?, dateVaccinated=?, timeFinish=?, updated_at=? WHERE id=?
   `;
+  const { dbOrigin } = req.body;
 
   try {
-    if (!(await authorizeFormMutation(req, res, 'vaccination_form', id))) return;
+    if (!(await authorizeFormMutation(req, res, 'vaccination_form', id, dbOrigin))) return;
     await queryDatabase(pool, updateQuery, [
       date,
       district,
@@ -822,9 +847,10 @@ app.post('/editNeuterForm', async (req, res) => {
     date=?, district=?, barangay=?, purok=?, proc=?, client=?, address=?, contactNo=?,
     name=?, species=?, sex=?, breed=?, age=?, pets=?, cat=?, updated_at=? WHERE id=?
   `;
+  const { dbOrigin } = req.body;
 
   try {
-    if (!(await authorizeFormMutation(req, res, 'consent_form', id))) return;
+    if (!(await authorizeFormMutation(req, res, 'consent_form', id, dbOrigin))) return;
     await queryDatabase(pool, updateQuery, [
       date,
       district,
@@ -968,9 +994,10 @@ app.post('/editRabiesSampleForms', async (req, res) => {
     breed=?, age=?, sampleSex=?, specimen=?, ownership=?, vacStatus=?, contact=?,
     manage=?, death=?, changes=?, otherillness=?, fatcount=?, updated_at=? WHERE id=?
   `;
+  const { dbOrigin } = req.body;
 
   try {
-    if (!(await authorizeFormMutation(req, res, 'bite_form', id))) return;
+    if (!(await authorizeFormMutation(req, res, 'bite_form', id, dbOrigin))) return;
     await queryDatabase(pool, updateQuery, [
       name,
       sex,
@@ -1053,7 +1080,7 @@ app.get('/getVaccinationFormsCVO', requireReviewer, async (req, res) => {
     const mobileResults = await queryDatabase(pool, query, [parseInt(limit), parseInt(offset)]);
     const webResults = await queryDatabase(webPool, query, [parseInt(limit), parseInt(offset)]);
 
-    const vaccinationForms = [...mobileResults, ...webResults];
+    const vaccinationForms = tagOrigin(mobileResults, webResults);
 
     if (vaccinationForms.length > 0) {
       console.log('Vaccination Forms:', vaccinationForms);
@@ -1112,7 +1139,7 @@ app.get('/getNeuterFormsCVO', requireReviewer, async (req, res) => {
     const mobileResults = await queryDatabase(pool, query, [parseInt(limit), parseInt(offset)]);
     const webResults = await queryDatabase(webPool, query, [parseInt(limit), parseInt(offset)]);
 
-    const neuterForms = [...mobileResults, ...webResults];
+    const neuterForms = tagOrigin(mobileResults, webResults);
 
     if (neuterForms.length > 0) {
       console.log('Neuter Forms:', neuterForms);
@@ -1172,7 +1199,7 @@ app.get('/getRabiesSampleFormsCVO', requireReviewer, async (req, res) => {
     const mobileResults = await queryDatabase(pool, query, [parseInt(limit), parseInt(offset)]);
     const webResults = await queryDatabase(webPool, query, [parseInt(limit), parseInt(offset)]);
 
-    const rabiesSampleForms = [...mobileResults, ...webResults];
+    const rabiesSampleForms = tagOrigin(mobileResults, webResults);
 
     if (rabiesSampleForms.length > 0) {
       console.log('Rabies Sample Forms:', rabiesSampleForms);
@@ -1250,9 +1277,10 @@ app.post('/editBudgetForm', async (req, res) => {
     UPDATE budget_form SET
     year=?, budget=?, costvax=?, updated_at=? WHERE id=?
   `;
+  const { dbOrigin } = req.body;
 
   try {
-    if (!(await authorizeFormMutation(req, res, 'budget_form', id))) return;
+    if (!(await authorizeFormMutation(req, res, 'budget_form', id, dbOrigin))) return;
     await queryDatabase(pool, updateQuery, [
       year,
       budget,
@@ -1340,9 +1368,10 @@ const updateQuery = `
   minimum_temperature=?, maximum_temperature=?, mean_temperature=?, relative_humidity=?, rainfall=?, precipitation=?,
   updated_at=? WHERE id=?
 `;
+const { dbOrigin } = req.body;
 
 try {
-  if (!(await authorizeFormMutation(req, res, 'weather_form', id))) return;
+  if (!(await authorizeFormMutation(req, res, 'weather_form', id, dbOrigin))) return;
   await queryDatabase(pool, updateQuery, [
     minimum_temperature,
     maximum_temperature,
@@ -1428,9 +1457,10 @@ app.post('/editScheduleForm', async (req, res) => {
     date=?, title=?, district=?, barangay=?, purok=?,
     updated_at=? WHERE id=?
   `;
+  const { dbOrigin } = req.body;
 
   try {
-    if (!(await authorizeFormMutation(req, res, 'schedule_form', id))) return;
+    if (!(await authorizeFormMutation(req, res, 'schedule_form', id, dbOrigin))) return;
     await queryDatabase(pool, updateQuery, [
       date,
       title,
@@ -1521,9 +1551,10 @@ app.post('/editIECForm', async (req, res) => {
     date=?, title=?, district=?, barangay=?, purok=?, participants=?, brochure=?, materials=?,
     updated_at=? WHERE id=?
   `;
+  const { dbOrigin } = req.body;
 
   try {
-    if (!(await authorizeFormMutation(req, res, 'iec_form', id))) return;
+    if (!(await authorizeFormMutation(req, res, 'iec_form', id, dbOrigin))) return;
     await queryDatabase(pool, updateQuery, [
       date,
       title,
@@ -1630,9 +1661,10 @@ app.post('/editAnimalControlForm', async (req, res) => {
     date1=?, cageNum=?, impHeads=?, date2=?, claimedHeads=?, date3=?, euthHeads=?, date4=?, chief=?,
     updated_at=? WHERE id=?
   `;
+  const { dbOrigin } = req.body;
 
   try {
-    if (!(await authorizeFormMutation(req, res, 'control_form', id))) return;
+    if (!(await authorizeFormMutation(req, res, 'control_form', id, dbOrigin))) return;
     await queryDatabase(pool, updateQuery, [
       date1,
       cageNum,
@@ -1787,9 +1819,10 @@ app.post('/editRabiesExposureForm', async (req, res) => {
     typeBNB=?, site=?, category=?, washing=?, RIG=?, route=?, d0=?, d3=?, d7=?, d14=?, d28=?,
     brand=?, outcome=?, bitingStatus=?, remarks=?, updated_at=? WHERE id=?
   `;
+  const { dbOrigin } = req.body;
 
   try {
-    if (!(await authorizeFormMutation(req, res, 'exposure_form', id))) return;
+    if (!(await authorizeFormMutation(req, res, 'exposure_form', id, dbOrigin))) return;
     await queryDatabase(pool, updateQuery, [
       regNo,
       regDate,
@@ -1874,7 +1907,7 @@ app.get('/getAnimalControlForms', requireAuth, async (req, res) => {
     const mobileResults = await queryDatabase(pool, query, params);
     const webResults = await queryDatabase(webPool, query, params);
 
-    const controlForms = [...mobileResults, ...webResults];
+    const controlForms = tagOrigin(mobileResults, webResults);
 
     if (controlForms.length > 0) {
       console.log('Animal Control and Rehabilitation Daily Report Forms:', controlForms);
@@ -1901,7 +1934,7 @@ app.get('/getIECForms', requireAuth, async (req, res) => {
     const mobileResults = await queryDatabase(pool, query, params);
     const webResults = await queryDatabase(webPool, query, params);
 
-    const iecForms = [...mobileResults, ...webResults];
+    const iecForms = tagOrigin(mobileResults, webResults);
 
     if (iecForms.length > 0) {
       console.log('IEC Report Forms:', iecForms);
@@ -1928,7 +1961,7 @@ app.get('/getScheduleForms', requireAuth, async (req, res) => {
     const mobileResults = await queryDatabase(pool, query, params);
     const webResults = await queryDatabase(webPool, query, params);
 
-    const scheduleForms = [...mobileResults, ...webResults];
+    const scheduleForms = tagOrigin(mobileResults, webResults);
 
     if (scheduleForms.length > 0) {
       console.log('Schedule Forms:', scheduleForms);
@@ -1955,7 +1988,7 @@ app.get('/getBudgetForms', requireAuth, async (req, res) => {
     const mobileResults = await queryDatabase(pool, query, params);
     const webResults = await queryDatabase(webPool, query, params);
 
-    const budgetForms = [...mobileResults, ...webResults];
+    const budgetForms = tagOrigin(mobileResults, webResults);
 
     if (budgetForms.length > 0) {
       console.log('Budget Forms:', budgetForms);
@@ -2007,7 +2040,7 @@ app.get('/getRabiesExposureForms', requireAuth, async (req, res) => {
     const mobileResults = await queryDatabase(pool, query, params);
     const webResults = await queryDatabase(webPool, query, params);
 
-    const exposureForms = [...mobileResults, ...webResults];
+    const exposureForms = tagOrigin(mobileResults, webResults);
 
     if (exposureForms.length > 0) {
       console.log('Rabies Exposure Forms:', exposureForms);
@@ -2024,11 +2057,12 @@ app.get('/getRabiesExposureForms', requireAuth, async (req, res) => {
 // DELETE endpoint for Vaccination Forms
 app.delete('/deleteVaccinationForm/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
+  const { dbOrigin } = req.query;
 
   const deleteQuery = 'DELETE FROM vaccination_form WHERE id = ?';
 
   try {
-    if (!(await authorizeFormMutation(req, res, 'vaccination_form', id))) return;
+    if (!(await authorizeFormMutation(req, res, 'vaccination_form', id, dbOrigin))) return;
     await queryDatabase(pool, deleteQuery, [id]);
     console.log(`Vaccination form with ID ${id} deleted successfully`);
     res.json({ success: true, message: 'Vaccination form deleted successfully' });
@@ -2041,11 +2075,12 @@ app.delete('/deleteVaccinationForm/:id', requireAuth, async (req, res) => {
 // DELETE endpoint for Neuter Forms
 app.delete('/deleteNeuterForm/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
+  const { dbOrigin } = req.query;
 
   const deleteQuery = 'DELETE FROM consent_form WHERE id = ?';
 
   try {
-    if (!(await authorizeFormMutation(req, res, 'consent_form', id))) return;
+    if (!(await authorizeFormMutation(req, res, 'consent_form', id, dbOrigin))) return;
     await queryDatabase(pool, deleteQuery, [id]);
     console.log(`Neuter form with ID ${id} deleted successfully`);
     res.json({ success: true, message: 'Neuter form deleted successfully' });
@@ -2058,11 +2093,12 @@ app.delete('/deleteNeuterForm/:id', requireAuth, async (req, res) => {
 // DELETE endpoint for Rabies Sample Forms
 app.delete('/deleteRabiesSampleForm/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
+  const { dbOrigin } = req.query;
 
   const deleteQuery = 'DELETE FROM bite_form WHERE id = ?';
 
   try {
-    if (!(await authorizeFormMutation(req, res, 'bite_form', id))) return;
+    if (!(await authorizeFormMutation(req, res, 'bite_form', id, dbOrigin))) return;
     await queryDatabase(pool, deleteQuery, [id]);
     console.log(`Rabies sample form with ID ${id} deleted successfully`);
     res.json({ success: true, message: 'Rabies sample form deleted successfully' });
@@ -2076,11 +2112,12 @@ app.delete('/deleteRabiesSampleForm/:id', requireAuth, async (req, res) => {
 // DELETE endpoint for Budget Forms
 app.delete('/deleteBudgetForm/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
+  const { dbOrigin } = req.query;
 
   const deleteQuery = 'DELETE FROM budget_form WHERE id = ?';
 
   try {
-    if (!(await authorizeFormMutation(req, res, 'budget_form', id))) return;
+    if (!(await authorizeFormMutation(req, res, 'budget_form', id, dbOrigin))) return;
     await queryDatabase(pool, deleteQuery, [id]);
     console.log(`Budget form with ID ${id} deleted successfully`);
     res.json({ success: true, message: 'Budget form deleted successfully' });
@@ -2093,11 +2130,12 @@ app.delete('/deleteBudgetForm/:id', requireAuth, async (req, res) => {
 // DELETE endpoint for Schedule Forms
 app.delete('/deleteScheduleForm/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
+  const { dbOrigin } = req.query;
 
   const deleteQuery = 'DELETE FROM schedule_form WHERE id = ?';
 
   try {
-    if (!(await authorizeFormMutation(req, res, 'schedule_form', id))) return;
+    if (!(await authorizeFormMutation(req, res, 'schedule_form', id, dbOrigin))) return;
     await queryDatabase(pool, deleteQuery, [id]);
     console.log(`Schedule form with ID ${id} deleted successfully`);
     res.json({ success: true, message: 'Schedule form deleted successfully' });
@@ -2110,11 +2148,12 @@ app.delete('/deleteScheduleForm/:id', requireAuth, async (req, res) => {
 // DELETE endpoint for IEC Forms
 app.delete('/deleteIECForm/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
+  const { dbOrigin } = req.query;
 
   const deleteQuery = 'DELETE FROM iec_form WHERE id = ?';
 
   try {
-    if (!(await authorizeFormMutation(req, res, 'iec_form', id))) return;
+    if (!(await authorizeFormMutation(req, res, 'iec_form', id, dbOrigin))) return;
     await queryDatabase(pool, deleteQuery, [id]);
     console.log(`IEC form with ID ${id} deleted successfully`);
     res.json({ success: true, message: 'IEC form deleted successfully' });
@@ -2127,11 +2166,12 @@ app.delete('/deleteIECForm/:id', requireAuth, async (req, res) => {
 // DELETE endpoint for Animal Control Forms
 app.delete('/deleteAnimalControlForm/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
+  const { dbOrigin } = req.query;
 
   const deleteQuery = 'DELETE FROM control_form WHERE id = ?';
 
   try {
-    if (!(await authorizeFormMutation(req, res, 'control_form', id))) return;
+    if (!(await authorizeFormMutation(req, res, 'control_form', id, dbOrigin))) return;
     await queryDatabase(pool, deleteQuery, [id]);
     console.log(`Animal control form with ID ${id} deleted successfully`);
     res.json({ success: true, message: 'Animal control form deleted successfully' });
@@ -2144,11 +2184,12 @@ app.delete('/deleteAnimalControlForm/:id', requireAuth, async (req, res) => {
 // DELETE endpoint for Rabies Exposure Forms
 app.delete('/deleteRabiesExposureForm/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
+  const { dbOrigin } = req.query;
 
   const deleteQuery = 'DELETE FROM exposure_form WHERE id = ?';
 
   try {
-    if (!(await authorizeFormMutation(req, res, 'exposure_form', id))) return;
+    if (!(await authorizeFormMutation(req, res, 'exposure_form', id, dbOrigin))) return;
     await queryDatabase(pool, deleteQuery, [id]);
     console.log(`Rabies Exposure form with ID ${id} deleted successfully`);
     res.json({ success: true, message: 'Rabies Exposure form deleted successfully' });

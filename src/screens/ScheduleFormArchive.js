@@ -104,7 +104,7 @@ const ScheduleFormArchive = () => {
     if (!deletableItem) return;
 
     setIsLoading(true);
-    axios.delete(`${apiURL}/deleteScheduleForm/${deletableItem.id}`)
+    axios.delete(`${apiURL}/deleteScheduleForm/${deletableItem.id}`, { params: { dbOrigin: deletableItem.dbOrigin } })
       .then(response => {
         if (response.data.success) {
           setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
@@ -172,9 +172,10 @@ const ScheduleFormArchive = () => {
 
       {pageItems.map((item) => (
         <ArchiveListItem
-          key={item.id}
+          key={`${item.dbOrigin}-${item.id}`}
           title={item.title || 'Untitled'}
           subtitle={`${item.district || 'No district'} • ${addOneDayToDate(item.date.split('T')[0])}`}
+          dbOrigin={item.dbOrigin}
           fields={[
             { label: 'Username', value: item.username },
             { label: 'Date', value: addOneDayToDate(item.date.split('T')[0]) },

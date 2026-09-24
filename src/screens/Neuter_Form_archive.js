@@ -133,7 +133,7 @@ const Neuter_Form_archive = () => {
     if (!deletableItem) return;
 
     setIsLoading(true);
-    axios.delete(`${apiURL}/deleteNeuterForm/${deletableItem.id}`)
+    axios.delete(`${apiURL}/deleteNeuterForm/${deletableItem.id}`, { params: { dbOrigin: deletableItem.dbOrigin } })
       .then(response => {
         if (response.data.success) {
           setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
@@ -191,9 +191,10 @@ const Neuter_Form_archive = () => {
 
       {pageItems.map((item) => (
         <ArchiveListItem
-          key={item.id}
+          key={`${item.dbOrigin}-${item.id}`}
           title={item.client || 'Unnamed Client'}
           subtitle={`${item.name || 'Unnamed patient'} • ${addOneDayToDate(item.date.split('T')[0])}`}
+          dbOrigin={item.dbOrigin}
           fields={[
             { label: 'Username', value: item.username },
             { label: 'Date', value: addOneDayToDate(item.date.split('T')[0]) },
