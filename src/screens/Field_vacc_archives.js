@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import {
@@ -11,7 +10,6 @@ import {
   AppButton,
   menuStyles,
 } from '../components';
-import { colors } from '../theme/theme';
 
 const Field_vacc_archives = () => {
   const [user, setUser] = useState(null);
@@ -26,7 +24,6 @@ const Field_vacc_archives = () => {
   const [isNotificationModalVisible, setNotificationModalVisible] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [isFetching, setIsFetching] = useState(false);
 
   const navigation = useNavigation();
   const apiURL = process.env.EXPO_PUBLIC_URL;
@@ -49,15 +46,9 @@ const Field_vacc_archives = () => {
         // as the backend's getVaccinationForms/getVaccinationFormsCVO split.
         let formsResponse;
         if (response.data.position === 'RabDash') {
-          formsResponse = await axios.get(`${apiURL}/getVaccinationFormsCVO`, {
-            params: { page: 1, limit: itemsPerPage },
-            withCredentials: true,
-          });
+          formsResponse = await axios.get(`${apiURL}/getVaccinationFormsCVO`, { withCredentials: true });
         } else if (response.data.position === 'Private Veterinarian' || response.data.position === 'CVO') {
-          formsResponse = await axios.get(`${apiURL}/getVaccinationForms`, {
-            params: { page: 1, limit: itemsPerPage },
-            withCredentials: true,
-          });
+          formsResponse = await axios.get(`${apiURL}/getVaccinationForms`, { withCredentials: true });
         } else {
           console.warn('Unknown user position:', response.data.position);
           setIsLoading(false);
@@ -183,25 +174,15 @@ const Field_vacc_archives = () => {
     return date.toISOString().split('T')[0];
   };
 
-  const handleNextPage = async () => {
-    const nextPage = currentPage + 1;
-    setIsFetching(true);
-    try {
-      // Fixed: this previously always hit the CVO endpoint regardless of
-      // position, so a Private Veterinarian or CVO user's "next page" would
-      // fetch RabDash-scoped data instead of their own.
-      const endpoint = user?.position === 'RabDash' ? 'getVaccinationFormsCVO' : 'getVaccinationForms';
-      const response = await axios.get(`${apiURL}/${endpoint}`, {
-        params: { page: nextPage, limit: itemsPerPage },
-        withCredentials: true,
-      });
-      setVaccinationForms([...vaccinationForms, ...response.data]);
-      setCurrentPage(nextPage);
-    } catch (error) {
-      console.error('Error fetching next page:', error);
-    } finally {
-      setIsFetching(false);
-    }
+  // Previously this re-fetched from the server on every "Next" press and
+  // appended the response — but getVaccinationForms/getVaccinationFormsCVO
+  // both now return the complete scoped result set on the initial load (see
+  // backend/app.js), so appending more of the same data just duplicated the
+  // list. Pagination is purely a client-side display concern now, same as
+  // every other archive screen: the full dataset is already in
+  // `vaccinationForms`, just move which slice of it is shown.
+  const handleNextPage = () => {
+    setCurrentPage(currentPage + 1);
   };
 
   const handlePreviousPage = () => {
@@ -260,8 +241,6 @@ const Field_vacc_archives = () => {
           onDelete={() => handleDeletePress(item)}
         />
       ))}
-
-      {isFetching && <ActivityIndicator size="large" color={colors.onPrimary} />}
 
       <ArchivePagination
         page={currentPage}

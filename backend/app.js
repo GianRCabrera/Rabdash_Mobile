@@ -1072,13 +1072,17 @@ app.get('/getVaccinationForms', async (req, res) => {
 
 // New endpoint to fetch vaccination_form data from both mobile and web databases
 app.get('/getVaccinationFormsCVO', requireReviewer, async (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
-  const offset = (page - 1) * limit;
-  const query = 'SELECT * FROM vaccination_form ORDER BY created_at DESC LIMIT ? OFFSET ?';
+  // No LIMIT/OFFSET: this used to default to the 10 newest rows whenever the
+  // frontend didn't pass page/limit (which it never did), silently hiding
+  // everything older from reviewers. Every other list endpoint in this file
+  // already returns its full scoped result set and leaves paging to the
+  // frontend's own client-side slicing — matching that here instead of
+  // building real server-side pagination for just these three routes.
+  const query = 'SELECT * FROM vaccination_form ORDER BY created_at DESC';
 
   try {
-    const mobileResults = await queryDatabase(pool, query, [parseInt(limit), parseInt(offset)]);
-    const webResults = await queryDatabase(webPool, query, [parseInt(limit), parseInt(offset)]);
+    const mobileResults = await queryDatabase(pool, query, []);
+    const webResults = await queryDatabase(webPool, query, []);
 
     const vaccinationForms = tagOrigin(mobileResults, webResults);
 
@@ -1131,13 +1135,12 @@ app.get('/getNeuterForms', async (req, res) => {
 
 // New endpoint to fetch neuter form data from both mobile and web databases
 app.get('/getNeuterFormsCVO', requireReviewer, async (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
-  const offset = (page - 1) * limit;
-  const query = 'SELECT * FROM consent_form ORDER BY created_at DESC LIMIT ? OFFSET ?';
+  // No LIMIT/OFFSET — see the comment on getVaccinationFormsCVO above.
+  const query = 'SELECT * FROM consent_form ORDER BY created_at DESC';
 
   try {
-    const mobileResults = await queryDatabase(pool, query, [parseInt(limit), parseInt(offset)]);
-    const webResults = await queryDatabase(webPool, query, [parseInt(limit), parseInt(offset)]);
+    const mobileResults = await queryDatabase(pool, query, []);
+    const webResults = await queryDatabase(webPool, query, []);
 
     const neuterForms = tagOrigin(mobileResults, webResults);
 
@@ -1191,13 +1194,12 @@ app.get('/getRabiesSampleForms', async (req, res) => {
 
 // Add a new endpoint to fetch rabies sample form data from both mobile and web databases
 app.get('/getRabiesSampleFormsCVO', requireReviewer, async (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
-  const offset = (page - 1) * limit;
-  const query = 'SELECT * FROM bite_form ORDER BY created_at DESC LIMIT ? OFFSET ?';
+  // No LIMIT/OFFSET — see the comment on getVaccinationFormsCVO above.
+  const query = 'SELECT * FROM bite_form ORDER BY created_at DESC';
 
   try {
-    const mobileResults = await queryDatabase(pool, query, [parseInt(limit), parseInt(offset)]);
-    const webResults = await queryDatabase(webPool, query, [parseInt(limit), parseInt(offset)]);
+    const mobileResults = await queryDatabase(pool, query, []);
+    const webResults = await queryDatabase(webPool, query, []);
 
     const rabiesSampleForms = tagOrigin(mobileResults, webResults);
 
