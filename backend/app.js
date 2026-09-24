@@ -1059,7 +1059,6 @@ app.get('/getVaccinationForms', async (req, res) => {
         }
         return result;
       });
-      console.log('Vaccination Forms:', adjustedResults);
       res.json(adjustedResults);
     } else {
       res.json([]);
@@ -1087,7 +1086,6 @@ app.get('/getVaccinationFormsCVO', requireReviewer, async (req, res) => {
     const vaccinationForms = tagOrigin(mobileResults, webResults);
 
     if (vaccinationForms.length > 0) {
-      console.log('Vaccination Forms:', vaccinationForms);
       res.json(vaccinationForms);
     } else {
       res.json([]);
@@ -1122,7 +1120,6 @@ app.get('/getNeuterForms', async (req, res) => {
         }
         return result;
       });
-      console.log('Neuter Forms:', adjustedResults);
       res.json(adjustedResults);
     } else {
       res.json([]);
@@ -1145,7 +1142,6 @@ app.get('/getNeuterFormsCVO', requireReviewer, async (req, res) => {
     const neuterForms = tagOrigin(mobileResults, webResults);
 
     if (neuterForms.length > 0) {
-      console.log('Neuter Forms:', neuterForms);
       res.json(neuterForms);
     } else {
       res.json([]);
@@ -1181,7 +1177,6 @@ app.get('/getRabiesSampleForms', async (req, res) => {
         }
         return result;
       });
-      console.log('Rabies Sample Forms:', adjustedResults);
       res.json(adjustedResults);
     } else {
       res.json([]);
@@ -1204,7 +1199,6 @@ app.get('/getRabiesSampleFormsCVO', requireReviewer, async (req, res) => {
     const rabiesSampleForms = tagOrigin(mobileResults, webResults);
 
     if (rabiesSampleForms.length > 0) {
-      console.log('Rabies Sample Forms:', rabiesSampleForms);
       res.json(rabiesSampleForms);
     } else {
       res.json([]);
@@ -1912,7 +1906,6 @@ app.get('/getAnimalControlForms', requireAuth, async (req, res) => {
     const controlForms = tagOrigin(mobileResults, webResults);
 
     if (controlForms.length > 0) {
-      console.log('Animal Control and Rehabilitation Daily Report Forms:', controlForms);
       res.json(controlForms);
     } else {
       res.json([]);
@@ -1939,7 +1932,6 @@ app.get('/getIECForms', requireAuth, async (req, res) => {
     const iecForms = tagOrigin(mobileResults, webResults);
 
     if (iecForms.length > 0) {
-      console.log('IEC Report Forms:', iecForms);
       res.json(iecForms);
     } else {
       res.json([]);
@@ -1966,7 +1958,6 @@ app.get('/getScheduleForms', requireAuth, async (req, res) => {
     const scheduleForms = tagOrigin(mobileResults, webResults);
 
     if (scheduleForms.length > 0) {
-      console.log('Schedule Forms:', scheduleForms);
       res.json(scheduleForms);
     } else {
       res.json([]);
@@ -1993,7 +1984,6 @@ app.get('/getBudgetForms', requireAuth, async (req, res) => {
     const budgetForms = tagOrigin(mobileResults, webResults);
 
     if (budgetForms.length > 0) {
-      console.log('Budget Forms:', budgetForms);
       res.json(budgetForms);
     } else {
       res.json([]);
@@ -2018,7 +2008,6 @@ app.get('/getWeatherForms', requireAuth, async (req, res) => {
 
     if (results.length > 0) {
       const weatherForms = results;
-      console.log('Weather Forms:', weatherForms);
       res.json(weatherForms);
     } else {
       res.json([]);
@@ -2045,7 +2034,6 @@ app.get('/getRabiesExposureForms', requireAuth, async (req, res) => {
     const exposureForms = tagOrigin(mobileResults, webResults);
 
     if (exposureForms.length > 0) {
-      console.log('Rabies Exposure Forms:', exposureForms);
       res.json(exposureForms);
     } else {
       res.json([]);
