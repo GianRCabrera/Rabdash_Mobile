@@ -32,8 +32,20 @@ const authReducer = (state, action) => {
   }
 };
 
+// Lets code outside the React tree (the axios session-expiry interceptor)
+// clear auth state without needing a hook — safe since AuthProvider mounts
+// once at the app root, before any screen can make an API call.
+let externalDispatch = null;
+
+const logoutFromOutsideReact = () => {
+  if (externalDispatch) {
+    externalDispatch({ type: 'LOGOUT' });
+  }
+};
+
 const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  externalDispatch = dispatch;
 
   return (
     <AuthStateContext.Provider value={state}>
@@ -68,4 +80,4 @@ const useAuth = () => {
   };
 };
 
-export { AuthProvider, useAuth };
+export { AuthProvider, useAuth, logoutFromOutsideReact };

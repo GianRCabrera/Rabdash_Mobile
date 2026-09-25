@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { AuthProvider } from './src/context/AuthContext';
 import { Linking } from 'react-native'; // Correctly import Linking from react-native
 import queryString from 'query-string'; // Import query-string for URL parsing
+import './src/api/axiosSessionInterceptor'; // Side-effect import: registers the global 401 handler once
 
 // Screens
 import LoginPage from './src/screens/LoginPage';
