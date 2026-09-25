@@ -238,6 +238,61 @@ const requireFields = (req, res, fields) => {
   return true;
 };
 
+const nowMysql = () => new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+// Builds a submit (INSERT) handler for the pattern shared by every form
+// type: derive username from the session, validate required fields, insert
+// with created_at/updated_at timestamps, return { success, message, id }.
+// Route must have requireAuth applied. `fields` is the table's complete set
+// of user-editable columns, used to build the INSERT; `requiredFields`
+// (defaults to all of `fields`) is the subset requireFields checks — pass a
+// smaller list for forms with genuinely optional fields (see the Rabies
+// Exposure form's longitudinal dose-date fields).
+const createSubmitHandler = (table, label, fields, requiredFields = fields) => async (req, res) => {
+  const username = req.session.user.email;
+
+  if (!requireFields(req, res, requiredFields)) return;
+
+  const createdAt = nowMysql();
+  const updatedAt = createdAt;
+
+  const columns = ['username', ...fields, 'created_at', 'updated_at'];
+  const values = [username, ...fields.map((field) => req.body[field]), createdAt, updatedAt];
+  const query = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`;
+
+  try {
+    const result = await queryDatabase(pool, query, values);
+    console.log(`${label} form data inserted successfully. New ID:`, result.insertId);
+    res.json({ success: true, message: `${label} form data submitted successfully`, id: result.insertId });
+  } catch (error) {
+    console.error(`Error during ${label} form submission:`, error);
+    res.status(500).json({ success: false, message: `An error occurred during ${label} form submission` });
+  }
+};
+
+// Builds an edit (UPDATE) handler for the pattern shared by every form
+// type: authorize via authorizeFormMutation (ownership + dbOrigin check),
+// overwrite every field plus updated_at. No field validation, matching the
+// original handlers — edits weren't in scope for the required-field pass
+// applied to submit handlers. Route must have requireAuth applied.
+const createEditHandler = (table, label, fields) => async (req, res) => {
+  const { id, dbOrigin } = req.body;
+  const updatedAt = nowMysql();
+  const setClause = fields.map((field) => `${field}=?`).join(', ');
+  const values = [...fields.map((field) => req.body[field]), updatedAt, id];
+  const query = `UPDATE ${table} SET ${setClause}, updated_at=? WHERE id=?`;
+
+  try {
+    if (!(await authorizeFormMutation(req, res, table, id, dbOrigin))) return;
+    await queryDatabase(pool, query, values);
+    console.log(`${label} form data updated successfully for ID:`, id);
+    res.json({ success: true, message: `${label} Form updated successfully`, id });
+  } catch (error) {
+    console.error(`Error during ${label} form update:`, error);
+    res.status(500).json({ success: false, message: `An error occurred during ${label} form update` });
+  }
+};
+
 const verifyPassword = async (password, hash) => {
   try {
     if (hash.startsWith('$2y$')) {
@@ -661,456 +716,27 @@ app.post('/reset-forgotten-password', authLimiter, async (req, res) => {
 
 
 //Forms
-app.post('/submitVaccinationForm', requireAuth, async (req, res) => {
-  const { user } = req.session;
-  const username = user.email;
-  console.log('Username:', username);
-
-  const createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  const updatedAt = createdAt;
-
-  const {
-    date,
-    district,
-    barangay,
-    purok,
-    vaccinator,
-    timeStart,
-    ownerName,
-    address,
-    sex,
-    contactNo,
-
-    petName,
-    petAge,
-    species,
-    petSex,
-    color,
-    cardNo,
-    vaccine,
-    source,
-    dateVaccinated,
-    timeFinish,
-  } = req.body;
-
-  if (!requireFields(req, res, [
-    'date', 'district', 'barangay', 'purok', 'vaccinator', 'timeStart', 'ownerName', 'address', 'sex', 'contactNo',
-    'petName', 'petAge', 'species', 'petSex', 'color', 'cardNo', 'vaccine', 'source', 'dateVaccinated', 'timeFinish',
-  ])) return;
-
-  const insertQuery = `
-    INSERT INTO vaccination_form
-    (username, date, district, barangay, purok, vaccinator, timeStart, ownerName, address, sex, contactNo,
-      petName, petAge, species, petSex, color, cardNo,
-      vaccine, source, dateVaccinated, timeFinish,  created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-  try {
-    const result = await queryDatabase(pool, insertQuery, [
-      username,
-      date,
-      district,
-      barangay,
-      purok,
-      vaccinator,
-      timeStart,
-      ownerName,
-      address,
-      sex,
-      contactNo,
-
-      petName,
-      petAge,
-      species,
-      petSex,
-      color,
-      cardNo,
-      vaccine,
-      source,
-      dateVaccinated,
-      timeFinish,
-      createdAt,
-      updatedAt
-    ]);
-    const insertedId = result.insertId;
-    console.log('Vaccination form data inserted successfully. New ID:', insertedId);
-    res.json({ success: true, message: 'Vaccination form data submitted successfully', id: insertedId });
-  } catch (error) {
-    console.error('Error during Vaccination form submission:', error);
-    res.status(500).json({ success: false, message: 'An error occurred during Vaccination form submission' });
-  }
-});
+const VACCINATION_FIELDS = [
+  'date', 'district', 'barangay', 'purok', 'vaccinator', 'timeStart', 'ownerName', 'address', 'sex', 'contactNo',
+  'petName', 'petAge', 'species', 'petSex', 'color', 'cardNo', 'vaccine', 'source', 'dateVaccinated', 'timeFinish',
+];
+app.post('/submitVaccinationForm', requireAuth, createSubmitHandler('vaccination_form', 'Vaccination', VACCINATION_FIELDS));
+app.post('/editVaccinationForm', requireAuth, createEditHandler('vaccination_form', 'Vaccination', VACCINATION_FIELDS));
 
 
-app.post('/editVaccinationForm', async (req, res) => {
-  const { user } = req.session;
-  if (!user) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
+const NEUTER_FIELDS = [
+  'date', 'district', 'barangay', 'purok', 'proc', 'client', 'address', 'contactNo',
+  'name', 'species', 'sex', 'breed', 'age', 'pets', 'cat',
+];
+app.post('/submitNeuterForm', requireAuth, createSubmitHandler('consent_form', 'Neuter', NEUTER_FIELDS));
+app.post('/editNeuterForm', requireAuth, createEditHandler('consent_form', 'Neuter', NEUTER_FIELDS));
 
-  const username = user.email;
-  console.log('Username:', username);
-
-  const updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
-  const {
-    id,
-    date,
-    district,
-    barangay,
-    purok,
-    vaccinator,
-    timeStart,
-    ownerName,
-    address,
-    sex,
-    contactNo,
-    petName,
-    petAge,
-    species,
-    petSex,
-    color,
-    cardNo,
-    vaccine,
-    source,
-    dateVaccinated,
-    timeFinish
-  } = req.body;
-
-  const updateQuery = `
-    UPDATE vaccination_form SET
-    date=?, district=?, barangay=?, purok=?, vaccinator=?, timeStart=?, ownerName=?, address=?,
-    sex=?, contactNo=?, petName=?, petAge=?, species=?, petSex=?, color=?, cardNo=?, vaccine=?,
-    source=?, dateVaccinated=?, timeFinish=?, updated_at=? WHERE id=?
-  `;
-  const { dbOrigin } = req.body;
-
-  try {
-    if (!(await authorizeFormMutation(req, res, 'vaccination_form', id, dbOrigin))) return;
-    await queryDatabase(pool, updateQuery, [
-      date,
-      district,
-      barangay,
-      purok,
-      vaccinator,
-      timeStart,
-      ownerName,
-      address,
-      sex,
-      contactNo,
-      petName,
-      petAge,
-      species,
-      petSex,
-      color,
-      cardNo,
-      vaccine,
-      source,
-      dateVaccinated,
-      timeFinish,
-      updatedAt,
-      id
-    ]);
-    console.log('Vaccination form data updated successfully for ID:', id);
-    res.json({ success: true, message: 'Vaccination Form updated successfully', id });
-  } catch (error) {
-    console.error('Error during Vaccination form update:', error);
-    res.status(500).json({ success: false, message: 'An error occurred during Vaccination form update' });
-  }
-});
-
-
-app.post('/submitNeuterForm', requireAuth, async (req, res) => {
-  const { user } = req.session;
-  const username = user.email;
-  console.log('Username:', username);
-
-  const createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  const updatedAt = createdAt;
-
-  const {
-    date,
-    district,
-    barangay,
-    purok,
-    proc,
-    client,
-    address,
-    contactNo,
-    name,
-    species,
-    sex,
-    breed,
-    age,
-    pets,
-    cat,
-  } = req.body;
-
-  if (!requireFields(req, res, [
-    'date', 'district', 'barangay', 'purok', 'proc', 'client', 'address', 'contactNo',
-    'name', 'species', 'sex', 'breed', 'age', 'pets', 'cat',
-  ])) return;
-
-  const insertQuery = `
-    INSERT INTO consent_form
-    (username, date, district, barangay, purok, proc, client, address, contactNo, name, species,
-    sex, breed, age, pets, cat, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
-
-  try {
-    const result = await queryDatabase(pool, insertQuery, [
-      username,
-      date,
-      district,
-      barangay,
-      purok,
-      proc,
-      client,
-      address,
-      contactNo,
-      name,
-      species,
-      sex,
-      breed,
-      age,
-      pets,
-      cat,
-      createdAt,
-      updatedAt
-    ]);
-    const insertedId = result.insertId;
-    console.log('Neuter form data inserted successfully. New ID:', insertedId);
-    res.json({ success: true, message: 'Neuter form data submitted successfully', id: insertedId });
-  } catch (error) {
-    console.error('Error during neuter form submission:', error);
-    res.status(500).json({ success: false, message: 'An error occurred during neuter form submission' });
-  }
-});
-
-app.post('/editNeuterForm', async (req, res) => {
-  const { user } = req.session;
-  if (!user) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
-
-  const username = user.email;
-  console.log('Username:', username);
-
-  const updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
-  const {
-    id,
-    date,
-    district,
-    barangay,
-    purok,
-    proc,
-    client,
-    address,
-    contactNo,
-    name,
-    species,
-    sex,
-    breed,
-    age,
-    pets,
-    cat,
-  } = req.body;
-
-  const updateQuery = `
-    UPDATE consent_form SET
-    date=?, district=?, barangay=?, purok=?, proc=?, client=?, address=?, contactNo=?,
-    name=?, species=?, sex=?, breed=?, age=?, pets=?, cat=?, updated_at=? WHERE id=?
-  `;
-  const { dbOrigin } = req.body;
-
-  try {
-    if (!(await authorizeFormMutation(req, res, 'consent_form', id, dbOrigin))) return;
-    await queryDatabase(pool, updateQuery, [
-      date,
-      district,
-      barangay,
-      purok,
-      proc,
-      client,
-      address,
-      contactNo,
-      name,
-      species,
-      sex,
-      breed,
-      age,
-      pets,
-      cat,
-      updatedAt,
-      id
-    ]);
-    console.log('Neuter form data updated successfully for ID:', id);
-    res.json({ success: true, message: 'Neuter Form updated successfully', id });
-  } catch (error) {
-    console.error('Error during neuter form update:', error);
-    res.status(500).json({ success: false, message: 'An error occurred during neuter form update' });
-  }
-});
-
-app.post('/submitRabiesSampleForms', requireAuth, async (req, res) => {
-  const { user } = req.session;
-  const username = user.email;
-  console.log('Username:', username);
-
-  const createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  const updatedAt = createdAt;
-
-  const {
-    name,
-    sex,
-    address,
-    number,
-    district,
-    barangay,
-    date,
-    species,
-    breed,
-    age,
-
-    sampleSex,
-    specimen,
-    ownership,
-    vacStatus,
-    contact,
-    manage,
-    death,
-    changes,
-    otherillness,
-    fatcount,
-  } = req.body;
-
-  if (!requireFields(req, res, [
-    'name', 'sex', 'address', 'number', 'district', 'barangay', 'date', 'species', 'breed', 'age',
-    'sampleSex', 'specimen', 'ownership', 'vacStatus', 'contact', 'manage', 'death', 'changes', 'otherillness', 'fatcount',
-  ])) return;
-
-  const insertQuery = `
-    INSERT INTO bite_form
-    (username, name, sex, address, number, district, barangay, date, species, breed, age,
-      sampleSex, specimen, ownership, vacStatus, contact, manage, death, changes, otherillness, fatcount, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
-
-  try {
-    const result = await queryDatabase(pool, insertQuery, [
-      username,
-      name,
-      sex,
-      address,
-      number,
-      district,
-      barangay,
-      date,
-      species,
-      breed,
-      age,
-
-      sampleSex,
-      specimen,
-      ownership,
-      vacStatus,
-      contact,
-      manage,
-      death,
-      changes,
-      otherillness,
-      fatcount,
-      createdAt,
-      updatedAt
-    ]);
-    const insertedId = result.insertId;
-    console.log('Rabies Sample form data inserted successfully. New ID:', insertedId);
-    res.json({ success: true, message: 'Rabies Sample form data submitted successfully', id: insertedId });
-  } catch (error) {
-    console.error('Error during Rabies Sample form submission:', error);
-    res.status(500).json({ success: false, message: 'An error occurred during Rabies Sample form submission' });
-  }
-});
-
-app.post('/editRabiesSampleForms', async (req, res) => {
-  const { user } = req.session;
-  if (!user) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
-
-  const username = user.email;
-  console.log('Username:', username);
-
-  const updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
-  const {
-    id,
-    name,
-    sex,
-    address,
-    number,
-    district,
-    barangay,
-    date,
-    species,
-    breed,
-    age,
-    sampleSex,
-    specimen,
-    ownership,
-    vacStatus,
-    contact,
-    manage,
-    death,
-    changes,
-    otherillness,
-    fatcount,
-  } = req.body;
-
-  const updateQuery = `
-    UPDATE bite_form SET
-    name=?, sex=?, address=?, number=?, district=?, barangay=?, date=?, species=?,
-    breed=?, age=?, sampleSex=?, specimen=?, ownership=?, vacStatus=?, contact=?,
-    manage=?, death=?, changes=?, otherillness=?, fatcount=?, updated_at=? WHERE id=?
-  `;
-  const { dbOrigin } = req.body;
-
-  try {
-    if (!(await authorizeFormMutation(req, res, 'bite_form', id, dbOrigin))) return;
-    await queryDatabase(pool, updateQuery, [
-      name,
-      sex,
-      address,
-      number,
-      district,
-      barangay,
-      date,
-      species,
-      breed,
-      age,
-      sampleSex,
-      specimen,
-      ownership,
-      vacStatus,
-      contact,
-      manage,
-      death,
-      changes,
-      otherillness,
-      fatcount,
-      updatedAt,
-      id
-    ]);
-    console.log('Rabies Sample form data updated successfully for ID:', id);
-    res.json({ success: true, message: 'Rabies Sample Form updated successfully', id });
-  } catch (error) {
-    console.error('Error during Rabies Sample form update:', error);
-    res.status(500).json({ success: false, message: 'An error occurred during Rabies Sample form update' });
-  }
-});
+const RABIES_SAMPLE_FIELDS = [
+  'name', 'sex', 'address', 'number', 'district', 'barangay', 'date', 'species', 'breed', 'age',
+  'sampleSex', 'specimen', 'ownership', 'vacStatus', 'contact', 'manage', 'death', 'changes', 'otherillness', 'fatcount',
+];
+app.post('/submitRabiesSampleForms', requireAuth, createSubmitHandler('bite_form', 'Rabies Sample', RABIES_SAMPLE_FIELDS));
+app.post('/editRabiesSampleForms', requireAuth, createEditHandler('bite_form', 'Rabies Sample', RABIES_SAMPLE_FIELDS));
 
 // Add a new endpoint to fetch vaccination form data
 app.get('/getVaccinationForms', async (req, res) => {
@@ -1291,662 +917,48 @@ app.get('/getRabiesSampleFormsCVO', requireReviewer, async (req, res) => {
   }
 });
 
-app.post('/submitBudgetForm', async (req, res) => {
-  const { user } = req.session;
-  if (!user) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
+const BUDGET_FIELDS = ['year', 'budget', 'costvax'];
+app.post('/submitBudgetForm', requireAuth, createSubmitHandler('budget_form', 'Budget', BUDGET_FIELDS));
+app.post('/editBudgetForm', requireAuth, createEditHandler('budget_form', 'Budget', BUDGET_FIELDS));
 
-  const username = user.email;
-  console.log('Username:', username);
-
-  const createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  const updatedAt = createdAt;
-
-  const {
-    year,
-    budget,
-    costvax,
-  } = req.body;
-
-  if (!requireFields(req, res, ['year', 'budget', 'costvax'])) return;
-
-  const insertQuery = `
-    INSERT INTO budget_form
-    (username, year, budget, costvax, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `;
-
-  try {
-    const result = await queryDatabase(pool, insertQuery, [
-      username,
-      year,
-      budget,
-      costvax,
-      createdAt,
-      updatedAt
-    ]);
-    const insertedId = result.insertId;
-    console.log('Budget form data inserted successfully. New ID:', insertedId);
-    res.json({ success: true, message: 'Budget form data submitted successfully', id: insertedId });
-  } catch (error) {
-    console.error('Error during Budget form submission:', error);
-    res.status(500).json({ success: false, message: 'An error occurred during Budget form submission' });
-  }
-});
-
-app.post('/editBudgetForm', async (req, res) => {
-  const { user } = req.session;
-  if (!user) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
-
-  const username = user.email;
-  console.log('Username:', username);
-
-  const updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
-  const {
-    id,
-    year,
-    budget,
-    costvax,
-  } = req.body;
-
-  const updateQuery = `
-    UPDATE budget_form SET
-    year=?, budget=?, costvax=?, updated_at=? WHERE id=?
-  `;
-  const { dbOrigin } = req.body;
-
-  try {
-    if (!(await authorizeFormMutation(req, res, 'budget_form', id, dbOrigin))) return;
-    await queryDatabase(pool, updateQuery, [
-      year,
-      budget,
-      costvax,
-      updatedAt,
-      id
-    ]);
-    console.log('Budget form data updated successfully for ID:', id);
-    res.json({ success: true, message: 'Budget Form updated successfully', id });
-  } catch (error) {
-    console.error('Error during Budget form update:', error);
-    res.status(500).json({ success: false, message: 'An error occurred during Budget form update' });
-  }
-});
-
-app.post('/submitWeatherForm', requireAuth, async (req, res) => {
-const { user } = req.session;
-const username = user.email;
-
-console.log('Username:', username);
-
-const createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-const updatedAt = createdAt;
-
-const {
-  minimum_temperature,
-  maximum_temperature,
-  mean_temperature,
-  relative_humidity,
-  rainfall,
-  precipitation
-} = req.body;
-
-if (!requireFields(req, res, [
+const WEATHER_FIELDS = [
   'minimum_temperature', 'maximum_temperature', 'mean_temperature', 'relative_humidity', 'rainfall', 'precipitation',
-])) return;
+];
+app.post('/submitWeatherForm', requireAuth, createSubmitHandler('weather_form', 'Weather', WEATHER_FIELDS));
+// The old hand-written editWeatherForm handler mislabeled its success/error
+// messages as "Schedule Form" (a copy-paste artifact) — using the shared
+// factory here fixes that automatically.
+app.post('/editWeatherForm', requireAuth, createEditHandler('weather_form', 'Weather', WEATHER_FIELDS));
 
-// Insert data into the weather_form table using parameterized query
-const insertQuery = `
-  INSERT INTO weather_form
-  (username, minimum_temperature, maximum_temperature, mean_temperature, relative_humidity, rainfall, precipitation, created_at, updated_at)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-`;
+const SCHEDULE_FIELDS = ['date', 'title', 'district', 'barangay', 'purok'];
+app.post('/submitScheduleForm', requireAuth, createSubmitHandler('schedule_form', 'Schedule', SCHEDULE_FIELDS));
+app.post('/editScheduleForm', requireAuth, createEditHandler('schedule_form', 'Schedule', SCHEDULE_FIELDS));
 
-try {
-  const result = await queryDatabase(pool, insertQuery, [
-    username,
-    minimum_temperature,
-    maximum_temperature,
-    mean_temperature,
-    relative_humidity,
-    rainfall,
-    precipitation,
-    createdAt,
-    updatedAt
-  ]);
-  const insertedId = result.insertId;
-  console.log('Weather form data inserted successfully. New ID:', insertedId);
-
-  console.log('Weather form data inserted successfully');
-  res.json({ success: true, message: 'Weather form data submitted successfully' });
-} catch (error) {
-  console.error('Error during Weather form submission:', error.message);
-  res.status(500).json({ success: false, message: 'An error occurred during Weather form submission' });
-}
-});
-
-app.post('/editWeatherForm', requireAuth, async (req, res) => {
-const { user } = req.session;
-const username = user.email;
-console.log('Username:', username);
-
-const updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
-const {
-  id,
-  minimum_temperature,
-  maximum_temperature,
-  mean_temperature,
-  relative_humidity,
-  rainfall,
-  precipitation,
-} = req.body;
-
-const updateQuery = `
-  UPDATE weather_form SET
-  minimum_temperature=?, maximum_temperature=?, mean_temperature=?, relative_humidity=?, rainfall=?, precipitation=?,
-  updated_at=? WHERE id=?
-`;
-const { dbOrigin } = req.body;
-
-try {
-  if (!(await authorizeFormMutation(req, res, 'weather_form', id, dbOrigin))) return;
-  await queryDatabase(pool, updateQuery, [
-    minimum_temperature,
-    maximum_temperature,
-    mean_temperature,
-    relative_humidity,
-    rainfall,
-    precipitation,
-    updatedAt,
-    id
-  ]);
-  console.log('Schedule form data updated successfully for ID:', id);
-  res.json({ success: true, message: 'Schedule Form updated successfully', id });
-} catch (error) {
-  console.error('Error during Schedule form update:', error);
-  res.status(500).json({ success: false, message: 'An error occurred during Schedule form update' });
-}
-});
-
-app.post('/submitScheduleForm', async (req, res) => {
-  const { user } = req.session;
-  if (!user) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
-
-  const username = user.email;
-  console.log('Username:', username);
-
-  const createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  const updatedAt = createdAt;
-
-  const { date, title, district, barangay, purok } = req.body;
-
-  if (!requireFields(req, res, ['date', 'title', 'district', 'barangay', 'purok'])) return;
-
-  const insertQuery = `
-    INSERT INTO schedule_form
-    (username, date, title, district, barangay, purok, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `;
-
-  try {
-    const result = await queryDatabase(pool, insertQuery, [
-      username,
-      date,
-      title,
-      district,
-      barangay,
-      purok,
-      createdAt,
-      updatedAt
-    ]);
-    const insertedId = result.insertId;
-    console.log('Schedule form data inserted successfully. New ID:', insertedId);
-    res.json({ success: true, message: 'Schedule form data submitted successfully', id: insertedId });
-  } catch (error) {
-    console.error('Error during Schedule form submission:', error);
-    res.status(500).json({ success: false, message: 'An error occurred during Schedule form submission' });
-  }
-});
-
-app.post('/editScheduleForm', async (req, res) => {
-  const { user } = req.session;
-  if (!user) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
-
-  const username = user.email;
-  console.log('Username:', username);
-
-  const updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
-  const {
-    id,
-    date,
-    title,
-    district,
-    barangay,
-    purok,
-  } = req.body;
-
-  const updateQuery = `
-    UPDATE schedule_form SET
-    date=?, title=?, district=?, barangay=?, purok=?,
-    updated_at=? WHERE id=?
-  `;
-  const { dbOrigin } = req.body;
-
-  try {
-    if (!(await authorizeFormMutation(req, res, 'schedule_form', id, dbOrigin))) return;
-    await queryDatabase(pool, updateQuery, [
-      date,
-      title,
-      district,
-      barangay,
-      purok,
-      updatedAt,
-      id
-    ]);
-    console.log('Schedule form data updated successfully for ID:', id);
-    res.json({ success: true, message: 'Schedule Form updated successfully', id });
-  } catch (error) {
-    console.error('Error during Schedule form update:', error);
-    res.status(500).json({ success: false, message: 'An error occurred during Schedule form update' });
-  }
-});
-
-app.post('/submitIECForm', async (req, res) => {
-  const { user } = req.session;
-  if (!user) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
-
-  const username = user.email;
-  console.log('Username:', username);
-
-  const createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  const updatedAt = createdAt;
-
-  const { date, title, district, barangay, purok, participants, brochure, materials } = req.body;
-
-  if (!requireFields(req, res, ['date', 'title', 'district', 'barangay', 'purok', 'participants', 'brochure', 'materials'])) return;
-
-  const insertQuery = `
-    INSERT INTO iec_form
-    (username, date, title, district, barangay, purok, participants, brochure, materials, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
-
-  try {
-    const result = await queryDatabase(pool, insertQuery, [
-      username,
-      date,
-      title,
-      district,
-      barangay,
-      purok,
-      participants,
-      brochure,
-      materials,
-      createdAt,
-      updatedAt
-    ]);
-    const insertedId = result.insertId;
-    console.log('IEC form data inserted successfully. New ID:', insertedId);
-    res.json({ success: true, message: 'IEC form data submitted successfully', id: insertedId });
-  } catch (error) {
-    console.error('Error during IEC form submission:', error);
-    res.status(500).json({ success: false, message: 'An error occurred during IEC form submission' });
-  }
-});
-
-app.post('/editIECForm', async (req, res) => {
-  const { user } = req.session;
-  if (!user) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
-  
-  const username = user.email;
-  console.log('Username:', username);
-
-  const updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
-  const {
-    id,
-    date,
-    title,
-    district,
-    barangay,
-    purok,
-    participants,
-    brochure,
-    materials
-  } = req.body;
-
-  const updateQuery = `
-    UPDATE iec_form SET
-    date=?, title=?, district=?, barangay=?, purok=?, participants=?, brochure=?, materials=?,
-    updated_at=? WHERE id=?
-  `;
-  const { dbOrigin } = req.body;
-
-  try {
-    if (!(await authorizeFormMutation(req, res, 'iec_form', id, dbOrigin))) return;
-    await queryDatabase(pool, updateQuery, [
-      date,
-      title,
-      district,
-      barangay,
-      purok,
-      participants,
-      brochure,
-      materials,
-      updatedAt,
-      id
-    ]);
-    console.log('IEC form data updated successfully for ID:', id);
-    res.json({ success: true, message: 'IEC Form updated successfully', id });
-  } catch (error) {
-    console.error('Error during IEC form update:', error);
-    res.status(500).json({ success: false, message: 'An error occurred during IEC form update' });
-  }
-});
+const IEC_FIELDS = ['date', 'title', 'district', 'barangay', 'purok', 'participants', 'brochure', 'materials'];
+app.post('/submitIECForm', requireAuth, createSubmitHandler('iec_form', 'IEC', IEC_FIELDS));
+app.post('/editIECForm', requireAuth, createEditHandler('iec_form', 'IEC', IEC_FIELDS));
 
 
-app.post('/submitAnimalControlForm', async (req, res) => {
-  const { user } = req.session;
-  if (!user) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
-
-  const username = user.email;
-  console.log('Username:', username);
-
-  const createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  const updatedAt = createdAt;
-
-  const {
-    date1,
-    cageNum,
-    impHeads,
-    date2,
-    claimedHeads,
-    date3,
-    date4,
-    euthHeads,
-    chief
-  } = req.body;
-
-  if (!requireFields(req, res, ['date1', 'cageNum', 'impHeads', 'date2', 'claimedHeads', 'date3', 'date4', 'euthHeads', 'chief'])) return;
-
-  const vaccinationFormQuery = `
-    INSERT INTO control_form
-    (username, date1, cageNum, impHeads, date2, claimedHeads, date3, euthHeads, date4, chief, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
-
-  try {
-    await queryDatabase(pool, vaccinationFormQuery, [
-      username,
-      date1,
-      cageNum,
-      impHeads,
-      date2,
-      claimedHeads,
-      date3,
-      euthHeads,
-      date4,
-      chief,
-      createdAt,
-      updatedAt
-    ]);
-
-    console.log('Animal Control form data inserted successfully');
-    res.json({ success: true, message: 'Animal Control form data submitted successfully' });
-  } catch (error) {
-    console.error('Error during Animal Control form submission:', error.message);
-    res.status(500).json({ success: false, message: 'An error occurred during Animal Control form submission' });
-  }
-});
-
-app.post('/editAnimalControlForm', async (req, res) => {
-  const { user } = req.session;
-  if (!user) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
-
-  const username = user.email;
-  console.log('Username:', username);
-
-  const updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
-  const {
-    id,
-    date1,
-    cageNum,
-    impHeads,
-    date2,
-    claimedHeads,
-    date3,
-    euthHeads,
-    date4,
-    chief,
-  } = req.body;
-
-  const updateQuery = `
-    UPDATE control_form SET
-    date1=?, cageNum=?, impHeads=?, date2=?, claimedHeads=?, date3=?, euthHeads=?, date4=?, chief=?,
-    updated_at=? WHERE id=?
-  `;
-  const { dbOrigin } = req.body;
-
-  try {
-    if (!(await authorizeFormMutation(req, res, 'control_form', id, dbOrigin))) return;
-    await queryDatabase(pool, updateQuery, [
-      date1,
-      cageNum,
-      impHeads,
-      date2,
-      claimedHeads,
-      date3,
-      euthHeads,
-      date4,
-      chief,
-      updatedAt,
-      id
-    ]);
-    console.log('Animal Control form data updated successfully for ID:', id);
-    res.json({ success: true, message: 'Animal Control Form updated successfully', id });
-  } catch (error) {
-    console.error('Error during Animal Control form update:', error);
-    res.status(500).json({ success: false, message: 'An error occurred during Animal Control form update' });
-  }
-});
+const ANIMAL_CONTROL_FIELDS = ['date1', 'cageNum', 'impHeads', 'date2', 'claimedHeads', 'date3', 'euthHeads', 'date4', 'chief'];
+app.post('/submitAnimalControlForm', requireAuth, createSubmitHandler('control_form', 'Animal Control', ANIMAL_CONTROL_FIELDS));
+app.post('/editAnimalControlForm', requireAuth, createEditHandler('control_form', 'Animal Control', ANIMAL_CONTROL_FIELDS));
 
 // Add a new endpoint to handle form data
-app.post('/submitRabiesExposureForm', async (req, res) => {
-  const { user } = req.session;
-  if (!user) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
-
-  const username = user.email;
-  console.log('Username:', username);
-
-  const createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  const updatedAt = createdAt;
-
-  const {
-    regNo,
-    regDate,
-    name,
-    address,
-    age,
-    sex,
-    expDate,
-    place,
-    typeAnimal,
-    typeBNB,
-    site,
-    category,
-    washing,
-    RIG,
-    route,
-    d0,
-    d3,
-    d7,
-    d14,
-    d28,
-    brand,
-    outcome,
-    bitingStatus,
-    remarks,
-  } = req.body;
-
-  // RIG, route, and the d0/d3/d7/d14/d28 dose dates are deliberately excluded —
-  // this form's own frontend validation doesn't require them either, since a
-  // case can be registered before its full multi-week vaccination schedule
-  // and outcome are known.
-  if (!requireFields(req, res, [
-    'regNo', 'regDate', 'name', 'address', 'age', 'sex', 'expDate', 'place', 'typeAnimal', 'typeBNB',
-    'site', 'category', 'washing', 'brand', 'outcome', 'bitingStatus', 'remarks',
-  ])) return;
-
-  const vaccinationFormQuery = `
-    INSERT INTO exposure_form
-    (username, regNo, regDate, name, address, age, sex, expDate, place, typeAnimal, typeBNB,
-     site, category, washing, RIG, route, d0, d3, d7, d14, d28, brand, outcome, bitingStatus, remarks, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
-
-  try {
-    await queryDatabase(pool, vaccinationFormQuery, [
-      username,
-      regNo,
-      regDate,
-      name,
-      address,
-      age,
-      sex,
-      expDate,
-      place,
-      typeAnimal,
-      typeBNB,
-      site,
-      category,
-      washing,
-      RIG,
-      route,
-      d0,
-      d3,
-      d7,
-      d14,
-      d28,
-      brand,
-      outcome,
-      bitingStatus,
-      remarks,
-      createdAt,
-      updatedAt
-    ]);
-
-    console.log('Rabies Exposure form data inserted successfully');
-    res.json({ success: true, message: 'Rabies Exposure form data submitted successfully' });
-  } catch (error) {
-    console.error('Error during Rabies Exposure form submission:', error);
-    res.status(500).json({ success: false, message: 'An error occurred during Rabies Exposure form submission' });
-  }
-});
-
-app.post('/editRabiesExposureForm', async (req, res) => {
-  const { user } = req.session;
-  if (!user) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
-
-  const username = user.email;
-  console.log('Username:', username);
-
-  const updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
-  const {
-    id,
-    regNo,
-    regDate,
-    name,
-    address,
-    age,
-    sex,
-    expDate,
-    place,
-    typeAnimal,
-    typeBNB,
-    site,
-    category,
-    washing,
-    RIG,
-    route,
-    d0,
-    d3,
-    d7,
-    d14,
-    d28,
-    brand,
-    outcome,
-    bitingStatus,
-    remarks,
-  } = req.body;
-
-  const updateQuery = `
-    UPDATE exposure_form SET
-    regNo=?, regDate=?, name=?, address=?, age=?, sex=?, expDate=?, place=?, typeAnimal=?,
-    typeBNB=?, site=?, category=?, washing=?, RIG=?, route=?, d0=?, d3=?, d7=?, d14=?, d28=?,
-    brand=?, outcome=?, bitingStatus=?, remarks=?, updated_at=? WHERE id=?
-  `;
-  const { dbOrigin } = req.body;
-
-  try {
-    if (!(await authorizeFormMutation(req, res, 'exposure_form', id, dbOrigin))) return;
-    await queryDatabase(pool, updateQuery, [
-      regNo,
-      regDate,
-      name,
-      address,
-      age,
-      sex,
-      expDate,
-      place,
-      typeAnimal,
-      typeBNB,
-      site,
-      category,
-      washing,
-      RIG,
-      route,
-      d0,
-      d3,
-      d7,
-      d14,
-      d28,
-      brand,
-      outcome,
-      bitingStatus,
-      remarks,
-      updatedAt,
-      id
-    ]);
-    console.log('Rabies Exposure form data updated successfully for ID:', id);
-    res.json({ success: true, message: 'Rabies Exposure Form updated successfully', id });
-  } catch (error) {
-    console.error('Error during Rabies Exposure form update:', error);
-    res.status(500).json({ success: false, message: 'An error occurred during Rabies Exposure form update' });
-  }
-});
+const RABIES_EXPOSURE_FIELDS = [
+  'regNo', 'regDate', 'name', 'address', 'age', 'sex', 'expDate', 'place', 'typeAnimal', 'typeBNB',
+  'site', 'category', 'washing', 'RIG', 'route', 'd0', 'd3', 'd7', 'd14', 'd28', 'brand', 'outcome', 'bitingStatus', 'remarks',
+];
+// RIG, route, and the d0/d3/d7/d14/d28 dose dates are deliberately excluded from
+// the required set — this form's own frontend validation doesn't require them
+// either, since a case can be registered before its full multi-week
+// vaccination schedule and outcome are known. Edits still overwrite every
+// column above (including these), same as before.
+const RABIES_EXPOSURE_REQUIRED_FIELDS = [
+  'regNo', 'regDate', 'name', 'address', 'age', 'sex', 'expDate', 'place', 'typeAnimal', 'typeBNB',
+  'site', 'category', 'washing', 'brand', 'outcome', 'bitingStatus', 'remarks',
+];
+app.post('/submitRabiesExposureForm', requireAuth, createSubmitHandler('exposure_form', 'Rabies Exposure', RABIES_EXPOSURE_FIELDS, RABIES_EXPOSURE_REQUIRED_FIELDS));
+app.post('/editRabiesExposureForm', requireAuth, createEditHandler('exposure_form', 'Rabies Exposure', RABIES_EXPOSURE_FIELDS));
 
 // Add this route to your backend code
 app.get('/Position', async (req, res) => {
