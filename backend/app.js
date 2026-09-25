@@ -218,6 +218,26 @@ const tagOrigin = (mobileRows, webRows) => [
   ...webRows.map((row) => ({ ...row, dbOrigin: 'web' })),
 ];
 
+// Rejects with 400 if any of `fields` is missing/blank in req.body; returns
+// true otherwise. None of the form-submission endpoints validated required
+// fields before this — a missing field silently became NULL (or a raw 500
+// if the column is NOT NULL) instead of a clear 400. Required-field lists
+// below were taken from each form screen's own client-side "fill in all
+// fields" check, not guessed — some fields (e.g. the Rabies Exposure form's
+// vaccine-dose dates) are deliberately optional there and are excluded here
+// too, since they're filled in over weeks, not all at once.
+const requireFields = (req, res, fields) => {
+  const missing = fields.filter((field) => {
+    const value = req.body[field];
+    return value === undefined || value === null || (typeof value === 'string' && value.trim() === '');
+  });
+  if (missing.length > 0) {
+    res.status(400).json({ success: false, message: `Missing required field(s): ${missing.join(', ')}` });
+    return false;
+  }
+  return true;
+};
+
 const verifyPassword = async (password, hash) => {
   try {
     if (hash.startsWith('$2y$')) {
@@ -673,6 +693,11 @@ app.post('/submitVaccinationForm', requireAuth, async (req, res) => {
     timeFinish,
   } = req.body;
 
+  if (!requireFields(req, res, [
+    'date', 'district', 'barangay', 'purok', 'vaccinator', 'timeStart', 'ownerName', 'address', 'sex', 'contactNo',
+    'petName', 'petAge', 'species', 'petSex', 'color', 'cardNo', 'vaccine', 'source', 'dateVaccinated', 'timeFinish',
+  ])) return;
+
   const insertQuery = `
     INSERT INTO vaccination_form
     (username, date, district, barangay, purok, vaccinator, timeStart, ownerName, address, sex, contactNo,
@@ -822,6 +847,11 @@ app.post('/submitNeuterForm', requireAuth, async (req, res) => {
     cat,
   } = req.body;
 
+  if (!requireFields(req, res, [
+    'date', 'district', 'barangay', 'purok', 'proc', 'client', 'address', 'contactNo',
+    'name', 'species', 'sex', 'breed', 'age', 'pets', 'cat',
+  ])) return;
+
   const insertQuery = `
     INSERT INTO consent_form
     (username, date, district, barangay, purok, proc, client, address, contactNo, name, species,
@@ -956,6 +986,11 @@ app.post('/submitRabiesSampleForms', requireAuth, async (req, res) => {
     otherillness,
     fatcount,
   } = req.body;
+
+  if (!requireFields(req, res, [
+    'name', 'sex', 'address', 'number', 'district', 'barangay', 'date', 'species', 'breed', 'age',
+    'sampleSex', 'specimen', 'ownership', 'vacStatus', 'contact', 'manage', 'death', 'changes', 'otherillness', 'fatcount',
+  ])) return;
 
   const insertQuery = `
     INSERT INTO bite_form
@@ -1274,6 +1309,8 @@ app.post('/submitBudgetForm', async (req, res) => {
     costvax,
   } = req.body;
 
+  if (!requireFields(req, res, ['year', 'budget', 'costvax'])) return;
+
   const insertQuery = `
     INSERT INTO budget_form
     (username, year, budget, costvax, created_at, updated_at)
@@ -1356,6 +1393,10 @@ const {
   rainfall,
   precipitation
 } = req.body;
+
+if (!requireFields(req, res, [
+  'minimum_temperature', 'maximum_temperature', 'mean_temperature', 'relative_humidity', 'rainfall', 'precipitation',
+])) return;
 
 // Insert data into the weather_form table using parameterized query
 const insertQuery = `
@@ -1445,6 +1486,8 @@ app.post('/submitScheduleForm', async (req, res) => {
 
   const { date, title, district, barangay, purok } = req.body;
 
+  if (!requireFields(req, res, ['date', 'title', 'district', 'barangay', 'purok'])) return;
+
   const insertQuery = `
     INSERT INTO schedule_form
     (username, date, title, district, barangay, purok, created_at, updated_at)
@@ -1530,6 +1573,8 @@ app.post('/submitIECForm', async (req, res) => {
   const updatedAt = createdAt;
 
   const { date, title, district, barangay, purok, participants, brochure, materials } = req.body;
+
+  if (!requireFields(req, res, ['date', 'title', 'district', 'barangay', 'purok', 'participants', 'brochure', 'materials'])) return;
 
   const insertQuery = `
     INSERT INTO iec_form
@@ -1636,6 +1681,8 @@ app.post('/submitAnimalControlForm', async (req, res) => {
     euthHeads,
     chief
   } = req.body;
+
+  if (!requireFields(req, res, ['date1', 'cageNum', 'impHeads', 'date2', 'claimedHeads', 'date3', 'date4', 'euthHeads', 'chief'])) return;
 
   const vaccinationFormQuery = `
     INSERT INTO control_form
@@ -1760,6 +1807,15 @@ app.post('/submitRabiesExposureForm', async (req, res) => {
     bitingStatus,
     remarks,
   } = req.body;
+
+  // RIG, route, and the d0/d3/d7/d14/d28 dose dates are deliberately excluded —
+  // this form's own frontend validation doesn't require them either, since a
+  // case can be registered before its full multi-week vaccination schedule
+  // and outcome are known.
+  if (!requireFields(req, res, [
+    'regNo', 'regDate', 'name', 'address', 'age', 'sex', 'expDate', 'place', 'typeAnimal', 'typeBNB',
+    'site', 'category', 'washing', 'brand', 'outcome', 'bitingStatus', 'remarks',
+  ])) return;
 
   const vaccinationFormQuery = `
     INSERT INTO exposure_form
