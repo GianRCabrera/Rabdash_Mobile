@@ -280,15 +280,15 @@ const registerUser = async (user, pool) => {
 app.post('/register', authLimiter, async (req, res) => {
   const { email } = req.body;
 
-  const storedOtp = otpStore[email];
-  if (!storedOtp || !storedOtp.verified || storedOtp.expiry <= Date.now()) {
-    return res.status(403).json({ success: false, message: 'OTP verification required before registering.' });
-  }
-
   try {
+    const storedOtp = await getOtp(email, 'register');
+    if (!isOtpUsable(storedOtp)) {
+      return res.status(403).json({ success: false, message: 'OTP verification required before registering.' });
+    }
+
     const registeredPosition = await registerUser(req.body, pool);
     if (registeredPosition) {
-      delete otpStore[email];
+      await deleteOtp(email, 'register');
       req.session.user = { email, position: registeredPosition };
       res.json({ success: true, message: 'User has been registered successfully' });
     }
@@ -416,20 +416,53 @@ const generateOTP = () => {
   return crypto.randomInt(100000, 999999).toString();
 };
 
-const otpStore = {};
+const OTP_EXPIRY_MS = 3600000; // 1 hour
+const OTP_MAX_ATTEMPTS = 5;
+
+const toMysqlDatetime = (date) => date.toISOString().slice(0, 19).replace('T', ' ');
+
+// Replaces the old in-memory otpStore, which was wiped on every server
+// restart/redeploy — a real reliability problem since redeploys can land
+// mid-registration or mid-password-reset for a real user. `purpose`
+// ('register' vs 'reset') keeps the two flows from validating against each
+// other's OTP, which the old store (keyed by email only) didn't prevent.
+const upsertOtp = async (email, purpose, otp) => {
+  const expiry = toMysqlDatetime(new Date(Date.now() + OTP_EXPIRY_MS));
+  await queryDatabase(pool, `
+    INSERT INTO otp_codes (email, purpose, otp, expiry, verified, attempts)
+    VALUES (?, ?, ?, ?, 0, 0)
+    ON DUPLICATE KEY UPDATE otp = VALUES(otp), expiry = VALUES(expiry), verified = 0, attempts = 0
+  `, [email, purpose, otp, expiry]);
+};
+
+const getOtp = async (email, purpose) => {
+  const rows = await queryDatabase(pool, 'SELECT * FROM otp_codes WHERE email = ? AND purpose = ?', [email, purpose]);
+  return rows[0] || null;
+};
+
+const markOtpVerified = (email, purpose) =>
+  queryDatabase(pool, 'UPDATE otp_codes SET verified = 1 WHERE email = ? AND purpose = ?', [email, purpose]);
+
+const incrementOtpAttempts = (email, purpose) =>
+  queryDatabase(pool, 'UPDATE otp_codes SET attempts = attempts + 1 WHERE email = ? AND purpose = ?', [email, purpose]);
+
+const deleteOtp = (email, purpose) =>
+  queryDatabase(pool, 'DELETE FROM otp_codes WHERE email = ? AND purpose = ?', [email, purpose]);
+
+const isOtpUsable = (storedOtp) =>
+  !!storedOtp && storedOtp.verified && new Date(storedOtp.expiry) > new Date();
 
 // OTP for reset Password
 app.post('/resetpass', authLimiter, async (req, res) => {
   const { email } = req.body;
-  
-  // Generate OTP (You can define generateOTP function as per your logic)
   const otp = generateOTP();
 
-  // Store OTP with expiration time (in milliseconds)
-  otpStore[email] = {
-    otp,
-    expiry: Date.now() + 3600000, // OTP expires in 1 hour
-  };
+  try {
+    await upsertOtp(email, 'reset', otp);
+  } catch (error) {
+    console.error('Error storing password reset OTP:', error.message);
+    return res.status(500).json({ success: false, message: 'Failed to send password reset OTP.' });
+  }
 
   const mailOptions = {
     from: 'admin@rabdash.com',
@@ -463,10 +496,7 @@ app.post('/registerotp', authLimiter, async (req, res) => {
   try {
     // Generate OTP
     const otp = generateOTP();
-    otpStore[email] = {
-      otp,
-      expiry: Date.now() + 3600000, // OTP expires in 1 hour
-    };
+    await upsertOtp(email, 'register', otp);
 
     // Send OTP email
     const mailOptions = {
@@ -489,39 +519,40 @@ app.post('/registerotp', authLimiter, async (req, res) => {
   }
 });
 
-// Validate OTP endpoint
-app.post('/validate-otp', authLimiter, async (req, res) => {
+// Shared by /validate-otp (purpose 'reset') and /validate-otp-reg (purpose
+// 'register') — these were previously byte-for-byte identical handlers
+// checking the same in-memory object with no purpose check at all. Now each
+// only matches an OTP issued for its own purpose, and a wrong guess counts
+// against OTP_MAX_ATTEMPTS on top of the existing per-IP authLimiter.
+const makeOtpValidator = (purpose) => async (req, res) => {
   const { email, otp } = req.body;
-  const storedOtp = otpStore[email];
 
-  // Never log the OTP value itself (submitted or stored) — it's the credential
-  // that gates a password reset, so leaking it via logs defeats the point of OTP.
-  console.log(`Validating OTP for ${email}: match=${!!(storedOtp && storedOtp.otp === otp && storedOtp.expiry > Date.now())}`);
+  try {
+    const storedOtp = await getOtp(email, purpose);
+    const attemptsLeft = storedOtp && storedOtp.attempts < OTP_MAX_ATTEMPTS;
+    const isMatch = !!(storedOtp && attemptsLeft && storedOtp.otp === otp && new Date(storedOtp.expiry) > new Date());
 
-  if (storedOtp && storedOtp.otp === otp && storedOtp.expiry > Date.now()) {
-    storedOtp.verified = true;
-    res.json({ success: true, message: 'OTP is valid.' });
-  } else {
+    // Never log the OTP value itself (submitted or stored) — it's the credential
+    // that gates registration/password reset, so leaking it via logs defeats the point of OTP.
+    console.log(`Validating OTP for ${email} (${purpose}): match=${isMatch}`);
+
+    if (isMatch) {
+      await markOtpVerified(email, purpose);
+      return res.json({ success: true, message: 'OTP is valid.' });
+    }
+
+    if (attemptsLeft) {
+      await incrementOtpAttempts(email, purpose);
+    }
     res.status(400).json({ success: false, message: 'Invalid or expired OTP.' });
+  } catch (error) {
+    console.error('Error validating OTP:', error.message);
+    res.status(500).json({ success: false, message: 'Database error.' });
   }
-});
+};
 
-// Validate OTP for registration endpoint
-app.post('/validate-otp-reg', authLimiter, async (req, res) => {
-  const { email, otp } = req.body;
-  const storedOtp = otpStore[email];
-
-  // Never log the OTP value itself (submitted or stored) — it's the credential
-  // that gates registration, so leaking it via logs defeats the point of OTP.
-  console.log(`Validating OTP for ${email}: match=${!!(storedOtp && storedOtp.otp === otp && storedOtp.expiry > Date.now())}`);
-
-  if (storedOtp && storedOtp.otp === otp && storedOtp.expiry > Date.now()) {
-    storedOtp.verified = true;
-    res.json({ success: true, message: 'OTP is valid.' });
-  } else {
-    res.status(400).json({ success: false, message: 'Invalid or expired OTP.' });
-  }
-});
+app.post('/validate-otp', authLimiter, makeOtpValidator('reset'));
+app.post('/validate-otp-reg', authLimiter, makeOtpValidator('register'));
 
 // Reset Password Functionality
 app.post('/reset-password', authLimiter, async (req, res) => {
@@ -567,12 +598,12 @@ app.post('/reset-forgotten-password', authLimiter, async (req, res) => {
     return res.status(400).json({ success: false, message: 'All fields are required.' });
   }
 
-  const storedOtp = otpStore[email];
-  if (!storedOtp || !storedOtp.verified || storedOtp.expiry <= Date.now()) {
-    return res.status(403).json({ success: false, message: 'OTP verification required before resetting password.' });
-  }
-
   try {
+    const storedOtp = await getOtp(email, 'reset');
+    if (!isOtpUsable(storedOtp)) {
+      return res.status(403).json({ success: false, message: 'OTP verification required before resetting password.' });
+    }
+
     const results = await queryDatabase(pool, 'SELECT * FROM users WHERE email = ?', [email]);
 
     if (results.length === 0) {
@@ -585,7 +616,7 @@ app.post('/reset-forgotten-password', authLimiter, async (req, res) => {
     await queryDatabase(pool, 'UPDATE users SET password = ? WHERE email = ?', [hashedNewPassword, email]);
     console.log('Password updated successfully for user:', email);
 
-    delete otpStore[email];
+    await deleteOtp(email, 'reset');
 
     res.json({ success: true, message: 'Password changed successfully.' });
   } catch (error) {
