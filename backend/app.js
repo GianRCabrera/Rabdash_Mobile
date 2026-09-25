@@ -554,6 +554,18 @@ const makeOtpValidator = (purpose) => async (req, res) => {
 app.post('/validate-otp', authLimiter, makeOtpValidator('reset'));
 app.post('/validate-otp-reg', authLimiter, makeOtpValidator('register'));
 
+// Mirrors logInUser's dual-database lookup — an account can live in either
+// database (login already checks both, falling back to webPool), but
+// password reset used to only ever check the mobile pool, silently failing
+// "User not found" for any account whose row actually lives in the web DB.
+const findUserPool = async (email) => {
+  const mobileResults = await queryDatabase(pool, 'SELECT * FROM users WHERE email = ?', [email]);
+  if (mobileResults.length > 0) return { userPool: pool, userRow: mobileResults[0] };
+  const webResults = await queryDatabase(webPool, 'SELECT * FROM users WHERE email = ?', [email]);
+  if (webResults.length > 0) return { userPool: webPool, userRow: webResults[0] };
+  return null;
+};
+
 // Reset Password Functionality
 app.post('/reset-password', authLimiter, async (req, res) => {
   const { email, oldPassword, newPassword } = req.body;
@@ -563,13 +575,13 @@ app.post('/reset-password', authLimiter, async (req, res) => {
   }
 
   try {
-    const results = await queryDatabase(pool, 'SELECT * FROM users WHERE email = ?', [email]);
+    const found = await findUserPool(email);
 
-    if (results.length === 0) {
+    if (!found) {
       return res.status(400).json({ success: false, message: 'User not found.' });
     }
 
-    const user = results[0];
+    const { userPool, userRow: user } = found;
 
     const passwordMatch = await verifyPassword(oldPassword, user.password);
 
@@ -580,7 +592,7 @@ app.post('/reset-password', authLimiter, async (req, res) => {
     // Hash the new password
     const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
 
-    await queryDatabase(pool, 'UPDATE users SET password = ? WHERE email = ?', [hashedNewPassword, email]);
+    await queryDatabase(userPool, 'UPDATE users SET password = ? WHERE email = ?', [hashedNewPassword, email]);
     console.log('Password updated successfully for user:', email);
 
     res.json({ success: true, message: 'Password changed successfully.' });
@@ -604,16 +616,18 @@ app.post('/reset-forgotten-password', authLimiter, async (req, res) => {
       return res.status(403).json({ success: false, message: 'OTP verification required before resetting password.' });
     }
 
-    const results = await queryDatabase(pool, 'SELECT * FROM users WHERE email = ?', [email]);
+    const found = await findUserPool(email);
 
-    if (results.length === 0) {
+    if (!found) {
       return res.status(400).json({ success: false, message: 'User not found.' });
     }
+
+    const { userPool } = found;
 
     // Hash the new password
     const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
 
-    await queryDatabase(pool, 'UPDATE users SET password = ? WHERE email = ?', [hashedNewPassword, email]);
+    await queryDatabase(userPool, 'UPDATE users SET password = ? WHERE email = ?', [hashedNewPassword, email]);
     console.log('Password updated successfully for user:', email);
 
     await deleteOtp(email, 'reset');
