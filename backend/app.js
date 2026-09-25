@@ -375,8 +375,10 @@ app.get('/userProfile', async (req, res) => {
   }
 
   const { email } = user;
-  const query = 'SELECT * FROM users WHERE email = ?';
-  
+  // Explicit column list — this used to be SELECT *, which sent the user's
+  // password hash to the client on every profile load.
+  const query = 'SELECT name, last_name, email, position FROM users WHERE email = ?';
+
   try {
     // First, check the mobile app database
     let results = await queryDatabase(pool, query, [email]);
@@ -1310,8 +1312,6 @@ const {
   precipitation
 } = req.body;
 
-console.log('Received Weather Form Data:', req.body);
-
 // Insert data into the weather_form table using parameterized query
 const insertQuery = `
   INSERT INTO weather_form
@@ -1400,8 +1400,6 @@ app.post('/submitScheduleForm', async (req, res) => {
 
   const { date, title, district, barangay, purok } = req.body;
 
-  console.log('Received Schedule Form Data:', req.body);
-
   const insertQuery = `
     INSERT INTO schedule_form
     (username, date, title, district, barangay, purok, created_at, updated_at)
@@ -1487,8 +1485,6 @@ app.post('/submitIECForm', async (req, res) => {
   const updatedAt = createdAt;
 
   const { date, title, district, barangay, purok, participants, brochure, materials } = req.body;
-
-  console.log('Received IEC Form Data:', req.body);
 
   const insertQuery = `
     INSERT INTO iec_form
@@ -1595,8 +1591,6 @@ app.post('/submitAnimalControlForm', async (req, res) => {
     euthHeads,
     chief
   } = req.body;
-
-  console.log('Received Animal Control Form Data:', req.body);
 
   const vaccinationFormQuery = `
     INSERT INTO control_form
@@ -1721,8 +1715,6 @@ app.post('/submitRabiesExposureForm', async (req, res) => {
     bitingStatus,
     remarks,
   } = req.body;
-
-  console.log('Received Rabies Exposure Form Data:', req.body);
 
   const vaccinationFormQuery = `
     INSERT INTO exposure_form
