@@ -13,6 +13,7 @@ const ResetForgotPass = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const navigation = useNavigation();
   const route = useRoute();
@@ -34,8 +35,7 @@ const ResetForgotPass = () => {
     try {
       const response = await axios.post(`${apiURL}/reset-forgotten-password`, { email, newPassword });
       if (response.data.success) {
-        Alert.alert('Success', 'Password changed successfully.');
-        navigation.navigate('Login');
+        setSuccessModalVisible(true);
       } else {
         Alert.alert('Error', response.data.message);
       }
@@ -60,6 +60,11 @@ const ResetForgotPass = () => {
   const confirmChangePassword = () => {
     toggleModal();
     handleResetPassword();
+  };
+
+  const handleSuccessModalClose = () => {
+    setSuccessModalVisible(false);
+    navigation.navigate('Login');
   };
 
   const eyeIcon = (visible) =>
@@ -107,6 +112,11 @@ const ResetForgotPass = () => {
           { label: 'No', onPress: toggleModal, variant: 'secondary' },
           { label: 'Yes', onPress: confirmChangePassword, variant: 'primary' },
         ]}
+      />
+      <AppModal
+        isVisible={successModalVisible}
+        message="Password changed successfully."
+        onBackdropPress={handleSuccessModalClose}
       />
     </ScrollView>
   );

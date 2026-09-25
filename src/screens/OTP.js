@@ -8,7 +8,6 @@ import { colors, spacing, typography } from '../theme/theme';
 const OTP = ({ route, navigation }) => {
   const { email } = route.params;
   const [userOtp, setUserOtp] = useState('');
-  const [otpSentModalVisible, setOtpSentModalVisible] = useState(true);
   const [otpSuccessModalVisible, setOtpSuccessModalVisible] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const apiURL = process.env.EXPO_PUBLIC_URL;
@@ -50,11 +49,6 @@ const OTP = ({ route, navigation }) => {
         <AppButton title="Back" onPress={() => navigation.goBack()} variant="secondary" style={styles.button} />
       </AppCard>
 
-      <AppModal
-        isVisible={otpSentModalVisible}
-        message="An OTP has been sent to your email."
-        onBackdropPress={() => setOtpSentModalVisible(false)}
-      />
       <AppModal
         isVisible={otpSuccessModalVisible}
         message="OTP verified successfully!"
