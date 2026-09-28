@@ -272,10 +272,13 @@ const createSubmitHandler = (table, label, fields, requiredFields = fields) => a
 
 // Builds an edit (UPDATE) handler for the pattern shared by every form
 // type: authorize via authorizeFormMutation (ownership + dbOrigin check),
-// overwrite every field plus updated_at. No field validation, matching the
-// original handlers — edits weren't in scope for the required-field pass
-// applied to submit handlers. Route must have requireAuth applied.
-const createEditHandler = (table, label, fields) => async (req, res) => {
+// validate required fields, overwrite every field plus updated_at. Route
+// must have requireAuth applied. Authorization runs before validation so an
+// unauthorized/malformed request always gets 403/404, never a 400 that
+// would tell an attacker their payload shape without confirming access
+// first. `requiredFields` defaults to all of `fields` — see
+// createSubmitHandler for why a form might pass a smaller subset.
+const createEditHandler = (table, label, fields, requiredFields = fields) => async (req, res) => {
   const { id, dbOrigin } = req.body;
   const updatedAt = nowMysql();
   const setClause = fields.map((field) => `${field}=?`).join(', ');
@@ -284,6 +287,7 @@ const createEditHandler = (table, label, fields) => async (req, res) => {
 
   try {
     if (!(await authorizeFormMutation(req, res, table, id, dbOrigin))) return;
+    if (!requireFields(req, res, requiredFields)) return;
     await queryDatabase(pool, query, values);
     console.log(`${label} form data updated successfully for ID:`, id);
     res.json({ success: true, message: `${label} Form updated successfully`, id });
@@ -958,7 +962,7 @@ const RABIES_EXPOSURE_REQUIRED_FIELDS = [
   'site', 'category', 'washing', 'brand', 'outcome', 'bitingStatus', 'remarks',
 ];
 app.post('/submitRabiesExposureForm', requireAuth, createSubmitHandler('exposure_form', 'Rabies Exposure', RABIES_EXPOSURE_FIELDS, RABIES_EXPOSURE_REQUIRED_FIELDS));
-app.post('/editRabiesExposureForm', requireAuth, createEditHandler('exposure_form', 'Rabies Exposure', RABIES_EXPOSURE_FIELDS));
+app.post('/editRabiesExposureForm', requireAuth, createEditHandler('exposure_form', 'Rabies Exposure', RABIES_EXPOSURE_FIELDS, RABIES_EXPOSURE_REQUIRED_FIELDS));
 
 // Add this route to your backend code
 app.get('/Position', async (req, res) => {

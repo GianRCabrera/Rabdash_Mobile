@@ -75,4 +75,21 @@ describe('Form submission required-field validation', () => {
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/name/);
   });
+
+  test('editing a form missing a required field is rejected with 400 (once authorized)', async () => {
+    mockQueryResult(pool, 'SELECT username FROM vaccination_form WHERE id = ?', [{ username: email }]);
+    const agent = await loginAs();
+    const { ownerName, ...incomplete } = vaccinationPayload;
+    const res = await agent.post('/editVaccinationForm').send({ ...incomplete, id: 1 });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/ownerName/);
+  });
+
+  test('a complete vaccination form edit succeeds', async () => {
+    mockQueryResult(pool, 'SELECT username FROM vaccination_form WHERE id = ?', [{ username: email }]);
+    const agent = await loginAs();
+    const res = await agent.post('/editVaccinationForm').send({ ...vaccinationPayload, id: 1 });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
 });

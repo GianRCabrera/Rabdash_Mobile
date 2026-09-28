@@ -2,6 +2,17 @@ const bcrypt = require('bcrypt');
 const request = require('supertest');
 const { loadApp, mockQueryResult } = require('./helpers');
 
+// editVaccinationForm now validates required fields (added after these tests
+// were first written, when edits had none) — the ownership-check tests below
+// care about authorization, not form content, so they all send this complete
+// payload and only vary id/ownerName.
+const VACCINATION_EDIT_PAYLOAD = {
+  date: '2026-01-01', district: 'D', barangay: 'B', purok: 'P', vaccinator: 'V', timeStart: '08:00',
+  ownerName: 'Owner', address: 'Addr', sex: 'M', contactNo: '09171234567',
+  petName: 'Rex', petAge: '2', species: 'Dog', petSex: 'M', color: 'Brown', cardNo: '1',
+  vaccine: 'Vax', source: 'Src', dateVaccinated: '2026-01-01', timeFinish: '09:00',
+};
+
 describe('Ownership check on edit/delete (the IDOR fix)', () => {
   let app;
   let pool;
@@ -54,7 +65,7 @@ describe('Ownership check on edit/delete (the IDOR fix)', () => {
 
   test('the actual owner can edit their own record', async () => {
     const owner = await loginAs('owner@example.invalid');
-    const res = await owner.post('/editVaccinationForm').send({ id: 1, ownerName: 'Updated' });
+    const res = await owner.post('/editVaccinationForm').send({ ...VACCINATION_EDIT_PAYLOAD, id: 1, ownerName: 'Updated' });
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
   });
@@ -68,7 +79,7 @@ describe('Ownership check on edit/delete (the IDOR fix)', () => {
 
   test('a RabDash reviewer can edit a record they do not own', async () => {
     const reviewer = await loginAs('reviewer@example.invalid');
-    const res = await reviewer.post('/editVaccinationForm').send({ id: 1, ownerName: 'Reviewed' });
+    const res = await reviewer.post('/editVaccinationForm').send({ ...VACCINATION_EDIT_PAYLOAD, id: 1, ownerName: 'Reviewed' });
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
   });
