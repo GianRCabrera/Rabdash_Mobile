@@ -1,0 +1,30 @@
+name: Frontend tests
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "backend/**"
+  pull_request:
+    paths-ignore:
+      - "backend/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      # --legacy-peer-deps: a pre-existing peer conflict (react-datepicker
+      # vs. react-dom) makes plain `npm ci` fail here regardless of any
+      # frontend-test-specific packages — not something this workflow
+      # introduced, just how this dependency tree already resolves locally.
+      - run: npm ci --legacy-peer-deps
+      - run: npm test
