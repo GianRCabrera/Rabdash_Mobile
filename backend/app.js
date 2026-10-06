@@ -297,6 +297,63 @@ const createEditHandler = (table, label, fields, requiredFields = fields) => asy
   }
 };
 
+// Builds a paginated, searchable list handler for the CVO/reviewer-merged
+// endpoints whose underlying tables can be huge — the web side of
+// vaccination_form alone has 400k+ rows (years of the companion website's
+// own usage), which is what originally OOM-crashed the unbounded version
+// of this query and then got a flat LIMIT 500 stopgap. Neither an unbounded
+// query nor a bigger flat cap scales here; this replaces both with real
+// LIMIT/OFFSET paging plus a server-side search (a WHERE clause), since no
+// client could reasonably hold hundreds of thousands of rows to filter
+// locally — client-side search over an already-loaded page would also
+// silently miss every record not on that page, which reads as "no results"
+// for a record that actually exists.
+//
+// `searchFields` is a deliberately narrow column subset (not every field
+// the form has) — both for query performance (no indexes on most columns
+// here) and because it's what a reviewer actually searches by: an owner's
+// or patient's name, a pet's name, a reference/card number.
+//
+// Mobile and web are each paginated independently with the same
+// limit/offset, then merged and re-sorted — not a true globally-ranked
+// top-K across both sources. Deliberate: the mobile side's row counts for
+// these tables are tiny (dozens) next to the web side's (hundreds of
+// thousands), so early pages naturally include both sources' recent rows
+// together, and once the much smaller mobile source is exhausted, deeper
+// pages are effectively just paging through the web side's history —
+// which is correct behavior, not a bug.
+const createPaginatedCvoListHandler = (table, searchFields) => async (req, res) => {
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 200);
+  const offset = (page - 1) * limit;
+  const search = (req.query.search || '').trim();
+
+  const whereClause = search ? `WHERE ${searchFields.map((field) => `${field} LIKE ?`).join(' OR ')}` : '';
+  const searchParams = search ? searchFields.map(() => `%${search}%`) : [];
+
+  const listQuery = `SELECT * FROM ${table} ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+  const countQuery = `SELECT COUNT(*) AS total FROM ${table} ${whereClause}`;
+
+  try {
+    const [mobileResults, webResults, mobileCount, webCount] = await Promise.all([
+      queryDatabase(pool, listQuery, [...searchParams, limit, offset]),
+      queryDatabase(webPool, listQuery, [...searchParams, limit, offset]),
+      queryDatabase(pool, countQuery, searchParams),
+      queryDatabase(webPool, countQuery, searchParams),
+    ]);
+
+    const data = tagOrigin(mobileResults, webResults).sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    );
+    const total = mobileCount[0].total + webCount[0].total;
+
+    res.json({ data, page, limit, total });
+  } catch (error) {
+    console.error(`Error retrieving ${table} (paginated):`, error);
+    res.status(500).json({ success: false, message: 'An error occurred while retrieving records' });
+  }
+};
+
 const verifyPassword = async (password, hash) => {
   try {
     if (hash.startsWith('$2y$')) {
@@ -782,31 +839,7 @@ app.get('/getVaccinationForms', async (req, res) => {
 });
 
 // New endpoint to fetch vaccination_form data from both mobile and web databases
-app.get('/getVaccinationFormsCVO', requireReviewer, async (req, res) => {
-  // Used to default to LIMIT 10 OFFSET 0, silently hiding everything older
-  // from reviewers. Removing the limit entirely OOM-crashed the whole Render
-  // process (both DBs' full result sets held in memory at once, then
-  // JSON-serialized) — this bounded cap stops that while still comfortably
-  // covering realistic table sizes. Real server-side pagination is the
-  // proper long-term fix; this is a stopgap.
-  const query = 'SELECT * FROM vaccination_form ORDER BY created_at DESC LIMIT 500';
-
-  try {
-    const mobileResults = await queryDatabase(pool, query, []);
-    const webResults = await queryDatabase(webPool, query, []);
-
-    const vaccinationForms = tagOrigin(mobileResults, webResults);
-
-    if (vaccinationForms.length > 0) {
-      res.json(vaccinationForms);
-    } else {
-      res.json([]);
-    }
-  } catch (error) {
-    console.error('Error retrieving vaccination forms:', error);
-    res.status(500).json({ message: 'An error occurred while retrieving vaccination forms' });
-  }
-});
+app.get('/getVaccinationFormsCVO', requireReviewer, createPaginatedCvoListHandler('vaccination_form', ['ownerName', 'petName', 'cardNo']));
 
 // Add a new endpoint to fetch neuter form data
 app.get('/getNeuterForms', async (req, res) => {
@@ -843,26 +876,7 @@ app.get('/getNeuterForms', async (req, res) => {
 });
 
 // New endpoint to fetch neuter form data from both mobile and web databases
-app.get('/getNeuterFormsCVO', requireReviewer, async (req, res) => {
-  // Bounded LIMIT — see the comment on getVaccinationFormsCVO above.
-  const query = 'SELECT * FROM consent_form ORDER BY created_at DESC LIMIT 500';
-
-  try {
-    const mobileResults = await queryDatabase(pool, query, []);
-    const webResults = await queryDatabase(webPool, query, []);
-
-    const neuterForms = tagOrigin(mobileResults, webResults);
-
-    if (neuterForms.length > 0) {
-      res.json(neuterForms);
-    } else {
-      res.json([]);
-    }
-  } catch (error) {
-    console.error('Error retrieving neuter forms:', error);
-    res.status(500).json({ message: 'An error occurred while retrieving neuter forms' });
-  }
-});
+app.get('/getNeuterFormsCVO', requireReviewer, createPaginatedCvoListHandler('consent_form', ['client', 'name']));
 
 
 // Add a new endpoint to fetch rabies sample form data
@@ -900,26 +914,7 @@ app.get('/getRabiesSampleForms', async (req, res) => {
 });
 
 // Add a new endpoint to fetch rabies sample form data from both mobile and web databases
-app.get('/getRabiesSampleFormsCVO', requireReviewer, async (req, res) => {
-  // Bounded LIMIT — see the comment on getVaccinationFormsCVO above.
-  const query = 'SELECT * FROM bite_form ORDER BY created_at DESC LIMIT 500';
-
-  try {
-    const mobileResults = await queryDatabase(pool, query, []);
-    const webResults = await queryDatabase(webPool, query, []);
-
-    const rabiesSampleForms = tagOrigin(mobileResults, webResults);
-
-    if (rabiesSampleForms.length > 0) {
-      res.json(rabiesSampleForms);
-    } else {
-      res.json([]);
-    }
-  } catch (error) {
-    console.error('Error retrieving rabies sample forms:', error);
-    res.status(500).json({ message: 'An error occurred while retrieving rabies sample forms' });
-  }
-});
+app.get('/getRabiesSampleFormsCVO', requireReviewer, createPaginatedCvoListHandler('bite_form', ['name', 'number']));
 
 const BUDGET_FIELDS = ['year', 'budget', 'costvax'];
 app.post('/submitBudgetForm', requireAuth, createSubmitHandler('budget_form', 'Budget', BUDGET_FIELDS));
