@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import {
@@ -10,6 +10,9 @@ import {
   AppButton,
   menuStyles,
 } from '../components';
+
+const REVIEWER_PAGE_SIZE = 20;
+const SEARCH_DEBOUNCE_MS = 400;
 
 const Sample_form_archive = () => {
   const [user, setUser] = useState(null);
@@ -26,11 +29,36 @@ const Sample_form_archive = () => {
   const navigation = useNavigation();
   const apiURL = process.env.EXPO_PUBLIC_URL;
   const [currentPage, setCurrentPage] = useState(1);
+  const [reviewerTotal, setReviewerTotal] = useState(0);
   const itemsPerPage = 5;
+  const isFirstSearchRender = useRef(true);
+
+  // PROVISIONAL (see CLAUDE.md): only RabDash is a full reviewer. The
+  // reviewer's merged dataset can be large (see backend/app.js's
+  // createPaginatedCvoListHandler), so it's paginated and searched
+  // server-side. Private Veterinarian/CVO see only their own small,
+  // per-user submission list, which stays a one-shot fetch with
+  // client-side search/pagination.
+  const isReviewer = user?.position === 'RabDash';
 
   const toggleConfirmModal = () => {
     setConfirmModalVisible(!isConfirmModalVisible);
   };
+
+  const fetchReviewerPage = useCallback(async (page, search) => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`${apiURL}/getRabiesSampleFormsCVO`, {
+        params: { page, limit: REVIEWER_PAGE_SIZE, search },
+      });
+      setVaccinationForms(response.data.data);
+      setReviewerTotal(response.data.total);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [apiURL]);
 
   useEffect(() => {
     const fetchUserAndForms = async () => {
@@ -39,30 +67,48 @@ const Sample_form_archive = () => {
         const response = await axios.get(`${apiURL}/Position`);
         setUser(response.data);
 
-        // PROVISIONAL (see CLAUDE.md): only RabDash is a full reviewer for now —
-        // CVO is scoped like Private Veterinarian (own submissions only).
-        let formsResponse;
         if (response.data.position === 'RabDash') {
-          formsResponse = await axios.get(`${apiURL}/getRabiesSampleFormsCVO`);
+          await fetchReviewerPage(1, '');
         } else if (response.data.position === 'Private Veterinarian' || response.data.position === 'CVO') {
-          formsResponse = await axios.get(`${apiURL}/getRabiesSampleForms`);
+          const formsResponse = await axios.get(`${apiURL}/getRabiesSampleForms`);
+          setVaccinationForms(formsResponse.data);
+          setIsLoading(false);
         } else {
           console.warn('Unknown user position:', response.data.position);
           setIsLoading(false);
-          return;
         }
-        setVaccinationForms(formsResponse.data);
       } catch (error) {
         console.error('Error fetching data:', error);
-      } finally {
         setIsLoading(false);
       }
     };
 
     fetchUserAndForms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Reviewer only: debounced server-side search, replacing client-side
+  // filtering for this path — see Field_vacc_archives.js for the same
+  // pattern and why. Skips on mount since the initial fetch above already
+  // covers the empty-search case.
   useEffect(() => {
+    if (!isReviewer) return;
+    if (isFirstSearchRender.current) {
+      isFirstSearchRender.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+      fetchReviewerPage(1, searchTerm);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchTerm, isReviewer, fetchReviewerPage]);
+
+  useEffect(() => {
+    if (isReviewer) {
+      setFilteredForms(vaccinationForms);
+      return;
+    }
     const filtered = vaccinationForms.filter(form =>
     (form.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     form.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -89,7 +135,7 @@ const Sample_form_archive = () => {
     // Previously fell back to the full unfiltered list on zero matches —
     // fixed to show an actual empty state instead.
     setFilteredForms(filtered);
-  }, [searchTerm, vaccinationForms]);
+  }, [searchTerm, vaccinationForms, isReviewer]);
 
   const handleEditPress = (item) => {
     setEditableItem(item);
@@ -134,7 +180,11 @@ const Sample_form_archive = () => {
     axios.delete(`${apiURL}/deleteRabiesSampleForm/${deletableItem.id}`, { params: { dbOrigin: deletableItem.dbOrigin } })
       .then(response => {
         if (response.data.success) {
-          setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
+          if (isReviewer) {
+            fetchReviewerPage(currentPage, searchTerm);
+          } else {
+            setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
+          }
           setNotificationMessage('Entry deleted successfully!');
         } else {
           setNotificationMessage('Failed to delete entry. ' + response.data.message);
@@ -163,22 +213,32 @@ const Sample_form_archive = () => {
   };
 
   const handleNextPage = () => {
-    setCurrentPage(currentPage + 1);
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    if (isReviewer) {
+      fetchReviewerPage(nextPage, searchTerm);
+    }
   };
 
   const handlePreviousPage = () => {
-    setCurrentPage(currentPage - 1);
+    if (currentPage <= 1) return;
+    const prevPage = currentPage - 1;
+    setCurrentPage(prevPage);
+    if (isReviewer) {
+      fetchReviewerPage(prevPage, searchTerm);
+    }
   };
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const pageItems = filteredForms.slice(startIndex, endIndex);
+  const pageItems = isReviewer ? filteredForms : filteredForms.slice(startIndex, endIndex);
+  const hasNext = isReviewer ? currentPage * REVIEWER_PAGE_SIZE < reviewerTotal : filteredForms.length > endIndex;
 
   return (
     <ArchiveScreen
       title="Rabies Sample Form Archive"
       loading={isLoading}
-      isEmpty={filteredForms.length === 0}
+      isEmpty={pageItems.length === 0}
       emptyMessage="No sample records found."
     >
       <ArchiveSearchBar
@@ -224,7 +284,7 @@ const Sample_form_archive = () => {
       <ArchivePagination
         page={currentPage}
         hasPrev={currentPage > 1}
-        hasNext={filteredForms.length > endIndex}
+        hasNext={hasNext}
         onPrev={handlePreviousPage}
         onNext={handleNextPage}
       />

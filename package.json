@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@react-native-community/datetimepicker": "7.7.0",
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/native-stack": "^6.9.26",
     "@react-navigation/stack": "^6.3.20",
@@ -63,6 +64,9 @@
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)"
     ],
-    "testPathIgnorePatterns": ["/node_modules/", "<rootDir>/backend/"]
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "<rootDir>/backend/"
+    ]
   }
 }

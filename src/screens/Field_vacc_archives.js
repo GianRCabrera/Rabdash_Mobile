@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import {
@@ -10,6 +10,9 @@ import {
   AppButton,
   menuStyles,
 } from '../components';
+
+const REVIEWER_PAGE_SIZE = 20;
+const SEARCH_DEBOUNCE_MS = 400;
 
 const Field_vacc_archives = () => {
   const [user, setUser] = useState(null);
@@ -24,15 +27,41 @@ const Field_vacc_archives = () => {
   const [isNotificationModalVisible, setNotificationModalVisible] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [reviewerTotal, setReviewerTotal] = useState(0);
+  const isFirstSearchRender = useRef(true);
 
   const navigation = useNavigation();
   const apiURL = process.env.EXPO_PUBLIC_URL;
 
   const itemsPerPage = 5;
+  // PROVISIONAL (see CLAUDE.md): only RabDash is a full reviewer. The
+  // reviewer's dataset (web + mobile vaccination_form merged) is huge —
+  // 400k+ rows on the web side alone — so it's paginated and searched
+  // server-side (see backend/app.js's createPaginatedCvoListHandler).
+  // Private Veterinarian/CVO see only their own small, per-user submission
+  // list, which stays a one-shot fetch with client-side search/pagination,
+  // same as every other archive screen.
+  const isReviewer = user?.position === 'RabDash';
 
   const toggleConfirmModal = () => {
     setConfirmModalVisible(!isConfirmModalVisible);
   };
+
+  const fetchReviewerPage = useCallback(async (page, search) => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`${apiURL}/getVaccinationFormsCVO`, {
+        withCredentials: true,
+        params: { page, limit: REVIEWER_PAGE_SIZE, search },
+      });
+      setVaccinationForms(response.data.data);
+      setReviewerTotal(response.data.total);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [apiURL]);
 
   useEffect(() => {
     const fetchUserAndForms = async () => {
@@ -41,31 +70,52 @@ const Field_vacc_archives = () => {
         const response = await axios.get(`${apiURL}/Position`, { withCredentials: true });
         setUser(response.data);
 
-        // PROVISIONAL (see CLAUDE.md): only RabDash is a full reviewer for now —
-        // CVO is scoped like Private Veterinarian (own submissions only), same
-        // as the backend's getVaccinationForms/getVaccinationFormsCVO split.
-        let formsResponse;
         if (response.data.position === 'RabDash') {
-          formsResponse = await axios.get(`${apiURL}/getVaccinationFormsCVO`, { withCredentials: true });
+          await fetchReviewerPage(1, '');
         } else if (response.data.position === 'Private Veterinarian' || response.data.position === 'CVO') {
-          formsResponse = await axios.get(`${apiURL}/getVaccinationForms`, { withCredentials: true });
+          const formsResponse = await axios.get(`${apiURL}/getVaccinationForms`, { withCredentials: true });
+          setVaccinationForms(formsResponse.data);
+          setIsLoading(false);
         } else {
           console.warn('Unknown user position:', response.data.position);
           setIsLoading(false);
-          return;
         }
-        setVaccinationForms(formsResponse.data);
       } catch (error) {
         console.error('Error fetching data:', error);
-      } finally {
         setIsLoading(false);
       }
     };
 
     fetchUserAndForms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Reviewer only: debounced server-side search, replacing the old
+  // client-side filter below for this path — the dataset is far too large
+  // (400k+ rows) to ever hold in memory to filter locally, and filtering
+  // only whatever page happened to be loaded would silently miss every
+  // record not on it. Skips on mount since the initial fetch above already
+  // covers the empty-search case. Resets to page 1, since a new search
+  // invalidates whatever page you were on for the old one.
   useEffect(() => {
+    if (!isReviewer) return;
+    if (isFirstSearchRender.current) {
+      isFirstSearchRender.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+      fetchReviewerPage(1, searchTerm);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchTerm, isReviewer, fetchReviewerPage]);
+
+  useEffect(() => {
+    if (isReviewer) {
+      // Already filtered server-side; show exactly what came back.
+      setFilteredForms(vaccinationForms);
+      return;
+    }
     // Null-safe: any field can be null/missing on a given record, and this used to
     // call .toLowerCase() directly on each one, crashing the whole screen on load
     // (not just on search) the moment any record had a null field.
@@ -98,7 +148,7 @@ const Field_vacc_archives = () => {
     // had zero matches, instead of an empty state — searching for something
     // that genuinely doesn't exist silently looked like the search did nothing.
     setFilteredForms(filtered);
-  }, [searchTerm, vaccinationForms]);
+  }, [searchTerm, vaccinationForms, isReviewer]);
 
   const handleEditPress = (item) => {
     setEditableItem(item);
@@ -146,7 +196,14 @@ const Field_vacc_archives = () => {
     })
       .then(response => {
         if (response.data.success) {
-          setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
+          if (isReviewer) {
+            // Refetch rather than splice locally — the deleted row's spot in
+            // the current page needs to be backfilled from the server, not
+            // just removed, since this is one page of a much larger dataset.
+            fetchReviewerPage(currentPage, searchTerm);
+          } else {
+            setVaccinationForms(prevForms => prevForms.filter(form => form.id !== deletableItem.id));
+          }
           setNotificationMessage('Entry deleted successfully!');
         } else {
           setNotificationMessage('Failed to delete entry. ' + response.data.message);
@@ -174,32 +231,35 @@ const Field_vacc_archives = () => {
     return date.toISOString().split('T')[0];
   };
 
-  // Previously this re-fetched from the server on every "Next" press and
-  // appended the response — but getVaccinationForms/getVaccinationFormsCVO
-  // both now return the complete scoped result set on the initial load (see
-  // backend/app.js), so appending more of the same data just duplicated the
-  // list. Pagination is purely a client-side display concern now, same as
-  // every other archive screen: the full dataset is already in
-  // `vaccinationForms`, just move which slice of it is shown.
   const handleNextPage = () => {
-    setCurrentPage(currentPage + 1);
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    if (isReviewer) {
+      fetchReviewerPage(nextPage, searchTerm);
+    }
   };
 
   const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+    if (currentPage <= 1) return;
+    const prevPage = currentPage - 1;
+    setCurrentPage(prevPage);
+    if (isReviewer) {
+      fetchReviewerPage(prevPage, searchTerm);
     }
   };
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const pageItems = filteredForms.slice(startIndex, endIndex);
+  // Reviewer: the server already returns exactly one page (REVIEWER_PAGE_SIZE
+  // rows), so filteredForms IS the page — no further slicing.
+  const pageItems = isReviewer ? filteredForms : filteredForms.slice(startIndex, endIndex);
+  const hasNext = isReviewer ? currentPage * REVIEWER_PAGE_SIZE < reviewerTotal : vaccinationForms.length >= endIndex;
 
   return (
     <ArchiveScreen
       title="Rabies Field Vaccination Archive"
       loading={isLoading}
-      isEmpty={filteredForms.length === 0}
+      isEmpty={pageItems.length === 0}
       emptyMessage="No vaccination records found."
     >
       <ArchiveSearchBar
@@ -245,7 +305,7 @@ const Field_vacc_archives = () => {
       <ArchivePagination
         page={currentPage}
         hasPrev={currentPage > 1}
-        hasNext={vaccinationForms.length >= endIndex}
+        hasNext={hasNext}
         onPrev={handlePreviousPage}
         onNext={handleNextPage}
       />
