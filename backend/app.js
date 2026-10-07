@@ -3,15 +3,23 @@ const express = require('express');
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 const bodyParser = require('body-parser');
-const mysql = require('mysql2');
 const cors = require('cors');
 const crypto = require('crypto');
-const { rateLimit } = require('express-rate-limit');
-const nodemailer = require('nodemailer'); // For sending reset password emails
-const bcrypt = require('bcrypt'); // Import bcrypt for password hashing
-const argon2 = require('argon2'); // Import argon2 for password hashing
 const moment = require('moment'); // Import moment for date formatting
-const saltRounds = 10; // Match the rounds used in your PHP application
+const bcrypt = require('bcrypt'); // Still used directly below (registerUser, /reset-password, /reset-forgotten-password) — verifyPassword itself lives in ./lib/passwords now.
+
+const { pool, webPool, queryDatabase } = require('./db');
+const { REVIEWER_POSITIONS, SELF_REGISTERABLE_POSITIONS } = require('./constants');
+const { requireAuth, requireReviewer, authLimiter, loginAccountLimiter } = require('./middleware');
+const { verifyPassword, saltRounds } = require('./lib/passwords');
+const { transporter } = require('./lib/mailer');
+const {
+  generateOTP, upsertOtp, getOtp, deleteOtp, isOtpUsable, makeOtpValidator,
+} = require('./lib/otp');
+const {
+  authorizeFormMutation, createSubmitHandler, createEditHandler,
+  createPaginatedCvoListHandler, createScopedPaginatedListHandler,
+} = require('./lib/formHelpers');
 
 const app = express();
 const path = require('path');
@@ -75,396 +83,6 @@ app.use(session({
     sameSite: 'lax',
   },
 }));
-
-// Rate limiter for auth/OTP endpoints — mitigates brute-forcing logins, OTPs, and password resets.
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: 'Too many attempts. Please try again later.' },
-});
-
-// authLimiter alone is keyed by IP, so it only mitigates one attacker
-// hammering from one address — it does nothing against attempts spread
-// across many IPs targeting one specific account. This second limiter is
-// keyed by the submitted email instead, applied alongside authLimiter (not
-// instead of it) on the two endpoints that check a password against a
-// stored hash (/login, /reset-password's oldPassword check) — the
-// genuinely brute-forceable ones; OTP-gated endpoints already have their
-// own per-OTP attempt cap (see OTP_MAX_ATTEMPTS).
-//
-// Tradeoff worth knowing: this means 10 failed attempts against one
-// account from anywhere locks that account out for the window, which is
-// itself a (much narrower) denial-of-service surface — someone could lock
-// out a legitimate user by repeatedly guessing wrong on their email. That's
-// the standard, accepted tradeoff for account-based lockout; the
-// alternative (no account-level limiting at all) leaves the account open
-// to unlimited guessing once an attacker has more than 10 IPs.
-const loginAccountLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: (req) => (req.body.email || '').toLowerCase().trim(),
-  skip: (req) => !req.body.email,
-  message: { success: false, message: 'Too many attempts for this account. Please try again later.' },
-});
-
-const dbConfig = {
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
-  connectionLimit: 10,
-  waitForConnections: true,
-  queueLimit: 0
-};
-
-const webDbConfig = {
-  host: process.env.WEB_DB_HOST,
-  user: process.env.WEB_DB_USER,
-  password: process.env.WEB_DB_PASSWORD,
-  database: process.env.WEB_DB_DATABASE,
-  connectionLimit: 10,
-  waitForConnections: true,
-  queueLimit: 0
-};
-
-const pool = mysql.createPool(dbConfig);        // Pool for mobile application
-const webPool = mysql.createPool(webDbConfig);  // Pool for web application
-
-// Retries the initial connection; does NOT re-register the 'error' listener on each
-// retry (that was a bug — every retry added another listener, eventually tripping
-// Node's MaxListenersExceededWarning when a DB stayed unreachable for a while).
-function tryConnect(pool) {
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error('Error getting database connection:', err);
-      setTimeout(() => tryConnect(pool), 2000); // Retry after 2 seconds
-    } else if (connection) {
-      connection.release();
-    }
-  });
-}
-
-function handleDisconnect(pool) {
-  tryConnect(pool);
-
-  pool.on('error', (err) => {
-    console.error('Database error:', err);
-    if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-      tryConnect(pool); // Reconnect if connection was lost
-    } else {
-      throw err;
-    }
-  });
-}
-
-handleDisconnect(pool);
-handleDisconnect(webPool);
-
-const queryDatabase = (pool, query, values) => {
-  return new Promise((resolve, reject) => {
-    pool.query(query, values, (err, results) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(results);
-      }
-    });
-  });
-};
-
-const requireAuth = (req, res, next) => {
-  if (!req.session.user) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
-  next();
-};
-
-// PROVISIONAL (Sep 2026, not finalized — see CLAUDE.md): RabDash is currently the
-// only true reviewer role (sees/edits everyone's submissions). CVO is a real,
-// self-registerable position, but is intentionally scoped like Private
-// Veterinarian (own submissions only) until a proper elevated-CVO tier is
-// designed. Named requireReviewer/REVIEWER_POSITIONS rather than requireCVO
-// specifically so this doesn't read as "requires CVO" when it excludes CVO.
-const requireReviewer = (req, res, next) => {
-  const { user } = req.session;
-  if (!user) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
-  if (!REVIEWER_POSITIONS.includes(user.position)) {
-    return res.status(403).json({ message: 'Forbidden: reviewer access required' });
-  }
-  next();
-};
-
-const REVIEWER_POSITIONS = ['RabDash'];
-
-// Guards edit/delete on a form record: only the submitter (matched by username) or a
-// reviewer may modify it. `table` is always a hardcoded literal from the call site,
-// never user input, so it's safe to interpolate into the query.
-//
-// `dbOrigin` ('mobile' | 'web' | undefined) is which database the caller believes this
-// row came from — see the get*FormsCVO/isReviewer list endpoints, which tag every row
-// they return with dbOrigin since they merge results from `pool` and `webPool`. Mobile
-// and web rows are independent auto-increment sequences, so the same numeric `id` can
-// legitimately exist in both databases at once. Every mutation below only ever touches
-// `pool` by `id`, so without this check, a reviewer editing/deleting a web-sourced row
-// would silently mutate an unrelated mobile row that happens to share its id, instead of
-// failing or doing nothing. Rejecting dbOrigin==='web' outright (rather than attempting
-// the mutation against `webPool`) is deliberate: we haven't verified the web DB's schema
-// matches column-for-column, and it has its own independent admin/edit workflow via the
-// companion website.
-// Sends the response and returns false when the caller should stop; true means proceed.
-const authorizeFormMutation = async (req, res, table, id, dbOrigin) => {
-  if (dbOrigin === 'web') {
-    res.status(403).json({ message: 'This record was submitted through the website and cannot be edited or deleted from the mobile app.' });
-    return false;
-  }
-  const { user } = req.session;
-  const rows = await queryDatabase(pool, `SELECT username FROM ${table} WHERE id = ?`, [id]);
-  if (rows.length === 0) {
-    res.status(404).json({ message: 'Record not found' });
-    return false;
-  }
-  if (rows[0].username !== user.email && !REVIEWER_POSITIONS.includes(user.position)) {
-    res.status(403).json({ message: 'Forbidden: you do not have permission to modify this record' });
-    return false;
-  }
-  return true;
-};
-
-// Tags every row from a merged mobile+web list query with which database it came from,
-// so the frontend can hide edit/delete for web-sourced rows and pass dbOrigin back on
-// mutation requests — see authorizeFormMutation above for why this matters.
-const tagOrigin = (mobileRows, webRows) => [
-  ...mobileRows.map((row) => ({ ...row, dbOrigin: 'mobile' })),
-  ...webRows.map((row) => ({ ...row, dbOrigin: 'web' })),
-];
-
-// Rejects with 400 if any of `fields` is missing/blank in req.body; returns
-// true otherwise. None of the form-submission endpoints validated required
-// fields before this — a missing field silently became NULL (or a raw 500
-// if the column is NOT NULL) instead of a clear 400. Required-field lists
-// below were taken from each form screen's own client-side "fill in all
-// fields" check, not guessed — some fields (e.g. the Rabies Exposure form's
-// vaccine-dose dates) are deliberately optional there and are excluded here
-// too, since they're filled in over weeks, not all at once.
-const requireFields = (req, res, fields) => {
-  const missing = fields.filter((field) => {
-    const value = req.body[field];
-    return value === undefined || value === null || (typeof value === 'string' && value.trim() === '');
-  });
-  if (missing.length > 0) {
-    res.status(400).json({ success: false, message: `Missing required field(s): ${missing.join(', ')}` });
-    return false;
-  }
-  return true;
-};
-
-const nowMysql = () => new Date().toISOString().slice(0, 19).replace('T', ' ');
-
-// Builds a submit (INSERT) handler for the pattern shared by every form
-// type: derive username from the session, validate required fields, insert
-// with created_at/updated_at timestamps, return { success, message, id }.
-// Route must have requireAuth applied. `fields` is the table's complete set
-// of user-editable columns, used to build the INSERT; `requiredFields`
-// (defaults to all of `fields`) is the subset requireFields checks — pass a
-// smaller list for forms with genuinely optional fields (see the Rabies
-// Exposure form's longitudinal dose-date fields).
-const createSubmitHandler = (table, label, fields, requiredFields = fields) => async (req, res) => {
-  const username = req.session.user.email;
-
-  if (!requireFields(req, res, requiredFields)) return;
-
-  const createdAt = nowMysql();
-  const updatedAt = createdAt;
-
-  const columns = ['username', ...fields, 'created_at', 'updated_at'];
-  const values = [username, ...fields.map((field) => req.body[field]), createdAt, updatedAt];
-  const query = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`;
-
-  try {
-    const result = await queryDatabase(pool, query, values);
-    console.log(`${label} form data inserted successfully. New ID:`, result.insertId);
-    res.json({ success: true, message: `${label} form data submitted successfully`, id: result.insertId });
-  } catch (error) {
-    console.error(`Error during ${label} form submission:`, error);
-    res.status(500).json({ success: false, message: `An error occurred during ${label} form submission` });
-  }
-};
-
-// Builds an edit (UPDATE) handler for the pattern shared by every form
-// type: authorize via authorizeFormMutation (ownership + dbOrigin check),
-// validate required fields, overwrite every field plus updated_at. Route
-// must have requireAuth applied. Authorization runs before validation so an
-// unauthorized/malformed request always gets 403/404, never a 400 that
-// would tell an attacker their payload shape without confirming access
-// first. `requiredFields` defaults to all of `fields` — see
-// createSubmitHandler for why a form might pass a smaller subset.
-const createEditHandler = (table, label, fields, requiredFields = fields) => async (req, res) => {
-  const { id, dbOrigin } = req.body;
-  const updatedAt = nowMysql();
-  const setClause = fields.map((field) => `${field}=?`).join(', ');
-  const values = [...fields.map((field) => req.body[field]), updatedAt, id];
-  const query = `UPDATE ${table} SET ${setClause}, updated_at=? WHERE id=?`;
-
-  try {
-    if (!(await authorizeFormMutation(req, res, table, id, dbOrigin))) return;
-    if (!requireFields(req, res, requiredFields)) return;
-    await queryDatabase(pool, query, values);
-    console.log(`${label} form data updated successfully for ID:`, id);
-    res.json({ success: true, message: `${label} Form updated successfully`, id });
-  } catch (error) {
-    console.error(`Error during ${label} form update:`, error);
-    res.status(500).json({ success: false, message: `An error occurred during ${label} form update` });
-  }
-};
-
-// Builds a paginated, searchable list handler for the CVO/reviewer-merged
-// endpoints whose underlying tables can be huge — the web side of
-// vaccination_form alone has 400k+ rows (years of the companion website's
-// own usage), which is what originally OOM-crashed the unbounded version
-// of this query and then got a flat LIMIT 500 stopgap. Neither an unbounded
-// query nor a bigger flat cap scales here; this replaces both with real
-// LIMIT/OFFSET paging plus a server-side search (a WHERE clause), since no
-// client could reasonably hold hundreds of thousands of rows to filter
-// locally — client-side search over an already-loaded page would also
-// silently miss every record not on that page, which reads as "no results"
-// for a record that actually exists.
-//
-// `searchFields` is a deliberately narrow column subset (not every field
-// the form has) — both for query performance (no indexes on most columns
-// here) and because it's what a reviewer actually searches by: an owner's
-// or patient's name, a pet's name, a reference/card number.
-//
-// Mobile and web are each paginated independently with the same
-// limit/offset, then merged and re-sorted — not a true globally-ranked
-// top-K across both sources. Deliberate: the mobile side's row counts for
-// these tables are tiny (dozens) next to the web side's (hundreds of
-// thousands), so early pages naturally include both sources' recent rows
-// together, and once the much smaller mobile source is exhausted, deeper
-// pages are effectively just paging through the web side's history —
-// which is correct behavior, not a bug.
-const createPaginatedCvoListHandler = (table, searchFields) => async (req, res) => {
-  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
-  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 200);
-  const offset = (page - 1) * limit;
-  const search = (req.query.search || '').trim();
-
-  const whereClause = search ? `WHERE ${searchFields.map((field) => `${field} LIKE ?`).join(' OR ')}` : '';
-  const searchParams = search ? searchFields.map(() => `%${search}%`) : [];
-
-  const listQuery = `SELECT * FROM ${table} ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`;
-  const countQuery = `SELECT COUNT(*) AS total FROM ${table} ${whereClause}`;
-
-  try {
-    const [mobileResults, webResults, mobileCount, webCount] = await Promise.all([
-      queryDatabase(pool, listQuery, [...searchParams, limit, offset]),
-      queryDatabase(webPool, listQuery, [...searchParams, limit, offset]),
-      queryDatabase(pool, countQuery, searchParams),
-      queryDatabase(webPool, countQuery, searchParams),
-    ]);
-
-    const data = tagOrigin(mobileResults, webResults).sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at)
-    );
-    const total = mobileCount[0].total + webCount[0].total;
-
-    res.json({ data, page, limit, total });
-  } catch (error) {
-    console.error(`Error retrieving ${table} (paginated):`, error);
-    res.status(500).json({ success: false, message: 'An error occurred while retrieving records' });
-  }
-};
-
-// Builds a paginated, searchable list handler for the single-endpoint
-// pattern shared by Animal Control, IEC, Schedule, Budget, and Rabies
-// Exposure: one route (requireAuth, not requireReviewer) that branches at
-// runtime — reviewers see everything, everyone else sees only their own
-// (username-scoped) rows, still merged across both databases. Their actual
-// row counts are in the hundreds today (nowhere near vaccination_form's
-// 400k+), so this isn't fixing an active emergency the way that one was —
-// it's applying the same real pagination/search for consistency and so a
-// flat cap doesn't quietly become the next stopgap if usage grows.
-const createScopedPaginatedListHandler = (table, searchFields) => async (req, res) => {
-  const { user } = req.session;
-  const isReviewer = REVIEWER_POSITIONS.includes(user.position);
-
-  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
-  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 200);
-  const offset = (page - 1) * limit;
-  const search = (req.query.search || '').trim();
-
-  const conditions = [];
-  const scopeParams = [];
-  if (!isReviewer) {
-    conditions.push('username = ?');
-    scopeParams.push(user.email);
-  }
-  const searchParams = search ? searchFields.map(() => `%${search}%`) : [];
-  if (search) {
-    conditions.push(`(${searchFields.map((field) => `${field} LIKE ?`).join(' OR ')})`);
-  }
-  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-  const queryParams = [...scopeParams, ...searchParams];
-
-  const listQuery = `SELECT * FROM ${table} ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`;
-  const countQuery = `SELECT COUNT(*) AS total FROM ${table} ${whereClause}`;
-
-  try {
-    const [mobileResults, webResults, mobileCount, webCount] = await Promise.all([
-      queryDatabase(pool, listQuery, [...queryParams, limit, offset]),
-      queryDatabase(webPool, listQuery, [...queryParams, limit, offset]),
-      queryDatabase(pool, countQuery, queryParams),
-      queryDatabase(webPool, countQuery, queryParams),
-    ]);
-
-    const data = tagOrigin(mobileResults, webResults).sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at)
-    );
-    const total = mobileCount[0].total + webCount[0].total;
-
-    res.json({ data, page, limit, total });
-  } catch (error) {
-    console.error(`Error retrieving ${table} (scoped, paginated):`, error);
-    res.status(500).json({ success: false, message: 'An error occurred while retrieving records' });
-  }
-};
-
-const verifyPassword = async (password, hash) => {
-  try {
-    if (hash.startsWith('$2y$')) {
-      // Convert $2y$ to $2b$ for bcrypt verification
-      hash = hash.replace('$2y$', '$2b$');
-    }
-
-    if (hash.startsWith('$2b$') || hash.startsWith('$2a$')) {
-      // Use bcrypt for verification
-      return await bcrypt.compare(password, hash);
-    } else if (hash.startsWith('$argon2i$') || hash.startsWith('$argon2id$')) {
-      // Use Argon2 for verification
-      return await argon2.verify(hash, password);
-    } else {
-      // Some rows have a plaintext string in `password` instead of a bcrypt/argon2 hash
-      // (inserted directly via SQL, not through /register). Treat as "no match" rather
-      // than throwing, so the caller sees a normal failed login instead of a 500 —
-      // callers should never end up authenticating against a hash we can't verify.
-      console.error('Unknown password hash format encountered during verification; treating as no match.');
-      return false;
-    }
-  } catch (error) {
-    console.error('Error verifying password:', error);
-    throw error;
-  }
-};
-
-
-// Positions selectable via public self-registration. RabDash is deliberately
-// excluded — that's still provisioned separately, never through this form.
-const SELF_REGISTERABLE_POSITIONS = ['Private Veterinarian', 'CVO'];
 
 const registerUser = async (user, pool) => {
   const { name, last_name, email, password } = user;
@@ -601,8 +219,8 @@ app.get('/userProfile', async (req, res) => {
     if (results.length === 1) {
       const userProfile = results[0];
       return res.json(userProfile);
-    } 
-    
+    }
+
     // If not found, check the website database
     results = await queryDatabase(webPool, query, [email]);
     if (results.length === 1) {
@@ -616,57 +234,6 @@ app.get('/userProfile', async (req, res) => {
     return res.status(500).json({ message: 'An error occurred while retrieving user profile' });
   }
 });
-
-// Configure Nodemailer with SMTP (see SMTP_* vars in .env)
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: process.env.SMTP_SECURE === 'true', // true for port 465, false for 587/STARTTLS
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
-
-const generateOTP = () => {
-  return crypto.randomInt(100000, 999999).toString();
-};
-
-const OTP_EXPIRY_MS = 3600000; // 1 hour
-const OTP_MAX_ATTEMPTS = 5;
-
-const toMysqlDatetime = (date) => date.toISOString().slice(0, 19).replace('T', ' ');
-
-// Replaces the old in-memory otpStore, which was wiped on every server
-// restart/redeploy — a real reliability problem since redeploys can land
-// mid-registration or mid-password-reset for a real user. `purpose`
-// ('register' vs 'reset') keeps the two flows from validating against each
-// other's OTP, which the old store (keyed by email only) didn't prevent.
-const upsertOtp = async (email, purpose, otp) => {
-  const expiry = toMysqlDatetime(new Date(Date.now() + OTP_EXPIRY_MS));
-  await queryDatabase(pool, `
-    INSERT INTO otp_codes (email, purpose, otp, expiry, verified, attempts)
-    VALUES (?, ?, ?, ?, 0, 0)
-    ON DUPLICATE KEY UPDATE otp = VALUES(otp), expiry = VALUES(expiry), verified = 0, attempts = 0
-  `, [email, purpose, otp, expiry]);
-};
-
-const getOtp = async (email, purpose) => {
-  const rows = await queryDatabase(pool, 'SELECT * FROM otp_codes WHERE email = ? AND purpose = ?', [email, purpose]);
-  return rows[0] || null;
-};
-
-const markOtpVerified = (email, purpose) =>
-  queryDatabase(pool, 'UPDATE otp_codes SET verified = 1 WHERE email = ? AND purpose = ?', [email, purpose]);
-
-const incrementOtpAttempts = (email, purpose) =>
-  queryDatabase(pool, 'UPDATE otp_codes SET attempts = attempts + 1 WHERE email = ? AND purpose = ?', [email, purpose]);
-
-const deleteOtp = (email, purpose) =>
-  queryDatabase(pool, 'DELETE FROM otp_codes WHERE email = ? AND purpose = ?', [email, purpose]);
-
-const isOtpUsable = (storedOtp) =>
-  !!storedOtp && storedOtp.verified && new Date(storedOtp.expiry) > new Date();
 
 // OTP for reset Password
 app.post('/resetpass', authLimiter, async (req, res) => {
@@ -734,38 +301,6 @@ app.post('/registerotp', authLimiter, async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to send OTP email.' });
   }
 });
-
-// Shared by /validate-otp (purpose 'reset') and /validate-otp-reg (purpose
-// 'register') — these were previously byte-for-byte identical handlers
-// checking the same in-memory object with no purpose check at all. Now each
-// only matches an OTP issued for its own purpose, and a wrong guess counts
-// against OTP_MAX_ATTEMPTS on top of the existing per-IP authLimiter.
-const makeOtpValidator = (purpose) => async (req, res) => {
-  const { email, otp } = req.body;
-
-  try {
-    const storedOtp = await getOtp(email, purpose);
-    const attemptsLeft = storedOtp && storedOtp.attempts < OTP_MAX_ATTEMPTS;
-    const isMatch = !!(storedOtp && attemptsLeft && storedOtp.otp === otp && new Date(storedOtp.expiry) > new Date());
-
-    // Never log the OTP value itself (submitted or stored) — it's the credential
-    // that gates registration/password reset, so leaking it via logs defeats the point of OTP.
-    console.log(`Validating OTP for ${email} (${purpose}): match=${isMatch}`);
-
-    if (isMatch) {
-      await markOtpVerified(email, purpose);
-      return res.json({ success: true, message: 'OTP is valid.' });
-    }
-
-    if (attemptsLeft) {
-      await incrementOtpAttempts(email, purpose);
-    }
-    res.status(400).json({ success: false, message: 'Invalid or expired OTP.' });
-  } catch (error) {
-    console.error('Error validating OTP:', error.message);
-    res.status(500).json({ success: false, message: 'Database error.' });
-  }
-};
 
 app.post('/validate-otp', authLimiter, makeOtpValidator('reset'));
 app.post('/validate-otp-reg', authLimiter, makeOtpValidator('register'));
