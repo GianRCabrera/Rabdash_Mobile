@@ -1261,38 +1261,10 @@ app.delete('/deleteRabiesExposureForm/:id', requireAuth, async (req, res) => {
 // Serve static files from a directory
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
-// Routes to serve the files
-app.get('/Vaccination_Report_form.xlsx', (req, res) => {
-res.sendFile(path.join(__dirname, 'assets/templates/Vaccination_Report_form.xlsx'));
-});
-
-app.get('/Neuter_Report_form.xlsx', (req, res) => {
-res.sendFile(path.join(__dirname, 'assets/templates/Neuter_Report_form.xlsx'));
-});
-
-app.get('/Rabies_Sample_Report_form.xlsx', (req, res) => {
-res.sendFile(path.join(__dirname, 'assets/templates/Rabies_Sample_Report_form.xlsx'));
-});
-
-app.get('/IEC_Report_form.xlsx', (req, res) => {
-res.sendFile(path.join(__dirname, 'assets/templates/IEC_Report_form.xlsx'));
-});
-
-app.get('/Daily_Report_form.xlsx', (req, res) => {
-res.sendFile(path.join(__dirname, 'assets/templates/Daily_Report_form.xlsx'));
-});
-
-app.get('/Schedule_Report_form.xlsx', (req, res) => {
-res.sendFile(path.join(__dirname, 'assets/templates/Schedule_Report_form.xlsx'));
-});
-
-app.get('/Budget_Report_form.xlsx', (req, res) => {
-res.sendFile(path.join(__dirname, 'assets/templates/Budget_Report_form.xlsx'));
-});
-
-app.get('/Rabies_Exposure_Report_form.xlsx', (req, res) => {
-res.sendFile(path.join(__dirname, 'assets/templates/Rabies_Exposure_Report_form.xlsx'));
-});
+// Routes to serve the files — see routes/reportTemplates.js (first slice of
+// the single-file-to-modules split: stateless, no DB/session dependency,
+// lowest possible risk to prove out the extraction pattern first).
+app.use(require('./routes/reportTemplates'));
 
 const PORT = process.env.PORT || 3000;
 
