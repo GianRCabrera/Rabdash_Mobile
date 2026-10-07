@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "test": "jest --forceExit",
-    "start": "nodemon app.js"
+    "start": "nodemon app.js",
+    "migrate": "node scripts/migrate.js"
   },
   "keywords": [],
   "author": "",
