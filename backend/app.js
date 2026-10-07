@@ -354,6 +354,60 @@ const createPaginatedCvoListHandler = (table, searchFields) => async (req, res) 
   }
 };
 
+// Builds a paginated, searchable list handler for the single-endpoint
+// pattern shared by Animal Control, IEC, Schedule, Budget, and Rabies
+// Exposure: one route (requireAuth, not requireReviewer) that branches at
+// runtime — reviewers see everything, everyone else sees only their own
+// (username-scoped) rows, still merged across both databases. Their actual
+// row counts are in the hundreds today (nowhere near vaccination_form's
+// 400k+), so this isn't fixing an active emergency the way that one was —
+// it's applying the same real pagination/search for consistency and so a
+// flat cap doesn't quietly become the next stopgap if usage grows.
+const createScopedPaginatedListHandler = (table, searchFields) => async (req, res) => {
+  const { user } = req.session;
+  const isReviewer = REVIEWER_POSITIONS.includes(user.position);
+
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 200);
+  const offset = (page - 1) * limit;
+  const search = (req.query.search || '').trim();
+
+  const conditions = [];
+  const scopeParams = [];
+  if (!isReviewer) {
+    conditions.push('username = ?');
+    scopeParams.push(user.email);
+  }
+  const searchParams = search ? searchFields.map(() => `%${search}%`) : [];
+  if (search) {
+    conditions.push(`(${searchFields.map((field) => `${field} LIKE ?`).join(' OR ')})`);
+  }
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const queryParams = [...scopeParams, ...searchParams];
+
+  const listQuery = `SELECT * FROM ${table} ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+  const countQuery = `SELECT COUNT(*) AS total FROM ${table} ${whereClause}`;
+
+  try {
+    const [mobileResults, webResults, mobileCount, webCount] = await Promise.all([
+      queryDatabase(pool, listQuery, [...queryParams, limit, offset]),
+      queryDatabase(webPool, listQuery, [...queryParams, limit, offset]),
+      queryDatabase(pool, countQuery, queryParams),
+      queryDatabase(webPool, countQuery, queryParams),
+    ]);
+
+    const data = tagOrigin(mobileResults, webResults).sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    );
+    const total = mobileCount[0].total + webCount[0].total;
+
+    res.json({ data, page, limit, total });
+  } catch (error) {
+    console.error(`Error retrieving ${table} (scoped, paginated):`, error);
+    res.status(500).json({ success: false, message: 'An error occurred while retrieving records' });
+  }
+};
+
 const verifyPassword = async (password, hash) => {
   try {
     if (hash.startsWith('$2y$')) {
@@ -995,108 +1049,16 @@ const startServer = (port) => {
 };
 
 // New endpoint to fetch control_form data from both mobile and web databases
-app.get('/getAnimalControlForms', requireAuth, async (req, res) => {
-  const { user } = req.session;
-  const isReviewer = REVIEWER_POSITIONS.includes(user.position);
-  const query = isReviewer
-    ? 'SELECT * FROM control_form ORDER BY created_at DESC LIMIT 500'
-    : 'SELECT * FROM control_form WHERE username = ? ORDER BY created_at DESC';
-  const params = isReviewer ? [] : [user.email];
-
-  try {
-    const mobileResults = await queryDatabase(pool, query, params);
-    const webResults = await queryDatabase(webPool, query, params);
-
-    const controlForms = tagOrigin(mobileResults, webResults);
-
-    if (controlForms.length > 0) {
-      res.json(controlForms);
-    } else {
-      res.json([]);
-    }
-  } catch (error) {
-    console.error('Error retrieving Animal Control and Rehabilitation Daily Report forms:', error);
-    res.status(500).json({ message: 'An error occurred while retrieving Animal Control and Rehabilitation Daily Report forms' });
-  }
-});
+app.get('/getAnimalControlForms', requireAuth, createScopedPaginatedListHandler('control_form', ['cageNum', 'chief']));
 
 // New endpoint to fetch IEC forms data from both mobile and web databases
-app.get('/getIECForms', requireAuth, async (req, res) => {
-  const { user } = req.session;
-  const isReviewer = REVIEWER_POSITIONS.includes(user.position);
-  const query = isReviewer
-    ? 'SELECT * FROM iec_form ORDER BY created_at DESC LIMIT 500'
-    : 'SELECT * FROM iec_form WHERE username = ? ORDER BY created_at DESC';
-  const params = isReviewer ? [] : [user.email];
-
-  try {
-    const mobileResults = await queryDatabase(pool, query, params);
-    const webResults = await queryDatabase(webPool, query, params);
-
-    const iecForms = tagOrigin(mobileResults, webResults);
-
-    if (iecForms.length > 0) {
-      res.json(iecForms);
-    } else {
-      res.json([]);
-    }
-  } catch (error) {
-    console.error('Error retrieving IEC Report forms:', error);
-    res.status(500).json({ message: 'An error occurred while retrieving IEC Report forms' });
-  }
-});
+app.get('/getIECForms', requireAuth, createScopedPaginatedListHandler('iec_form', ['title', 'barangay']));
 
 // New endpoint to fetch Schedule forms data from both mobile and web databases
-app.get('/getScheduleForms', requireAuth, async (req, res) => {
-  const { user } = req.session;
-  const isReviewer = REVIEWER_POSITIONS.includes(user.position);
-  const query = isReviewer
-    ? 'SELECT * FROM schedule_form ORDER BY created_at DESC LIMIT 500'
-    : 'SELECT * FROM schedule_form WHERE username = ? ORDER BY created_at DESC';
-  const params = isReviewer ? [] : [user.email];
-
-  try {
-    const mobileResults = await queryDatabase(pool, query, params);
-    const webResults = await queryDatabase(webPool, query, params);
-
-    const scheduleForms = tagOrigin(mobileResults, webResults);
-
-    if (scheduleForms.length > 0) {
-      res.json(scheduleForms);
-    } else {
-      res.json([]);
-    }
-  } catch (error) {
-    console.error('Error retrieving Schedule Report forms:', error);
-    res.status(500).json({ message: 'An error occurred while retrieving Schedule Report forms' });
-  }
-});
+app.get('/getScheduleForms', requireAuth, createScopedPaginatedListHandler('schedule_form', ['title', 'barangay']));
 
 // New endpoint to fetch Budget forms data from both mobile and web databases
-app.get('/getBudgetForms', requireAuth, async (req, res) => {
-  const { user } = req.session;
-  const isReviewer = REVIEWER_POSITIONS.includes(user.position);
-  const query = isReviewer
-    ? 'SELECT * FROM budget_form ORDER BY created_at DESC LIMIT 500'
-    : 'SELECT * FROM budget_form WHERE username = ? ORDER BY created_at DESC';
-  const params = isReviewer ? [] : [user.email];
-
-  try {
-    const mobileResults = await queryDatabase(pool, query, params);
-    const webResults = await queryDatabase(webPool, query, params);
-
-    const budgetForms = tagOrigin(mobileResults, webResults);
-
-    if (budgetForms.length > 0) {
-      res.json(budgetForms);
-    } else {
-      res.json([]);
-    }
-  } catch (error) {
-    console.error('Error retrieving Budget Report forms:', error);
-    res.status(500).json({ message: 'An error occurred while retrieving Budget Report forms' });
-  }
-});
+app.get('/getBudgetForms', requireAuth, createScopedPaginatedListHandler('budget_form', ['year']));
 
 // Add a new endpoint to fetch weather form data
 app.get('/getWeatherForms', requireAuth, async (req, res) => {
@@ -1123,30 +1085,7 @@ app.get('/getWeatherForms', requireAuth, async (req, res) => {
 });
 
 // New endpoint to fetch exposure_form data from both mobile and web databases
-app.get('/getRabiesExposureForms', requireAuth, async (req, res) => {
-  const { user } = req.session;
-  const isReviewer = REVIEWER_POSITIONS.includes(user.position);
-  const query = isReviewer
-    ? 'SELECT * FROM exposure_form ORDER BY created_at DESC LIMIT 500'
-    : 'SELECT * FROM exposure_form WHERE username = ? ORDER BY created_at DESC';
-  const params = isReviewer ? [] : [user.email];
-
-  try {
-    const mobileResults = await queryDatabase(pool, query, params);
-    const webResults = await queryDatabase(webPool, query, params);
-
-    const exposureForms = tagOrigin(mobileResults, webResults);
-
-    if (exposureForms.length > 0) {
-      res.json(exposureForms);
-    } else {
-      res.json([]);
-    }
-  } catch (error) {
-    console.error('Error retrieving Rabies Exposure forms:', error);
-    res.status(500).json({ message: 'An error occurred while retrieving Rabies Exposure forms' });
-  }
-});
+app.get('/getRabiesExposureForms', requireAuth, createScopedPaginatedListHandler('exposure_form', ['name', 'regNo']));
 
 // DELETE endpoint for Vaccination Forms
 app.delete('/deleteVaccinationForm/:id', requireAuth, async (req, res) => {
