@@ -58,10 +58,14 @@ const IECFormArchive = () => {
       try {
         const [positionResponse, formsResponse] = await Promise.all([
           axios.get(`${apiURL}/Position`),
-          axios.get(`${apiURL}/getIECForms`),
+          // getIECForms now returns { data, page, limit, total } — a
+          // generous limit keeps this screen's existing fetch-once
+          // behavior working, since this table's row counts are in the
+          // hundreds, not hundreds of thousands.
+          axios.get(`${apiURL}/getIECForms`, { params: { limit: 500 } }),
         ]);
         setUser(positionResponse.data);
-        setVaccinationForms(formsResponse.data);
+        setVaccinationForms(formsResponse.data.data);
       } catch (error) {
         console.error('Error fetching SEMINARS/TRAININGS/IEC Report Form Archives:', error);
       } finally {

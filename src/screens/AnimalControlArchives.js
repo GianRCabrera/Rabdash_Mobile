@@ -61,10 +61,15 @@ const AnimalControlArchives = () => {
       try {
         const [positionResponse, formsResponse] = await Promise.all([
           axios.get(`${apiURL}/Position`),
-          axios.get(`${apiURL}/getAnimalControlForms`),
+          // getAnimalControlForms now returns { data, page, limit, total } —
+          // requesting a generous limit keeps this screen's existing
+          // fetch-once-then-filter-client-side behavior working, since this
+          // table's row counts are in the hundreds, not hundreds of
+          // thousands (unlike vaccination_form's reviewer archive).
+          axios.get(`${apiURL}/getAnimalControlForms`, { params: { limit: 500 } }),
         ]);
         setUser(positionResponse.data);
-        setVaccinationForms(formsResponse.data);
+        setVaccinationForms(formsResponse.data.data);
       } catch (error) {
         console.error('Error fetching Animal Control and Rehabilitation Section Daily Report Archive forms:', error);
       } finally {

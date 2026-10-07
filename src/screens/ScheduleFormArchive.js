@@ -58,10 +58,14 @@ const ScheduleFormArchive = () => {
       try {
         const [positionResponse, formsResponse] = await Promise.all([
           axios.get(`${apiURL}/Position`),
-          axios.get(`${apiURL}/getScheduleForms`),
+          // getScheduleForms now returns { data, page, limit, total } — a
+          // generous limit keeps this screen's existing fetch-once
+          // behavior working, since this table's row counts are in the
+          // dozens, not hundreds of thousands.
+          axios.get(`${apiURL}/getScheduleForms`, { params: { limit: 500 } }),
         ]);
         setUser(positionResponse.data);
-        setVaccinationForms(formsResponse.data);
+        setVaccinationForms(formsResponse.data.data);
       } catch (error) {
         console.error('Error fetching Schedule/Events Form Archives:', error);
       } finally {

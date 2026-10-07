@@ -58,10 +58,13 @@ const BudgetFormArchive = () => {
       try {
         const [positionResponse, formsResponse] = await Promise.all([
           axios.get(`${apiURL}/Position`),
-          axios.get(`${apiURL}/getBudgetForms`),
+          // getBudgetForms now returns { data, page, limit, total } — a
+          // generous limit keeps this screen's existing fetch-once
+          // behavior working, since this table's row counts are tiny.
+          axios.get(`${apiURL}/getBudgetForms`, { params: { limit: 500 } }),
         ]);
         setUser(positionResponse.data);
-        setVaccinationForms(formsResponse.data);
+        setVaccinationForms(formsResponse.data.data);
       } catch (error) {
         console.error('Error fetching Budget Form Archives:', error);
       } finally {
