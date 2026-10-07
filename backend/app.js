@@ -85,6 +85,32 @@ const authLimiter = rateLimit({
   message: { success: false, message: 'Too many attempts. Please try again later.' },
 });
 
+// authLimiter alone is keyed by IP, so it only mitigates one attacker
+// hammering from one address — it does nothing against attempts spread
+// across many IPs targeting one specific account. This second limiter is
+// keyed by the submitted email instead, applied alongside authLimiter (not
+// instead of it) on the two endpoints that check a password against a
+// stored hash (/login, /reset-password's oldPassword check) — the
+// genuinely brute-forceable ones; OTP-gated endpoints already have their
+// own per-OTP attempt cap (see OTP_MAX_ATTEMPTS).
+//
+// Tradeoff worth knowing: this means 10 failed attempts against one
+// account from anywhere locks that account out for the window, which is
+// itself a (much narrower) denial-of-service surface — someone could lock
+// out a legitimate user by repeatedly guessing wrong on their email. That's
+// the standard, accepted tradeoff for account-based lockout; the
+// alternative (no account-level limiting at all) leaves the account open
+// to unlimited guessing once an attacker has more than 10 IPs.
+const loginAccountLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req.body.email || '').toLowerCase().trim(),
+  skip: (req) => !req.body.email,
+  message: { success: false, message: 'Too many attempts for this account. Please try again later.' },
+});
+
 const dbConfig = {
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -529,7 +555,7 @@ const logInUser = async (user) => {
   return loggedInUser;
 };
 
-app.post('/login', authLimiter, async (req, res) => {
+app.post('/login', authLimiter, loginAccountLimiter, async (req, res) => {
   try {
     const user = await logInUser(req.body);
 
@@ -757,7 +783,7 @@ const findUserPool = async (email) => {
 };
 
 // Reset Password Functionality
-app.post('/reset-password', authLimiter, async (req, res) => {
+app.post('/reset-password', authLimiter, loginAccountLimiter, async (req, res) => {
   const { email, oldPassword, newPassword } = req.body;
 
   if (!email || !oldPassword || !newPassword) {
