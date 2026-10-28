@@ -73,7 +73,7 @@ Then restart `npx expo start` so the new env value is picked up.
 
 ## Deploying backend changes
 
-**The hosted backend at `rabdash-mobile-backend.onrender.com` deploys from a *different*, separate private repository** — `GianRCabrera/Rabdash-Mobile-Backend` — not from `backend/` in this repo. Render is connected to that repo, not this one. Changes made to `backend/app.js` here need to be manually copied/pushed to that other repo to actually go live; pushing only to this repo's `backend/` folder has no effect on production. Keep the two in sync by hand when editing backend logic (the SMTP-env-var and audit-fix commits from Aug 2026 are examples of parallel commits made to both).
+**The hosted backend at `rabdash-mobile-backend.onrender.com` deploys from this repository's `backend/` folder** (Render → Rabdash-Mobile-Backend → Settings: Source `GianRCabrera/Rabdash_Mobile`, root directory `backend/`, build command `npm ci`; confirmed 2026-10-28). The separate `GianRCabrera/Rabdash-Mobile-Backend` repository is an older copy that Render no longer builds from — changes pushed only there do not go live. Run `npm test` in `backend/` before pushing, since a push here is what Render deploys.
 
 If Render deploys start failing with "we don't have access to your repo" after a GitHub repo transfer/rename (as happened when this repo moved to a new owner), the fix has two parts: (1) re-grant the Render GitHub App access at `https://github.com/apps/render/installations/new` under the account that now owns the repo, **and** (2) on the Render service's Settings → Build page, re-select the repo via the Source "Edit" button (Render also caches its own stale link separately from the GitHub App permissions).
 

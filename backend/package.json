@@ -35,5 +35,8 @@
   "devDependencies": {
     "jest": "^30.5.2",
     "supertest": "^7.2.2"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }
