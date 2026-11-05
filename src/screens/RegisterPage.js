@@ -6,6 +6,7 @@ import axios from 'axios';
 import Svg, { Path } from 'react-native-svg';
 import { AppButton, AppInput, AppModal } from '../components';
 import { colors, spacing, radii, typography } from '../theme/theme';
+import { isValidEmail, normalizeEmail } from '../utils/email';
 
 // Must match backend/app.js's SELF_REGISTERABLE_POSITIONS whitelist — this is
 // just what the picker offers, the backend is the actual authority and
@@ -69,9 +70,8 @@ const RegisterPage = () => {
 
     console.log('Registration button pressed');
 
-    const trimmedEmail = email.trim();
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const emailIsValid = emailPattern.test(trimmedEmail);
+    const trimmedEmail = normalizeEmail(email);
+    const emailIsValid = isValidEmail(trimmedEmail);
 
     console.log(`Email validation result: ${emailIsValid} for email: ${trimmedEmail}`);
 
