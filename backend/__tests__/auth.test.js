@@ -25,6 +25,18 @@ describe('POST /login', () => {
     expect(res.body).toEqual({ success: true, message: 'Login successful', position: 'Private Veterinarian' });
   });
 
+  // A cookie without Max-Age is a browser-session cookie, which the phone's
+  // cookie store may drop when the app is closed — logging the user out.
+  test('the session cookie lasts 7 days rather than ending with the app session', async () => {
+    const res = await request(app).post('/login').send({ email, password: correctPassword });
+    const cookie = (res.headers['set-cookie'] || []).find((c) => c.startsWith('connect.sid='));
+    expect(cookie).toBeDefined();
+    const expires = Date.parse(cookie.match(/Expires=([^;]+)/)[1]);
+    const days = (expires - Date.now()) / (24 * 60 * 60 * 1000);
+    expect(days).toBeGreaterThan(6.9);
+    expect(days).toBeLessThanOrEqual(7);
+  });
+
   test('wrong password fails with a generic message', async () => {
     const res = await request(app).post('/login').send({ email, password: 'WrongPassword!' });
     expect(res.status).toBe(200);

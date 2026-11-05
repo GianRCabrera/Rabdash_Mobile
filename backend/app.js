@@ -42,7 +42,15 @@ app.use(bodyParser.json());
 // Render's free tier the instance restarts on every inactivity spin-down, so without
 // this every user was getting logged out far more often than SESSION_SECRET alone
 // (which only persists the signing key, not the session data) would suggest.
+// How long a login survives without use. The cookie gets a real expiry (not a
+// browser-session cookie, which Android/iOS may drop when the app is closed),
+// `rolling` re-sends it with a fresh expiry on every response, and the store
+// keeps the server-side row for the same window — so a field user stays logged
+// in across app restarts and is only asked to log in again after a week idle.
+const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
 const sessionStore = new MySQLStore({
+  expiration: SESSION_MAX_AGE_MS,
   host: process.env.DB_HOST,
   port: 3306,
   user: process.env.DB_USER,
@@ -65,7 +73,9 @@ app.use(session({
   // write a DB row for every request that touches session middleware — i.e. nearly
   // every request — even from visitors who never log in.
   saveUninitialized: false,
+  rolling: true,
   cookie: {
+    maxAge: SESSION_MAX_AGE_MS,
     secure: 'auto',
     httpOnly: true,
     sameSite: 'lax',
