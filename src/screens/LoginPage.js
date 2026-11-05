@@ -7,6 +7,7 @@ import Svg, { Path } from 'react-native-svg';
 import { useAuth } from '../context/AuthContext';
 import { AppButton, AppInput, AppModal } from '../components';
 import { colors, spacing, typography } from '../theme/theme';
+import { isValidEmail, normalizeEmail } from '../utils/email';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -40,8 +41,7 @@ const LoginPage = () => {
       return;
     }
 
-    const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-    if (!emailPattern.test(email)) {
+    if (!isValidEmail(email)) {
       console.log('Invalid email format');
       showInvalidModal();
       return;
@@ -50,15 +50,16 @@ const LoginPage = () => {
     setIsLoggingIn(true);
     try {
       console.log('Login button pressed!');
-      console.log('Request Payload:', { email });
+      const loginEmail = normalizeEmail(email);
+      console.log('Request Payload:', { email: loginEmail });
 
-      const response = await axios.post(`${apiURL}/login`, { email, password });
+      const response = await axios.post(`${apiURL}/login`, { email: loginEmail, password });
       console.log('Response Payload:', response.data);
       if (response.data.success) {
         console.log('Login successful');
         const position = response.data.position;
 
-        dispatch({ type: 'LOGIN', payload: { user: { email, position } } });
+        dispatch({ type: 'LOGIN', payload: { user: { email: loginEmail, position } } });
 
         switch (position) {
           case 'CVO':

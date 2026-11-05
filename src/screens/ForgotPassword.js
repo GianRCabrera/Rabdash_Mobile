@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from '@expo/vector-icons/MaterialCommunityIcons';
 import { AppButton, AppInput, AppCard, AppModal } from '../components';
 import { colors, spacing, typography } from '../theme/theme';
+import { isValidEmail, normalizeEmail } from '../utils/email';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -17,20 +18,19 @@ const ForgotPassword = () => {
   const apiURL = process.env.EXPO_PUBLIC_URL;
 
   const handleResetPassword = async () => {
-    if (!email) {
+    if (!normalizeEmail(email)) {
       setFillAllFieldsModalVisible(true);
       return;
     }
 
-    const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-    if (!emailPattern.test(email)) {
+    if (!isValidEmail(email)) {
       setErrorModalVisible(true);
       return;
     }
 
     setIsSending(true);
     try {
-      const response = await axios.post(`${apiURL}/resetpass`, { email });
+      const response = await axios.post(`${apiURL}/resetpass`, { email: normalizeEmail(email) });
       if (response.data.success) {
         setSuccessModalVisible(true);
       } else {
@@ -49,7 +49,7 @@ const ForgotPassword = () => {
     // The OTP itself is only ever sent by email, never returned in the API
     // response (that would defeat the point of emailing it) — the OTP
     // screen collects it from the user, not from these nav params.
-    navigation.navigate('OTP', { email }, { pop: true });
+    navigation.navigate('OTP', { email: normalizeEmail(email) }, { pop: true });
   };
 
   const handleBackPress = () => navigation.navigate('Login', undefined, { pop: true });

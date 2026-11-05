@@ -75,6 +75,27 @@ describe('LoginPage', () => {
     expect(utils.getByTestId('current-user').props.children).toBe(`staff@example.com|${position}`);
   });
 
+  // These used to be rejected on the phone before reaching the server, even
+  // though Register accepted them — so such accounts could never log in.
+  test.each(['name+rabdash@gmail.com', 'staff@cityvet.agency'])('%s reaches the server instead of being rejected locally', async (email) => {
+    axios.post.mockResolvedValue({ data: { success: true, position: 'Private Veterinarian' } });
+    const utils = await renderLogin();
+
+    await fillAndSubmit(utils, email, 'secret');
+
+    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(expect.stringMatching(/\/login$/), { email, password: 'secret' }));
+  });
+
+  test('surrounding spaces are trimmed before the email is sent and remembered', async () => {
+    axios.post.mockResolvedValue({ data: { success: true, position: 'CVO' } });
+    const utils = await renderLogin();
+
+    await fillAndSubmit(utils, ' staff@example.com  ', 'secret');
+
+    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(expect.stringMatching(/\/login$/), { email: 'staff@example.com', password: 'secret' }));
+    expect(utils.getByTestId('current-user').props.children).toBe('staff@example.com|CVO');
+  });
+
   test('wrong credentials show "Invalid email or password" and log nobody in', async () => {
     axios.post.mockResolvedValue({ data: { success: false, message: 'Invalid email or password' } });
     const utils = await renderLogin();
