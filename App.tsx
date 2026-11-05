@@ -28,7 +28,6 @@ import NeuterForm2 from './src/screens/Neuter_Form2';
 import RabiesSampleInformationForm from './src/screens/Rabies_Sample_Information_Form';
 import RabiesSampleInformationForm2 from './src/screens/Rabies_Sample_Information_Form2';
 import BudgetForm from './src/screens/BudgetForm';
-import WeatherForm from './src/screens/WeatherForm';
 import ScheduleForm from './src/screens/ScheduleForm';
 import IECForm from './src/screens/IECForm';
 import AnimalControlForm from './src/screens/AnimalControlForm';
@@ -44,7 +43,6 @@ import IECFormArchive from './src/screens/IECFormArchive';
 import ScheduleFormArchive from './src/screens/ScheduleFormArchive';
 import BudgetFormArchive from './src/screens/BudgetFormArchive';
 import Rabies_Exposure_Form_Archive from './src/screens/Rabies_Exposure_Form_Archive';
-import WeatherFormArchive from './src/screens/WeatherFormArchive';
 import DownloadableForms from './src/screens/DownloadableForms';
 import DownloadableFormsPrivVet from './src/screens/DownloadableFormsPrivVet';
 import Landing_page from './src/screens/Landing_page';
@@ -68,7 +66,6 @@ const GuardedRabiesSampleInformationForm = withAuthGuard(RabiesSampleInformation
 const GuardedRabiesSampleInformationForm2 = withAuthGuard(RabiesSampleInformationForm2);
 const GuardedClientDatabase = withAuthGuard(ClientDatabase);
 const GuardedBudgetForm = withAuthGuard(BudgetForm);
-const GuardedWeatherForm = withAuthGuard(WeatherForm);
 const GuardedScheduleForm = withAuthGuard(ScheduleForm);
 const GuardedIECForm = withAuthGuard(IECForm);
 const GuardedAnimalControlForm = withAuthGuard(AnimalControlForm);
@@ -83,7 +80,6 @@ const GuardedIECFormArchive = withAuthGuard(IECFormArchive);
 const GuardedScheduleFormArchive = withAuthGuard(ScheduleFormArchive);
 const GuardedBudgetFormArchive = withAuthGuard(BudgetFormArchive);
 const GuardedRabies_Exposure_Form_Archive = withAuthGuard(Rabies_Exposure_Form_Archive);
-const GuardedWeatherFormArchive = withAuthGuard(WeatherFormArchive);
 const GuardedDownloadableForms = withAuthGuard(DownloadableForms);
 const GuardedDownloadableFormsPrivVet = withAuthGuard(DownloadableFormsPrivVet);
 
@@ -107,7 +103,6 @@ type RootStackParamList = {
   Rabies_Sample_Information_Form2: undefined;
   ClientDatabase: undefined;
   BudgetForm: undefined;
-  WeatherForm: undefined;
   ScheduleForm: undefined;
   IECForm: undefined;
   AnimalControlForm: undefined;
@@ -122,7 +117,6 @@ type RootStackParamList = {
   ScheduleFormArchive: undefined;
   BudgetFormArchive: undefined;
   Rabies_Exposure_Form_Archive: undefined;
-  WeatherFormArchive: undefined;
   DownloadableForms: undefined;
   DownloadableFormsPrivVet: undefined;
   OTP: undefined
@@ -202,7 +196,6 @@ const RootNavigator = () => {
         <Stack.Screen name="Rabies_Sample_Information_Form2" component={GuardedRabiesSampleInformationForm2} options={{ headerShown: false }} />
         <Stack.Screen name="ClientDatabase" component={GuardedClientDatabase} options={{ headerShown: false }} />
         <Stack.Screen name="BudgetForm" component={GuardedBudgetForm} options={{ headerShown: false }} />
-        <Stack.Screen name="WeatherForm" component={GuardedWeatherForm} options={{ headerShown: false }} />
         <Stack.Screen name="ScheduleForm" component={GuardedScheduleForm} options={{ headerShown: false }} />
         <Stack.Screen name="IECForm" component={GuardedIECForm} options={{ headerShown: false }} />
         <Stack.Screen name="AnimalControlForm" component={GuardedAnimalControlForm} options={{ headerShown: false }} />
@@ -216,7 +209,6 @@ const RootNavigator = () => {
         <Stack.Screen name="IECFormArchive" component={GuardedIECFormArchive} options={{ headerShown: false }} />
         <Stack.Screen name="ScheduleFormArchive" component={GuardedScheduleFormArchive} options={{ headerShown: false }} />
         <Stack.Screen name="BudgetFormArchive" component={GuardedBudgetFormArchive} options={{ headerShown: false }} />
-        <Stack.Screen name="WeatherFormArchive" component={GuardedWeatherFormArchive} options={{ headerShown: false }} />
         <Stack.Screen name="Rabies_Exposure_Form_Archive" component={GuardedRabies_Exposure_Form_Archive} options={{ headerShown: false }} />
         <Stack.Screen name="DownloadableForms" component={GuardedDownloadableForms} options={{ headerShown: false }} />
         <Stack.Screen name="DownloadableFormsPrivVet" component={GuardedDownloadableFormsPrivVet} options={{ headerShown: false }} />

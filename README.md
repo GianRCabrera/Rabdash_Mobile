@@ -1,6 +1,6 @@
 # RabDash Mobile
 
-Mobile application for RabDash DC — a rabies-control / animal-control field program. Field staff and veterinarians submit forms (vaccination, neutering, rabies samples, budget, weather, schedule, IEC, animal control, rabies exposure) from the field; a CVO (City Veterinary Office) role reviews submissions.
+Mobile application for RabDash DC — a rabies-control / animal-control field program. Field staff and veterinarians submit forms (vaccination, neutering, rabies samples, budget, schedule, IEC, animal control, rabies exposure) from the field; a CVO (City Veterinary Office) role reviews submissions.
 
 Originally built as a thesis project.
 
@@ -82,13 +82,20 @@ If Render deploys start failing with "we don't have access to your repo" after a
 ```
 .
 ├── App.tsx                # Navigation tree + screen registry (single source of truth for routes)
-├── AuthContext.js         # Global auth state (React Context, not persisted across reloads)
-├── *.js                   # Screens, flat at repo root (no src/ directory)
-├── styles/                # StyleSheet objects, grouped by kind and imported by screens
+├── src/
+│   ├── screens/           # One file per screen (forms, archives, menus, auth screens)
+│   ├── components/        # Shared UI: AppButton, AppModal, FormScreen, ArchiveScreen, ...
+│   ├── context/           # AuthContext (login saved with expo-secure-store) + withAuthGuard
+│   ├── api/               # Global axios 401 handler (session expiry → back to Login)
+│   ├── theme/             # Colors, spacing, typography tokens
+│   ├── utils/             # Small shared helpers (e.g. email validation)
+│   └── constants/
 ├── assets/                # Images/icons used by the app
 └── backend/
-    ├── app.js             # Express app — nearly all routes are defined inline here
-    ├── routes/            # Present but largely unused (see CLAUDE.md)
+    ├── app.js             # Express/session/CORS setup and route mounting
+    ├── routes/            # auth.js, forms.js, reportTemplates.js
+    ├── lib/               # Shared helpers: form handler factories, OTP, mailer, passwords
+    ├── migrations/        # Numbered .sql schema changes, applied with `npm run migrate`
     └── assets/templates/  # Downloadable .xlsx report templates served by the backend
 ```
 

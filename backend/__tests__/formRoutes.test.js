@@ -24,7 +24,6 @@ describe('form routes across every form type', () => {
     ['/submitNeuterForm', 'consent_form'],
     ['/submitRabiesSampleForms', 'bite_form'],
     ['/submitBudgetForm', 'budget_form'],
-    ['/submitWeatherForm', 'weather_form'],
     ['/submitScheduleForm', 'schedule_form'],
     ['/submitIECForm', 'iec_form'],
     ['/submitAnimalControlForm', 'control_form'],
