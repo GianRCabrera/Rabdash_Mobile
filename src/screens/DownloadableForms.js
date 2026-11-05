@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Buffer } from 'buffer';
 import { AppButton, AppModal, MenuScreen, menuStyles } from '../components';
@@ -25,12 +24,6 @@ const DownloadableForms = () => {
 
   const downloadFile = async (fileUrl, fileName) => {
     try {
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== 'granted') {
-        console.error('Permission to access media library denied');
-        return;
-      }
-
       const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
       if (permissions.granted) {
         const uri = await FileSystem.StorageAccessFramework.createFileAsync(permissions.directoryUri, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
