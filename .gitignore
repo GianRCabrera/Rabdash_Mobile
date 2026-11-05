@@ -26,6 +26,11 @@ yarn-error.*
 
 # macOS
 .DS_Store
+
+# Windows
+desktop.ini
+Thumbs.db
+
 *.pem
 
 # local env files
