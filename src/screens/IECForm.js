@@ -83,10 +83,10 @@ const IECForm = () => {
     const backTo = route.params?.from;
     switch (backTo) {
       case 'ArchiveMenu':
-        navigation.navigate('ClientDatabase');
+        navigation.navigate('ClientDatabase', undefined, { pop: true });
         break;
       case 'VetInputForms':
-        navigation.navigate('VetInputForms');
+        navigation.navigate('VetInputForms', undefined, { pop: true });
         break;
       default:
         navigation.goBack();
@@ -148,9 +148,9 @@ const IECForm = () => {
 
   const navigateAfterSubmit = () => {
     if (editableItem) {
-      navigation.navigate('IECFormArchive');
+      navigation.navigate('IECFormArchive', undefined, { pop: true });
     } else {
-      navigation.navigate('VetInputForms');
+      navigation.navigate('VetInputForms', undefined, { pop: true });
     }
   };
 

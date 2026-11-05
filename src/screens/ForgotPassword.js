@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Alert, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from '@expo/vector-icons/MaterialCommunityIcons';
 import { AppButton, AppInput, AppCard, AppModal } from '../components';
 import { colors, spacing, typography } from '../theme/theme';
 
@@ -49,10 +49,10 @@ const ForgotPassword = () => {
     // The OTP itself is only ever sent by email, never returned in the API
     // response (that would defeat the point of emailing it) — the OTP
     // screen collects it from the user, not from these nav params.
-    navigation.navigate('OTP', { email });
+    navigation.navigate('OTP', { email }, { pop: true });
   };
 
-  const handleBackPress = () => navigation.navigate('Login');
+  const handleBackPress = () => navigation.navigate('Login', undefined, { pop: true });
 
   return (
     <ScrollView contentContainerStyle={styles.container}>

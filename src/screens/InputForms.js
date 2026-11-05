@@ -4,10 +4,10 @@ import { AppButton, MenuScreen, menuStyles } from '../components';
 
 const InputForms = () => {
   const navigation = useNavigation();
-  const navigateToRabies_Field_Vacc_Form = () => navigation.navigate('Rabies_Field_Vacc_Form');
-  const navigateToRabies_Neuter_Form = () => navigation.navigate('Neuter_Form');
-  const navigateToRabies_Sample_Information_Form = () => navigation.navigate('Rabies_Sample_Information_Form');
-  const navigateToMainMenu = () => navigation.navigate('MainMenu');
+  const navigateToRabies_Field_Vacc_Form = () => navigation.navigate('Rabies_Field_Vacc_Form', undefined, { pop: true });
+  const navigateToRabies_Neuter_Form = () => navigation.navigate('Neuter_Form', undefined, { pop: true });
+  const navigateToRabies_Sample_Information_Form = () => navigation.navigate('Rabies_Sample_Information_Form', undefined, { pop: true });
+  const navigateToMainMenu = () => navigation.navigate('MainMenu', undefined, { pop: true });
 
   return (
     <MenuScreen title="Form Menu">

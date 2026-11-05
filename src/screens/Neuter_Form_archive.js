@@ -149,7 +149,7 @@ const Neuter_Form_archive = () => {
       navigation.navigate('Neuter_Form', {
         item: editableItem,
         fromArchive: true
-      });
+      }, { pop: true });
       setEditableItem(null);
       toggleConfirmModal();
     }
@@ -158,9 +158,9 @@ const Neuter_Form_archive = () => {
   const handleBackPress = () => {
     const position = user?.position;
     if (position === 'CVO' || position === 'RabDash') {
-      navigation.navigate('VetArchiveMenu');
+      navigation.navigate('VetArchiveMenu', undefined, { pop: true });
     } else if (position === 'Private Veterinarian') {
-      navigation.navigate('ClientDatabase');
+      navigation.navigate('ClientDatabase', undefined, { pop: true });
     } else {
       console.warn('Unknown user position:', position);
     }

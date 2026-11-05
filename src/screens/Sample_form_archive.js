@@ -147,7 +147,7 @@ const Sample_form_archive = () => {
       navigation.navigate('Rabies_Sample_Information_Form', {
         item: editableItem,
         fromArchive: true
-      });
+      }, { pop: true });
       setEditableItem(null);
       toggleConfirmModal();
     }
@@ -156,9 +156,9 @@ const Sample_form_archive = () => {
   const handleBackPress = () => {
     const position = user?.position;
     if (position === 'CVO' || position === 'RabDash') {
-      navigation.navigate('VetArchiveMenu');
+      navigation.navigate('VetArchiveMenu', undefined, { pop: true });
     } else if (position === 'Private Veterinarian') {
-      navigation.navigate('ClientDatabase');
+      navigation.navigate('ClientDatabase', undefined, { pop: true });
     } else {
       console.warn('Unknown user position:', position);
     }

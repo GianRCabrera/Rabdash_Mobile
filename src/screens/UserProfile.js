@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import Icon from '@expo/vector-icons/MaterialIcons';
 import { AppButton, AppCard, ScreenHeader, menuStyles } from '../components';
 import { colors, spacing, typography, radii } from '../theme/theme';
 
@@ -26,10 +26,10 @@ const UserProfile = () => {
       switch (user.position) {
         case 'CVO':
         case 'RabDash':
-          navigation.navigate('VetMenu');
+          navigation.navigate('VetMenu', undefined, { pop: true });
           break;
         case 'Private Veterinarian':
-          navigation.navigate('MainMenu');
+          navigation.navigate('MainMenu', undefined, { pop: true });
           break;
         default:
           console.warn('Unknown user position:', user.position);
@@ -40,7 +40,7 @@ const UserProfile = () => {
   };
 
   const handleResetPassword = () => {
-    navigation.navigate('ResetPasswordPage', { email: user.email, previousScreen: 'UserProfile' });
+    navigation.navigate('ResetPasswordPage', { email: user.email, previousScreen: 'UserProfile' }, { pop: true });
   };
 
   return (

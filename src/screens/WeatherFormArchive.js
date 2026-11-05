@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, FlatList, ScrollView, ActivityIndicator,  TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import styles from '../../styles/Archive';
-import Modal from 'react-native-modal';
+import { ModalShell as Modal } from '../components/AppModal';
 import axios from 'axios';
 
 const WeatherFormArchive = () => {
@@ -22,7 +22,7 @@ const WeatherFormArchive = () => {
   const apiURL = process.env.EXPO_PUBLIC_URL;
 
   const navigateToVetArchiveMenu = () => {
-    navigation.navigate('VetArchiveMenu');
+    navigation.navigate('VetArchiveMenu', undefined, { pop: true });
   };
 
   const toggleConfirmModal = () => {
@@ -88,7 +88,7 @@ const submitForm = () => {
     navigation.navigate('WeatherForm', {
       item: editableItem,
       fromArchive: true
-    });
+    }, { pop: true });
     toggleConfirmModal();
   }
 };

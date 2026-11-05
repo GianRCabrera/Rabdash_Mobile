@@ -17,14 +17,14 @@ const VetMenu = () => {
       console.error('Error during logout:', error.message);
     }
     dispatch({ type: 'LOGOUT' });
-    navigation.navigate('Login');
+    navigation.navigate('Login', undefined, { pop: true });
   };
 
-  const navigateToAboutUs = () => navigation.navigate('AboutUs');
-  const navigateToUserProfile = () => navigation.navigate('UserProfile');
-  const navigateToInputForms = () => navigation.navigate('VetInputForms');
-  const navigateToVetArchiveMenu = () => navigation.navigate('VetArchiveMenu');
-  const navigateToDownloadableForms = () => navigation.navigate('DownloadableForms');
+  const navigateToAboutUs = () => navigation.navigate('AboutUs', undefined, { pop: true });
+  const navigateToUserProfile = () => navigation.navigate('UserProfile', undefined, { pop: true });
+  const navigateToInputForms = () => navigation.navigate('VetInputForms', undefined, { pop: true });
+  const navigateToVetArchiveMenu = () => navigation.navigate('VetArchiveMenu', undefined, { pop: true });
+  const navigateToDownloadableForms = () => navigation.navigate('DownloadableForms', undefined, { pop: true });
 
   return (
     <MenuScreen title="Main Menu" badge={position}>

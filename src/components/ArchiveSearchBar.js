@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import Icon from '@expo/vector-icons/MaterialIcons';
 import { colors, spacing, radii, typography, shadow } from '../theme/theme';
 
 // The search bar shared by every archive screen — previously copy-pasted 8

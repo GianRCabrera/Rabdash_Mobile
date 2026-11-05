@@ -6,7 +6,7 @@ import { View,
   ScrollView,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import Modal from 'react-native-modal';
+import { ModalShell as Modal } from '../components/AppModal';
 import axios from 'axios';
 import styles from '../../styles/submitforms3';
 
@@ -98,10 +98,10 @@ const handleBackPress = () => {
       // 'ArchiveMenu' isn't a real registered screen name — the actual
       // archive-menu screen for Private Veterinarian users is
       // ClientDatabase (parallels VetArchiveMenu for CVO/RabDash).
-      navigation.navigate('ClientDatabase');
+      navigation.navigate('ClientDatabase', undefined, { pop: true });
       break;
     case 'VetInputForms':
-      navigation.navigate('VetInputForms');
+      navigation.navigate('VetInputForms', undefined, { pop: true });
       break;
     default:
       navigation.goBack();
@@ -154,10 +154,10 @@ const handleBackPress = () => {
        // Navigate back or refresh list as needed
        if (isEditing) {
          // Possibly navigate back or refresh the list to show updated data
-         navigation.navigate('VetArchiveMenu'); // Adjust 'ArchiveMenu' to your actual Archive Menu screen name
+         navigation.navigate('VetArchiveMenu', undefined, { pop: true }); // Adjust 'ArchiveMenu' to your actual Archive Menu screen name
        } else {
          // Handle navigation for new entry submission
-         navigation.navigate('VetInputForms'); // Adjust 'FormMenu' to your actual Form Menu screen name
+         navigation.navigate('VetInputForms', undefined, { pop: true }); // Adjust 'FormMenu' to your actual Form Menu screen name
        }
    })
    .catch(error => {

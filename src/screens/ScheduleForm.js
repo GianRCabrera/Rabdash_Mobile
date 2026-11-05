@@ -71,10 +71,10 @@ const ScheduleForm = () => {
     const backTo = route.params?.from;
     switch (backTo) {
       case 'ArchiveMenu':
-        navigation.navigate('ClientDatabase');
+        navigation.navigate('ClientDatabase', undefined, { pop: true });
         break;
       case 'VetInputForms':
-        navigation.navigate('VetInputForms');
+        navigation.navigate('VetInputForms', undefined, { pop: true });
         break;
       default:
         navigation.goBack();
@@ -127,9 +127,9 @@ const ScheduleForm = () => {
 
   const navigateAfterSubmit = () => {
     if (editableItem) {
-      navigation.navigate('ScheduleFormArchive');
+      navigation.navigate('ScheduleFormArchive', undefined, { pop: true });
     } else {
-      navigation.navigate('VetInputForms');
+      navigation.navigate('VetInputForms', undefined, { pop: true });
     }
   };
 

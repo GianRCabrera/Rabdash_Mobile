@@ -18,13 +18,9 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
           cache-dependency-path: package-lock.json
 
-      # --legacy-peer-deps: a pre-existing peer conflict (react-datepicker
-      # vs. react-dom) makes plain `npm ci` fail here regardless of any
-      # frontend-test-specific packages — not something this workflow
-      # introduced, just how this dependency tree already resolves locally.
-      - run: npm ci --legacy-peer-deps
+      - run: npm ci
       - run: npm test

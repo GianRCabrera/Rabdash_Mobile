@@ -41,7 +41,7 @@ const OTPRegistration = ({ route, navigation }) => {
 
   const handleOtpSuccessModalClose = () => {
     setOtpSuccessModalVisible(false);
-    navigation.navigate('Login');
+    navigation.navigate('Login', undefined, { pop: true });
   };
 
   const handleRegistrationSuccessModalClose = () => {

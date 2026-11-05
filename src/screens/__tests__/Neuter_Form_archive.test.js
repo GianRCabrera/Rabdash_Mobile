@@ -36,7 +36,7 @@ describe('Neuter_Form_archive — reviewer (RabDash) pagination and search', () 
       .mockResolvedValueOnce(positionResponse('RabDash'))
       .mockResolvedValueOnce(pageResponse([sampleRow(1)], 1));
 
-    const { findByText } = render(<Neuter_Form_archive />);
+    const { findByText } = await render(<Neuter_Form_archive />);
     await findByText('Client 1');
 
     const [, call] = axios.get.mock.calls;
@@ -50,10 +50,10 @@ describe('Neuter_Form_archive — reviewer (RabDash) pagination and search', () 
       .mockResolvedValueOnce(pageResponse([sampleRow(1)], 40))
       .mockResolvedValueOnce(pageResponse([sampleRow(21)], 40));
 
-    const { findByText, getByText } = render(<Neuter_Form_archive />);
+    const { findByText, getByText } = await render(<Neuter_Form_archive />);
     await findByText('Client 1');
 
-    fireEvent.press(getByText('Next'));
+    await fireEvent.press(getByText('Next'));
     await findByText('Client 21');
 
     const lastCall = axios.get.mock.calls[axios.get.mock.calls.length - 1];
@@ -66,13 +66,13 @@ describe('Neuter_Form_archive — reviewer (RabDash) pagination and search', () 
       .mockResolvedValueOnce(pageResponse([sampleRow(1)], 1))
       .mockResolvedValueOnce(pageResponse([sampleRow(2, { client: 'Rex Owner' })], 1));
 
-    const { findByText, getByPlaceholderText } = render(<Neuter_Form_archive />);
+    const { findByText, getByPlaceholderText } = await render(<Neuter_Form_archive />);
     await findByText('Client 1');
 
-    fireEvent.changeText(getByPlaceholderText('Search by owner, pet name, or date...'), 'Rex');
+    await fireEvent.changeText(getByPlaceholderText('Search by owner, pet name, or date...'), 'Rex');
     expect(axios.get).toHaveBeenCalledTimes(2);
 
-    act(() => {
+    await act(() => {
       jest.advanceTimersByTime(400);
     });
 
@@ -94,11 +94,11 @@ describe('Neuter_Form_archive — non-reviewer (own records) stays client-side',
       .mockResolvedValueOnce(positionResponse('Private Veterinarian'))
       .mockResolvedValueOnce({ data: [sampleRow(1, { client: 'Alice' }), sampleRow(2, { client: 'Bob' })] });
 
-    const { findByText, getByPlaceholderText, queryByText } = render(<Neuter_Form_archive />);
+    const { findByText, getByPlaceholderText, queryByText } = await render(<Neuter_Form_archive />);
     await findByText('Alice');
     expect(axios.get).toHaveBeenCalledTimes(2);
 
-    fireEvent.changeText(getByPlaceholderText('Search by owner, pet name, or date...'), 'Alice');
+    await fireEvent.changeText(getByPlaceholderText('Search by owner, pet name, or date...'), 'Alice');
 
     await waitFor(() => expect(queryByText('Bob')).toBeNull());
     expect(axios.get).toHaveBeenCalledTimes(2);

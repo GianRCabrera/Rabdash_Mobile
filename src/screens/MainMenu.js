@@ -17,14 +17,14 @@ const MainMenu = () => {
       console.error('Error during logout:', error.message);
     }
     dispatch({ type: 'LOGOUT' });
-    navigation.navigate('Login');
+    navigation.navigate('Login', undefined, { pop: true });
   };
 
-  const navigateToAboutUs = () => navigation.navigate('AboutUs');
-  const navigateToUserProfile = () => navigation.navigate('UserProfile');
-  const navigateToInputForms = () => navigation.navigate('InputForms');
-  const navigateToClientDatabase = () => navigation.navigate('ClientDatabase');
-  const navigateToDownloadableForms = () => navigation.navigate('DownloadableFormsPrivVet');
+  const navigateToAboutUs = () => navigation.navigate('AboutUs', undefined, { pop: true });
+  const navigateToUserProfile = () => navigation.navigate('UserProfile', undefined, { pop: true });
+  const navigateToInputForms = () => navigation.navigate('InputForms', undefined, { pop: true });
+  const navigateToClientDatabase = () => navigation.navigate('ClientDatabase', undefined, { pop: true });
+  const navigateToDownloadableForms = () => navigation.navigate('DownloadableFormsPrivVet', undefined, { pop: true });
 
   return (
     <MenuScreen title="Main Menu" badge={position}>

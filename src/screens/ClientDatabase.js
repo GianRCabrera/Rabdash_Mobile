@@ -4,10 +4,10 @@ import { AppButton, MenuScreen, menuStyles } from '../components';
 
 const ClientDatabase = () => {
   const navigation = useNavigation();
-  const navigateToField_vacc_archives = () => navigation.navigate('Field_vacc_archives');
-  const navigateToNeuter_Form_archive = () => navigation.navigate('Neuter_Form_archive');
-  const navigateToSample_form_archive = () => navigation.navigate('Sample_form_archive');
-  const navigateToMainMenu = () => navigation.navigate('MainMenu');
+  const navigateToField_vacc_archives = () => navigation.navigate('Field_vacc_archives', undefined, { pop: true });
+  const navigateToNeuter_Form_archive = () => navigation.navigate('Neuter_Form_archive', undefined, { pop: true });
+  const navigateToSample_form_archive = () => navigation.navigate('Sample_form_archive', undefined, { pop: true });
+  const navigateToMainMenu = () => navigation.navigate('MainMenu', undefined, { pop: true });
 
   return (
     <MenuScreen title="Form Archives">

@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useNavigation } from '@react-navigation/native';
 import { AppButton } from '../components';
@@ -23,8 +24,8 @@ const LandingPage = () => {
           Leveraging data and research to assist in achieving a rabies-free Davao City by 2030.
         </Text>
         <View style={styles.buttonRow}>
-          <AppButton title="Login" onPress={() => navigation.navigate('Login')} variant="inverse" style={styles.button} />
-          <AppButton title="Sign Up" onPress={() => navigation.navigate('Register')} variant="inverse" style={styles.button} />
+          <AppButton title="Login" onPress={() => navigation.navigate('Login', undefined, { pop: true })} variant="inverse" style={styles.button} />
+          <AppButton title="Sign Up" onPress={() => navigation.navigate('Register', undefined, { pop: true })} variant="inverse" style={styles.button} />
         </View>
       </View>
     </SafeAreaView>

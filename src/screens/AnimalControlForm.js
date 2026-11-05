@@ -118,10 +118,10 @@ const AnimalControlForm = () => {
     const backTo = route.params?.from;
     switch (backTo) {
       case 'ArchiveMenu':
-        navigation.navigate('ClientDatabase');
+        navigation.navigate('ClientDatabase', undefined, { pop: true });
         break;
       case 'VetInputForms':
-        navigation.navigate('VetInputForms');
+        navigation.navigate('VetInputForms', undefined, { pop: true });
         break;
       default:
         navigation.goBack();
@@ -195,9 +195,9 @@ const AnimalControlForm = () => {
 
   const navigateAfterSubmit = () => {
     if (editableItem) {
-      navigation.navigate('AnimalControlArchives');
+      navigation.navigate('AnimalControlArchives', undefined, { pop: true });
     } else {
-      navigation.navigate('VetInputForms');
+      navigation.navigate('VetInputForms', undefined, { pop: true });
     }
   };
 

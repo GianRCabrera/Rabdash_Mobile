@@ -131,7 +131,7 @@ const Neuter_Form = () => {
         formData,
         petData: editableItem,
         fromArchive: !!editableItem,
-      });
+      }, { pop: true });
     } else {
       navigation.navigate('Neuter_Form2', {
         date: selectedDate.toISOString(),
@@ -143,7 +143,7 @@ const Neuter_Form = () => {
         address: addressValue,
         contactNo: contactValue,
         fromArchive: false,
-      });
+      }, { pop: true });
     }
   };
 
@@ -151,14 +151,14 @@ const Neuter_Form = () => {
     const source = route.params?.source;
     switch (source) {
       case 'Neuter_Form_archives':
-        navigation.navigate('Neuter_Form_archives');
+        navigation.navigate('Neuter_Form_archives', undefined, { pop: true });
         break;
       case 'InputMenu': {
         const position = user?.position;
         if (position === 'CVO' || position === 'RabDash') {
-          navigation.navigate('VetInputForms');
+          navigation.navigate('VetInputForms', undefined, { pop: true });
         } else if (position === 'Private Veterinarian') {
-          navigation.navigate('InputForms');
+          navigation.navigate('InputForms', undefined, { pop: true });
         } else {
           console.warn('Unknown user position:', position);
         }
