@@ -6,7 +6,7 @@ import { View,
   ScrollView,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import Modal from 'react-native-modal';
+import { ModalShell as Modal } from '../components/AppModal';
 import axios from 'axios';
 import styles from '../../styles/submitforms3';
 

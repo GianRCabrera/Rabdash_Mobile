@@ -1,8 +1,20 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import Modal from 'react-native-modal';
+import { Modal, Pressable, View, Text, StyleSheet } from 'react-native';
 import AppButton from './AppButton';
 import { colors, spacing, radii, typography } from '../theme/theme';
+
+// Built on React Native's own Modal rather than react-native-modal: that
+// library calls InteractionManager (removed in RN 0.88) and crashes on show.
+// Same isVisible/onBackdropPress props it had, so callers didn't change.
+// Android's hardware back button maps to onBackdropPress too.
+export const ModalShell = ({ isVisible, onBackdropPress, children }) => (
+  <Modal visible={!!isVisible} transparent animationType="fade" onRequestClose={onBackdropPress} statusBarTranslucent>
+    <View style={styles.overlay}>
+      <Pressable style={StyleSheet.absoluteFill} onPress={onBackdropPress} />
+      {children}
+    </View>
+  </Modal>
+);
 
 // Every screen hand-rolled its own modal container (padding/radius varied:
 // 5, 10, 15, 20 depending on the file) for what's really always one of two
@@ -19,7 +31,7 @@ const AppModal = ({ isVisible, message, children, actions, onBackdropPress }) =>
     (message ? [{ label: 'OK', onPress: onBackdropPress, variant: 'primary' }] : []);
 
   return (
-    <Modal isVisible={isVisible} onBackdropPress={onBackdropPress}>
+    <ModalShell isVisible={isVisible} onBackdropPress={onBackdropPress}>
       <View style={styles.container}>
         {children ? children : <Text style={styles.message}>{message}</Text>}
         {resolvedActions.length > 0 && (
@@ -36,11 +48,17 @@ const AppModal = ({ isVisible, message, children, actions, onBackdropPress }) =>
           </View>
         )}
       </View>
-    </Modal>
+    </ModalShell>
   );
 };
 
 const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: spacing.xl,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
   container: {
     backgroundColor: colors.surface,
     borderRadius: radii.md,

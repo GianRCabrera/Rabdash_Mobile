@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, FlatList, ScrollView, ActivityIndicator,  TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import styles from '../../styles/Archive';
-import Modal from 'react-native-modal';
+import { ModalShell as Modal } from '../components/AppModal';
 import axios from 'axios';
 
 const WeatherFormArchive = () => {
