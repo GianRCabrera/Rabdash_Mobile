@@ -63,10 +63,10 @@ const LoginPage = () => {
         switch (position) {
           case 'CVO':
           case 'RabDash':
-            navigation.navigate('VetMenu');
+            navigation.navigate('VetMenu', undefined, { pop: true });
             break;
           case 'Private Veterinarian':
-            navigation.navigate('MainMenu');
+            navigation.navigate('MainMenu', undefined, { pop: true });
             break;
           default:
             console.warn('Unknown user position:', position);
@@ -87,11 +87,11 @@ const LoginPage = () => {
   };
 
   const handleForgotPassword = () => {
-    navigation.navigate('ForgotPassword');
+    navigation.navigate('ForgotPassword', undefined, { pop: true });
   };
 
   const handleRegister = () => {
-    navigation.navigate('Register');
+    navigation.navigate('Register', undefined, { pop: true });
   };
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);

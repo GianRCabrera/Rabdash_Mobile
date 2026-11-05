@@ -22,7 +22,7 @@ const WeatherFormArchive = () => {
   const apiURL = process.env.EXPO_PUBLIC_URL;
 
   const navigateToVetArchiveMenu = () => {
-    navigation.navigate('VetArchiveMenu');
+    navigation.navigate('VetArchiveMenu', undefined, { pop: true });
   };
 
   const toggleConfirmModal = () => {
@@ -88,7 +88,7 @@ const submitForm = () => {
     navigation.navigate('WeatherForm', {
       item: editableItem,
       fromArchive: true
-    });
+    }, { pop: true });
     toggleConfirmModal();
   }
 };

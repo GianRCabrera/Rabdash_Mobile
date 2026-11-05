@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import Icon from '@expo/vector-icons/MaterialIcons';
 import AppButton from './AppButton';
 import FormSectionLabel from './FormSectionLabel';
 import { colors, spacing, radii, typography, shadow } from '../theme/theme';

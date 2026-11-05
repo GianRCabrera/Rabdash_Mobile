@@ -95,7 +95,7 @@ const RegisterPage = () => {
       console.log('Registration success');
       resetInputFields();
 
-      navigation.navigate('OTPRegistration', { name, last_name, email: trimmedEmail, position, password });
+      navigation.navigate('OTPRegistration', { name, last_name, email: trimmedEmail, position, password }, { pop: true });
     } catch (error) {
       const errorMessage =
         error.response && error.response.data && error.response.data.message
@@ -108,7 +108,7 @@ const RegisterPage = () => {
   };
 
   const handleLogin = () => {
-    navigation.navigate('Login');
+    navigation.navigate('Login', undefined, { pop: true });
   };
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);

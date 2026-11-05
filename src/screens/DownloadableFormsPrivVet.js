@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import * as MediaLibrary from 'expo-media-library';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Buffer } from 'buffer';
 import { AppButton, AppModal, MenuScreen, menuStyles } from '../components';
 
@@ -59,7 +59,7 @@ const DownloadableFormsPrivVet = () => {
   const handleDownloadNeuterForm = () => downloadFile(`${apiURL}/assets/templates/Neuter_Report_form.xlsx`, 'Neuter_Report_form.xlsx').catch(() => {});
   const handleDownloadRabSampleForm = () => downloadFile(`${apiURL}/assets/templates/Rabies_Sample_Report_form.xlsx`, 'Rabies_Sample_Report_form.xlsx').catch(() => {});
 
-  const navigateToMainMenu = () => navigation.navigate('MainMenu');
+  const navigateToMainMenu = () => navigation.navigate('MainMenu', undefined, { pop: true });
 
   return (
     <MenuScreen title="Downloadable Forms">

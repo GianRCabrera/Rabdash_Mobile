@@ -300,9 +300,9 @@ const Rabies_Exposure_Form2 = () => {
 
   const navigateAfterSubmit = () => {
     if (isFormEdit) {
-      navigation.navigate('Rabies_Exposure_Form_Archive');
+      navigation.navigate('Rabies_Exposure_Form_Archive', undefined, { pop: true });
     } else {
-      navigation.navigate('VetInputForms');
+      navigation.navigate('VetInputForms', undefined, { pop: true });
     }
   };
 
@@ -407,7 +407,7 @@ const Rabies_Exposure_Form2 = () => {
       <AppInput label="Remarks" placeholder="" value={remarks} onChangeText={setRemarks} />
 
       <View style={menuStyles.formActionsRow}>
-        <AppButton title="Back" variant="secondary" onPress={() => navigation.navigate('Rabies_Exposure_Form1')} style={menuStyles.rowButton} />
+        <AppButton title="Back" variant="secondary" onPress={() => navigation.navigate('Rabies_Exposure_Form1', undefined, { pop: true })} style={menuStyles.rowButton} />
         <AppButton title="Submit" variant="primary" onPress={handleSubmitPress} style={menuStyles.rowButton} />
       </View>
 

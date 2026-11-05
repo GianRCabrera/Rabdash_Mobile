@@ -5,15 +5,15 @@ import { AppButton, MenuScreen, menuStyles } from '../components';
 
 const VetArchiveMenu = () => {
   const navigation = useNavigation();
-  const navigateToSeminarFormarchive = () => navigation.navigate('IECFormArchive');
-  const navigateToField_vacc_archives = () => navigation.navigate('Field_vacc_archives');
-  const navigateToAnimalControlarchive = () => navigation.navigate('AnimalControlArchives');
-  const navigateToNeuter_Form_archive = () => navigation.navigate('Neuter_Form_archive');
-  const navigateToSample_form_archive = () => navigation.navigate('Sample_form_archive');
-  const navigateToScheduleFormarchive = () => navigation.navigate('ScheduleFormArchive');
-  const navigateToBudgetFormarchive = () => navigation.navigate('BudgetFormArchive');
-  const navigateToRabiesExposureFormarchive = () => navigation.navigate('Rabies_Exposure_Form_Archive');
-  const navigateToVetMenu = () => navigation.navigate('VetMenu');
+  const navigateToSeminarFormarchive = () => navigation.navigate('IECFormArchive', undefined, { pop: true });
+  const navigateToField_vacc_archives = () => navigation.navigate('Field_vacc_archives', undefined, { pop: true });
+  const navigateToAnimalControlarchive = () => navigation.navigate('AnimalControlArchives', undefined, { pop: true });
+  const navigateToNeuter_Form_archive = () => navigation.navigate('Neuter_Form_archive', undefined, { pop: true });
+  const navigateToSample_form_archive = () => navigation.navigate('Sample_form_archive', undefined, { pop: true });
+  const navigateToScheduleFormarchive = () => navigation.navigate('ScheduleFormArchive', undefined, { pop: true });
+  const navigateToBudgetFormarchive = () => navigation.navigate('BudgetFormArchive', undefined, { pop: true });
+  const navigateToRabiesExposureFormarchive = () => navigation.navigate('Rabies_Exposure_Form_Archive', undefined, { pop: true });
+  const navigateToVetMenu = () => navigation.navigate('VetMenu', undefined, { pop: true });
 
   return (
     <MenuScreen title="Form Archives">

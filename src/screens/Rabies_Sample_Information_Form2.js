@@ -240,11 +240,11 @@ const Rabies_Sample_Information_Form2 = () => {
   const navigateAfterSubmit = () => {
     const position = user?.position;
     if (isEdit) {
-      navigation.navigate('Sample_form_archive');
+      navigation.navigate('Sample_form_archive', undefined, { pop: true });
     } else if (position === 'CVO' || position === 'RabDash') {
-      navigation.navigate('VetInputForms');
+      navigation.navigate('VetInputForms', undefined, { pop: true });
     } else if (position === 'Private Veterinarian') {
-      navigation.navigate('InputForms');
+      navigation.navigate('InputForms', undefined, { pop: true });
     } else {
       console.warn('Unknown user position:', position);
     }
@@ -361,7 +361,7 @@ const Rabies_Sample_Information_Form2 = () => {
       />
 
       <View style={menuStyles.formActionsRow}>
-        <AppButton title="Back" variant="secondary" onPress={() => navigation.navigate('Rabies_Sample_Information_Form')} style={menuStyles.rowButton} />
+        <AppButton title="Back" variant="secondary" onPress={() => navigation.navigate('Rabies_Sample_Information_Form', undefined, { pop: true })} style={menuStyles.rowButton} />
         <AppButton title="Submit" variant="primary" onPress={handleSubmitPress} style={menuStyles.rowButton} />
       </View>
 

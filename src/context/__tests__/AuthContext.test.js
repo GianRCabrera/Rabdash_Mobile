@@ -11,9 +11,9 @@ const Probe = ({ probeRef }) => {
 };
 
 describe('AuthContext', () => {
-  test('LOGIN sets state.user, LOGOUT clears it back to empty', () => {
+  test('LOGIN sets state.user, LOGOUT clears it back to empty', async () => {
     const probeRef = { current: null };
-    const { getByText } = render(
+    const { getByText } = await render(
       <AuthProvider>
         <Probe probeRef={probeRef} />
       </AuthProvider>
@@ -21,12 +21,12 @@ describe('AuthContext', () => {
 
     expect(getByText('logged-out')).toBeTruthy();
 
-    act(() => {
+    await act(() => {
       probeRef.current.dispatch({ type: 'LOGIN', payload: { user: { email: 'vet@example.invalid', position: 'Private Veterinarian' } } });
     });
     expect(getByText('vet@example.invalid')).toBeTruthy();
 
-    act(() => {
+    await act(() => {
       probeRef.current.dispatch({ type: 'LOGOUT' });
     });
     expect(getByText('logged-out')).toBeTruthy();
@@ -37,20 +37,20 @@ describe('AuthContext', () => {
   // it has no hook access, only this module-level escape hatch. withAuthGuard
   // reacts to state.user clearing to bounce the user back to Login; this test
   // covers the AuthContext half of that chain, not the navigation reset itself.
-  test('logoutFromOutsideReact clears state.user without a dispatch call available', () => {
+  test('logoutFromOutsideReact clears state.user without a dispatch call available', async () => {
     const probeRef = { current: null };
-    const { getByText } = render(
+    const { getByText } = await render(
       <AuthProvider>
         <Probe probeRef={probeRef} />
       </AuthProvider>
     );
 
-    act(() => {
+    await act(() => {
       probeRef.current.dispatch({ type: 'LOGIN', payload: { user: { email: 'vet@example.invalid', position: 'Private Veterinarian' } } });
     });
     expect(getByText('vet@example.invalid')).toBeTruthy();
 
-    act(() => {
+    await act(() => {
       logoutFromOutsideReact();
     });
     expect(getByText('logged-out')).toBeTruthy();

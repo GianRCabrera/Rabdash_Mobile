@@ -49,7 +49,7 @@ const ResetForgotPass = () => {
 
   const handleBack = () => {
     if (previousScreen === 'OTP') {
-      navigation.navigate('OTP', { email });
+      navigation.navigate('OTP', { email }, { pop: true });
     } else {
       navigation.goBack();
     }
@@ -64,7 +64,7 @@ const ResetForgotPass = () => {
 
   const handleSuccessModalClose = () => {
     setSuccessModalVisible(false);
-    navigation.navigate('Login');
+    navigation.navigate('Login', undefined, { pop: true });
   };
 
   const eyeIcon = (visible) =>

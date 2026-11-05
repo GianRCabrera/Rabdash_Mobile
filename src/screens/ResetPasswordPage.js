@@ -37,7 +37,7 @@ const ResetPasswordPage = () => {
       const response = await axios.post(`${apiURL}/reset-password`, { email, oldPassword, newPassword });
       if (response.data.success) {
         Alert.alert('Success', 'Password changed successfully.');
-        navigation.navigate('Login');
+        navigation.navigate('Login', undefined, { pop: true });
       } else {
         Alert.alert('Error', response.data.message);
       }
@@ -51,7 +51,7 @@ const ResetPasswordPage = () => {
 
   const handleBack = () => {
     if (previousScreen === 'OTP') {
-      navigation.navigate('OTP', { email });
+      navigation.navigate('OTP', { email }, { pop: true });
     } else {
       navigation.goBack();
     }

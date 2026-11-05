@@ -5,15 +5,15 @@ import { AppButton, MenuScreen, menuStyles } from '../components';
 
 const VetInputForms = () => {
   const navigation = useNavigation();
-  const navigateToRabies_Field_Vacc_Form = () => navigation.navigate('Rabies_Field_Vacc_Form');
-  const navigateToRabies_Neuter_Form = () => navigation.navigate('Neuter_Form');
-  const navigateToAnimalControlForm = () => navigation.navigate('AnimalControlForm');
-  const navigateToRabies_Sample_Information_Form = () => navigation.navigate('Rabies_Sample_Information_Form');
-  const navigateToBudgetForm = () => navigation.navigate('BudgetForm');
-  const navigateToScheduleForm = () => navigation.navigate('ScheduleForm');
-  const navigateToIECForm = () => navigation.navigate('IECForm');
-  const navigateToRabies_Exposure_Form1 = () => navigation.navigate('Rabies_Exposure_Form1');
-  const navigateToMainMenu = () => navigation.navigate('VetMenu');
+  const navigateToRabies_Field_Vacc_Form = () => navigation.navigate('Rabies_Field_Vacc_Form', undefined, { pop: true });
+  const navigateToRabies_Neuter_Form = () => navigation.navigate('Neuter_Form', undefined, { pop: true });
+  const navigateToAnimalControlForm = () => navigation.navigate('AnimalControlForm', undefined, { pop: true });
+  const navigateToRabies_Sample_Information_Form = () => navigation.navigate('Rabies_Sample_Information_Form', undefined, { pop: true });
+  const navigateToBudgetForm = () => navigation.navigate('BudgetForm', undefined, { pop: true });
+  const navigateToScheduleForm = () => navigation.navigate('ScheduleForm', undefined, { pop: true });
+  const navigateToIECForm = () => navigation.navigate('IECForm', undefined, { pop: true });
+  const navigateToRabies_Exposure_Form1 = () => navigation.navigate('Rabies_Exposure_Form1', undefined, { pop: true });
+  const navigateToMainMenu = () => navigation.navigate('VetMenu', undefined, { pop: true });
 
   return (
     <MenuScreen title="Forms">

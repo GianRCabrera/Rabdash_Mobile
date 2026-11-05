@@ -145,7 +145,7 @@ const Rabies_Field_Vacc_Form = () => {
         formData,
         petData: editableItem,
         fromArchive: !!editableItem,
-      });
+      }, { pop: true });
     } else {
       navigation.navigate('Rabies_Field_Vacc_Form2', {
         date: selectedDate.toISOString(),
@@ -159,7 +159,7 @@ const Rabies_Field_Vacc_Form = () => {
         sex: sexValue,
         contactNo: contactValue,
         fromArchive: false,
-      });
+      }, { pop: true });
     }
   };
 
@@ -167,14 +167,14 @@ const Rabies_Field_Vacc_Form = () => {
     const source = route.params?.source;
     switch (source) {
       case 'Field_vacc_archives':
-        navigation.navigate('Field_vacc_archives');
+        navigation.navigate('Field_vacc_archives', undefined, { pop: true });
         break;
       case 'InputMenu': {
         const position = user?.position;
         if (position === 'CVO' || position === 'RabDash') {
-          navigation.navigate('VetInputForms');
+          navigation.navigate('VetInputForms', undefined, { pop: true });
         } else if (position === 'Private Veterinarian') {
-          navigation.navigate('InputForms');
+          navigation.navigate('InputForms', undefined, { pop: true });
         } else {
           console.warn('Unknown user position:', position);
         }

@@ -37,7 +37,7 @@ describe('Field_vacc_archives — reviewer (RabDash) pagination and search', () 
       .mockResolvedValueOnce(positionResponse('RabDash'))
       .mockResolvedValueOnce(pageResponse([sampleRow(1)], 1));
 
-    const { findByText } = render(<Field_vacc_archives />);
+    const { findByText } = await render(<Field_vacc_archives />);
 
     await findByText('Owner 1');
 
@@ -52,10 +52,10 @@ describe('Field_vacc_archives — reviewer (RabDash) pagination and search', () 
       .mockResolvedValueOnce(pageResponse([sampleRow(1)], 40)) // a full page -> hasNext true
       .mockResolvedValueOnce(pageResponse([sampleRow(21)], 40));
 
-    const { findByText, getByText } = render(<Field_vacc_archives />);
+    const { findByText, getByText } = await render(<Field_vacc_archives />);
     await findByText('Owner 1');
 
-    fireEvent.press(getByText('Next'));
+    await fireEvent.press(getByText('Next'));
     await findByText('Owner 21');
 
     const lastCall = axios.get.mock.calls[axios.get.mock.calls.length - 1];
@@ -68,15 +68,15 @@ describe('Field_vacc_archives — reviewer (RabDash) pagination and search', () 
       .mockResolvedValueOnce(pageResponse([sampleRow(1)], 1))
       .mockResolvedValueOnce(pageResponse([sampleRow(2, { ownerName: 'Rex Owner' })], 1));
 
-    const { findByText, getByPlaceholderText } = render(<Field_vacc_archives />);
+    const { findByText, getByPlaceholderText } = await render(<Field_vacc_archives />);
     await findByText('Owner 1');
 
-    fireEvent.changeText(getByPlaceholderText('Search by owner, pet name, or date...'), 'Rex');
+    await fireEvent.changeText(getByPlaceholderText('Search by owner, pet name, or date...'), 'Rex');
 
     // Not fired yet — still within the debounce window.
     expect(axios.get).toHaveBeenCalledTimes(2);
 
-    act(() => {
+    await act(() => {
       jest.advanceTimersByTime(400);
     });
 
@@ -98,11 +98,11 @@ describe('Field_vacc_archives — non-reviewer (own records) stays client-side',
       .mockResolvedValueOnce(positionResponse('Private Veterinarian'))
       .mockResolvedValueOnce({ data: [sampleRow(1, { ownerName: 'Alice' }), sampleRow(2, { ownerName: 'Bob' })] });
 
-    const { findByText, getByPlaceholderText, queryByText } = render(<Field_vacc_archives />);
+    const { findByText, getByPlaceholderText, queryByText } = await render(<Field_vacc_archives />);
     await findByText('Alice');
     expect(axios.get).toHaveBeenCalledTimes(2); // /Position + /getVaccinationForms, nothing more
 
-    fireEvent.changeText(getByPlaceholderText('Search by owner, pet name, or date...'), 'Alice');
+    await fireEvent.changeText(getByPlaceholderText('Search by owner, pet name, or date...'), 'Alice');
 
     await waitFor(() => expect(queryByText('Bob')).toBeNull());
     expect(axios.get).toHaveBeenCalledTimes(2); // still no additional network calls
