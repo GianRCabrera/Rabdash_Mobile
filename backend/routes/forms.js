@@ -1,7 +1,6 @@
 const express = require('express');
 
 const { pool, webPool, queryDatabase } = require('../db');
-const { REVIEWER_POSITIONS } = require('../constants');
 const { requireAuth, requireReviewer } = require('../middleware');
 const {
   authorizeFormMutation, createSubmitHandler, createEditHandler,
@@ -154,15 +153,6 @@ const BUDGET_FIELDS = ['year', 'budget', 'costvax'];
 router.post('/submitBudgetForm', requireAuth, createSubmitHandler('budget_form', 'Budget', BUDGET_FIELDS));
 router.post('/editBudgetForm', requireAuth, createEditHandler('budget_form', 'Budget', BUDGET_FIELDS));
 
-const WEATHER_FIELDS = [
-  'minimum_temperature', 'maximum_temperature', 'mean_temperature', 'relative_humidity', 'rainfall', 'precipitation',
-];
-router.post('/submitWeatherForm', requireAuth, createSubmitHandler('weather_form', 'Weather', WEATHER_FIELDS));
-// The old hand-written editWeatherForm handler mislabeled its success/error
-// messages as "Schedule Form" (a copy-paste artifact) — using the shared
-// factory here fixes that automatically.
-router.post('/editWeatherForm', requireAuth, createEditHandler('weather_form', 'Weather', WEATHER_FIELDS));
-
 const SCHEDULE_FIELDS = ['date', 'title', 'district', 'barangay', 'purok'];
 router.post('/submitScheduleForm', requireAuth, createSubmitHandler('schedule_form', 'Schedule', SCHEDULE_FIELDS));
 router.post('/editScheduleForm', requireAuth, createEditHandler('schedule_form', 'Schedule', SCHEDULE_FIELDS));
@@ -204,30 +194,6 @@ router.get('/getScheduleForms', requireAuth, createScopedPaginatedListHandler('s
 
 // New endpoint to fetch Budget forms data from both mobile and web databases
 router.get('/getBudgetForms', requireAuth, createScopedPaginatedListHandler('budget_form', ['year']));
-
-// Add a new endpoint to fetch weather form data
-router.get('/getWeatherForms', requireAuth, async (req, res) => {
-  const { user } = req.session;
-  const isReviewer = REVIEWER_POSITIONS.includes(user.position);
-  const query = isReviewer
-    ? 'SELECT * FROM weather_form ORDER BY created_at DESC'
-    : 'SELECT * FROM weather_form WHERE username = ? ORDER BY created_at DESC';
-  const params = isReviewer ? [] : [user.email];
-
-  try {
-    const results = await queryDatabase(pool, query, params);
-
-    if (results.length > 0) {
-      const weatherForms = results;
-      res.json(weatherForms);
-    } else {
-      res.json([]);
-    }
-  } catch (error) {
-    console.error('Error retrieving Weather Report forms:', error);
-    res.status(500).json({ message: 'An error occurred while retrieving Weather Report forms' });
-  }
-});
 
 // New endpoint to fetch exposure_form data from both mobile and web databases
 router.get('/getRabiesExposureForms', requireAuth, createScopedPaginatedListHandler('exposure_form', ['name', 'regNo']));

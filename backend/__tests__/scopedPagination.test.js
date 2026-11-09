@@ -15,6 +15,7 @@ describe('GET /getAnimalControlForms scoped pagination (reviewer vs. own records
   const users = {
     'vet@example.invalid': { position: 'Private Veterinarian' },
     'reviewer@example.invalid': { position: 'RabDash' },
+    'cvo@example.invalid': { position: 'CVO' },
   };
 
   beforeAll(async () => {
@@ -55,6 +56,31 @@ describe('GET /getAnimalControlForms scoped pagination (reviewer vs. own records
 
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(1);
+  });
+
+  // PROVISIONAL (see CLAUDE.md): CVO is not currently a reviewer — scoped
+  // the same as Private Veterinarian until an elevated CVO tier is designed.
+  // (Moved here from the old scoping.test.js, which tested it through the
+  // since-removed /getWeatherForms route.)
+  test('a CVO account is scoped to its own records too, not treated as a reviewer', async () => {
+    mockEmptyOn(web);
+    let countParams;
+    let selectParams;
+    mockQueryResult(pool, 'COUNT(*) AS total', (values) => {
+      countParams = values;
+      return [{ total: 1 }];
+    });
+    mockQueryResult(pool, 'SELECT * FROM control_form', (values) => {
+      selectParams = values;
+      return [{ id: 1, username: 'cvo@example.invalid', created_at: '2026-01-01' }];
+    });
+
+    const agent = await loginAs('cvo@example.invalid');
+    const res = await agent.get('/getAnimalControlForms');
+
+    expect(res.status).toBe(200);
+    expect(countParams).toEqual(['cvo@example.invalid']);
+    expect(selectParams[0]).toBe('cvo@example.invalid');
   });
 
   test('a RabDash reviewer gets unscoped records — no username filter applied', async () => {
