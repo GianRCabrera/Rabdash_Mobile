@@ -28,7 +28,10 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "EXPO_PUBLIC_URL": "https://rabdash-mobile-backend.onrender.com"
+      "EXPO_PUBLIC_URL": "https://rabdash-mobile-backend.onrender.com",
+      "eas": {
+        "projectId": "3eccd36f-5eef-4d28-88b7-25800ab313c2"
+      }
     },
     "plugins": [
       "expo-secure-store",
@@ -42,6 +45,7 @@
           "imageWidth": 200
         }
       ]
-    ]
+    ],
+    "owner": "gianlangpo21"
   }
 }
