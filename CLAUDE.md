@@ -27,9 +27,11 @@ npm start                # nodemon app.js, listens on PORT env var or 3000
 npm run migrate          # apply pending backend/migrations/*.sql — see Architecture below
 ```
 
-There are no lint or typecheck scripts configured in either `package.json`. Both halves have a test suite now: `npm test` at the repo root for the frontend (Jest + jest-expo + React Native Testing Library, ~39 tests) and `cd backend && npm test` for the backend (~155 tests, ~1-3s, no real database involved — see the Architecture section below for how). Both run automatically via GitHub Actions on push/PR (`.github/workflows/frontend-tests.yml`, `backend-tests.yml`).
+There are no lint or typecheck scripts configured in either `package.json`. Both halves have a test suite now: `npm test` at the repo root for the frontend (Jest + jest-expo + React Native Testing Library, ~59 tests) and `cd backend && npm test` for the backend (~155 tests, ~1-3s, no real database involved — see the Architecture section below for how). Both run automatically via GitHub Actions on push/PR (`.github/workflows/frontend-tests.yml`, `backend-tests.yml`).
 
 The frontend's `EXPO_PUBLIC_URL` (root `.env`) already points at the hosted backend (`https://rabdash-mobile-backend.onrender.com`), so the local Expo app works against production data without running `backend/` locally. Only run the backend locally when changing backend code — point `.env` at `http://<your-LAN-IP>:3000` (see the commented-out alternatives already in `.env`) since a physical device/simulator on Expo Go can't reach `localhost`.
+
+**Standalone Android builds use EAS Build** (`eas.json`, Nov 2026). Android package is `com.rabdash.mobile` (permanent — never change it once installed builds exist). `npx eas-cli build -p android --profile preview` makes an installable APK; `production` makes a Play Store bundle. The root `.env` is gitignored, so EAS never sees it: `EXPO_PUBLIC_URL` is set per profile in `eas.json` instead, and must be changed there too if the backend URL ever moves. Bump `android.versionCode` in `app.json` for each build that will be installed over an older one.
 
 ## Architecture
 
