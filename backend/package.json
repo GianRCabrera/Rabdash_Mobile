@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest --forceExit",
     "start": "nodemon app.js",
-    "migrate": "node scripts/migrate.js"
+    "migrate": "node scripts/migrate.js",
+    "create-user": "node scripts/createUser.js"
   },
   "keywords": [],
   "author": "",

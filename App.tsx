@@ -47,13 +47,14 @@ import DownloadableForms from './src/screens/DownloadableForms';
 import DownloadableFormsPrivVet from './src/screens/DownloadableFormsPrivVet';
 import Landing_page from './src/screens/Landing_page';
 import withAuthGuard from './src/context/AuthGuard';
+import { VET_MENU_POSITIONS, usesVetMenu } from './src/constants/roles';
 
 // Screens below require a logged-in session; VetMenu additionally requires
 // the CVO/RabDash role. Public screens (Landing_page, Login, ForgotPassword,
 // OTP, OTPRegistration, Register, ResetPasswordPage, ResetforgotPass) are
 // left unguarded since they're used before/without a session.
 const GuardedMainMenu = withAuthGuard(MainMenu);
-const GuardedVetMenu = withAuthGuard(VetMenu, ['CVO', 'RabDash']);
+const GuardedVetMenu = withAuthGuard(VetMenu, VET_MENU_POSITIONS);
 const GuardedAboutUs = withAuthGuard(AboutUs);
 const GuardedUserProfile = withAuthGuard(UserProfile);
 const GuardedInputForms = withAuthGuard(InputForms);
@@ -168,7 +169,7 @@ const RootNavigator = () => {
 
   let initialRouteName: keyof RootStackParamList = 'Landing_page';
   if (state.user.email) {
-    initialRouteName = ['CVO', 'RabDash'].includes(state.user.position) ? 'VetMenu' : 'MainMenu';
+    initialRouteName = usesVetMenu(state.user.position) ? 'VetMenu' : 'MainMenu';
   }
 
   return (

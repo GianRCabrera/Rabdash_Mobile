@@ -1,5 +1,5 @@
 const { rateLimit } = require('express-rate-limit');
-const { REVIEWER_POSITIONS } = require('./constants');
+const { VIEW_ALL_POSITIONS } = require('./constants');
 
 const requireAuth = (req, res, next) => {
   if (!req.session.user) {
@@ -8,18 +8,15 @@ const requireAuth = (req, res, next) => {
   next();
 };
 
-// PROVISIONAL (Sep 2026, not finalized — see CLAUDE.md): RabDash is currently the
-// only true reviewer role (sees/edits everyone's submissions). CVO is a real,
-// self-registerable position, but is intentionally scoped like Private
-// Veterinarian (own submissions only) until a proper elevated-CVO tier is
-// designed. Named requireReviewer/REVIEWER_POSITIONS rather than requireCVO
-// specifically so this doesn't read as "requires CVO" when it excludes CVO.
+// For the all-users list routes (get*FormsCVO): RabDash and CVO Admin only.
+// Plain CVO is excluded — see constants.js. Viewing only; changing another
+// user's record is checked separately in authorizeFormMutation.
 const requireReviewer = (req, res, next) => {
   const { user } = req.session;
   if (!user) {
     return res.status(401).json({ message: 'User not authenticated' });
   }
-  if (!REVIEWER_POSITIONS.includes(user.position)) {
+  if (!VIEW_ALL_POSITIONS.includes(user.position)) {
     return res.status(403).json({ message: 'Forbidden: reviewer access required' });
   }
   next();

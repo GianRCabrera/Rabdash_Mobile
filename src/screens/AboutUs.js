@@ -22,6 +22,7 @@ const AboutUs = () => {
     switch (state.user.position) {
       case 'CVO':
       case 'RabDash':
+      case 'CVO Admin':
         navigation.navigate('VetMenu', undefined, { pop: true });
         break;
       default:

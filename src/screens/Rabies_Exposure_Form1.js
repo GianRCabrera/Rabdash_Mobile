@@ -13,6 +13,7 @@ import {
   FormSectionLabel,
   menuStyles,
 } from '../components';
+import { usesVetMenu } from '../constants/roles';
 
 const SEXES = [
   { label: 'Male', value: 'Male' },
@@ -186,7 +187,7 @@ const Rabies_Exposure_Form = () => {
         break;
       case 'InputMenu': {
         const position = user?.position;
-        if (position === 'CVO' || position === 'RabDash') {
+        if (usesVetMenu(position)) {
           navigation.navigate('VetInputForms', undefined, { pop: true });
         } else if (position === 'Private Veterinarian') {
           navigation.navigate('InputForms', undefined, { pop: true });

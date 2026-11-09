@@ -14,6 +14,7 @@ import {
   menuStyles,
 } from '../components';
 import { DISTRICTS } from '../constants/districts';
+import { usesVetMenu } from '../constants/roles';
 
 const SEXES = [
   { label: 'Male', value: 'Male' },
@@ -173,7 +174,7 @@ const Rabies_Sample_Information_Form = () => {
         navigation.navigate('Sample_form_archives', undefined, { pop: true });
         break;
       case 'InputMenu':
-        if (user.position === 'CVO' || user.position === 'RabDash') {
+        if (usesVetMenu(user.position)) {
           navigation.navigate('VetInputForms', undefined, { pop: true });
         } else if (user.position === 'Private Veterinarian') {
           navigation.navigate('InputForms', undefined, { pop: true });

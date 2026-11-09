@@ -142,8 +142,8 @@ const RegisterPage = () => {
           autoCapitalize="none"
         />
 
-        {/* PROVISIONAL (see CLAUDE.md): Private Veterinarian and CVO are both
-            self-registerable; RabDash is still provisioned separately. A
+        {/* Private Veterinarian and CVO are self-registerable; RabDash and
+            CVO Admin are created with `npm run create-user` instead. A
             2-option segmented control avoids the dropdown-in-ScrollView
             clipping issue react-native-dropdown-picker has elsewhere in this
             app, and reads more clearly than a dropdown for a binary choice. */}

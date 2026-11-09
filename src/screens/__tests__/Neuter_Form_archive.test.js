@@ -4,6 +4,11 @@ import { render, waitFor, fireEvent, act } from '@testing-library/react-native';
 import Neuter_Form_archive from '../Neuter_Form_archive';
 
 jest.mock('axios');
+// The logged-in user, as AuthContext would hold it; tests can change it.
+let mockAuthUser = { email: 'user@example.invalid', position: 'RabDash' };
+jest.mock('../../context/AuthContext', () => ({
+  useAuth: () => ({ state: { user: mockAuthUser } }),
+}));
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: jest.fn() }),
 }));
