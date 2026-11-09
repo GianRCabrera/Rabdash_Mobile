@@ -1,5 +1,5 @@
 const { pool, webPool, queryDatabase } = require('../db');
-const { REVIEWER_POSITIONS } = require('../constants');
+const { VIEW_ALL_POSITIONS, EDIT_ALL_POSITIONS } = require('../constants');
 
 // Guards edit/delete on a form record: only the submitter (matched by username) or a
 // reviewer may modify it. `table` is always a hardcoded literal from the call site,
@@ -28,7 +28,7 @@ const authorizeFormMutation = async (req, res, table, id, dbOrigin) => {
     res.status(404).json({ message: 'Record not found' });
     return false;
   }
-  if (rows[0].username !== user.email && !REVIEWER_POSITIONS.includes(user.position)) {
+  if (rows[0].username !== user.email && !EDIT_ALL_POSITIONS.includes(user.position)) {
     res.status(403).json({ message: 'Forbidden: you do not have permission to modify this record' });
     return false;
   }
@@ -190,7 +190,7 @@ const createPaginatedCvoListHandler = (table, searchFields) => async (req, res) 
 // flat cap doesn't quietly become the next stopgap if usage grows.
 const createScopedPaginatedListHandler = (table, searchFields) => async (req, res) => {
   const { user } = req.session;
-  const isReviewer = REVIEWER_POSITIONS.includes(user.position);
+  const isReviewer = VIEW_ALL_POSITIONS.includes(user.position);
 
   const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
   const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 200);

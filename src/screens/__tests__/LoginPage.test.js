@@ -63,6 +63,7 @@ describe('LoginPage', () => {
   test.each([
     ['CVO', 'VetMenu'],
     ['RabDash', 'VetMenu'],
+    ['CVO Admin', 'VetMenu'],
     ['Private Veterinarian', 'MainMenu'],
   ])('a %s login records the user and opens %s', async (position, screen) => {
     axios.post.mockResolvedValue({ data: { success: true, position } });

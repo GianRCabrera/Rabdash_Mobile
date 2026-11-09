@@ -11,6 +11,7 @@ import {
   FormSectionLabel,
   menuStyles,
 } from '../components';
+import { usesVetMenu } from '../constants/roles';
 
 const SPECIES = [
   { label: 'Canine', value: 'Canine' },
@@ -164,7 +165,7 @@ const Neuter_Form2 = () => {
     const position = user.position;
     if (isEdit) {
       navigation.navigate('Neuter_Form_archive', undefined, { pop: true });
-    } else if (position === 'CVO' || position === 'RabDash') {
+    } else if (usesVetMenu(position)) {
       navigation.navigate('VetInputForms', undefined, { pop: true });
     } else if (position === 'Private Veterinarian') {
       navigation.navigate('InputForms', undefined, { pop: true });

@@ -70,12 +70,12 @@ describe('account routes', () => {
       expect(sqlCalls(pool, 'INSERT INTO users')).toHaveLength(0);
     });
 
-    test('a request claiming the RabDash role is registered as Private Veterinarian instead', async () => {
-      const email = 'wants-rabdash@example.invalid';
+    test.each(['RabDash', 'CVO Admin'])('a request claiming the %s role is registered as Private Veterinarian instead', async (claimed) => {
+      const email = `wants-${claimed.replace(' ', '-').toLowerCase()}@example.invalid`;
       mockQueryResult(pool, 'FROM otp_codes', (values) => (values[0] === email ? [verifiedOtp('register')] : []));
 
       const res = await post(request(app), '/register').send({
-        name: 'Sneaky', last_name: 'User', email, password, position: 'RabDash',
+        name: 'Sneaky', last_name: 'User', email, password, position: claimed,
       });
 
       expect(res.body.success).toBe(true);

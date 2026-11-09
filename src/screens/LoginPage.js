@@ -64,6 +64,7 @@ const LoginPage = () => {
         switch (position) {
           case 'CVO':
           case 'RabDash':
+          case 'CVO Admin':
             navigation.navigate('VetMenu', undefined, { pop: true });
             break;
           case 'Private Veterinarian':

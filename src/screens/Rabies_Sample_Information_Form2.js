@@ -10,6 +10,7 @@ import {
   FormSectionLabel,
   menuStyles,
 } from '../components';
+import { usesVetMenu } from '../constants/roles';
 
 const YES_NO = [
   { label: 'Yes', value: 'Yes' },
@@ -241,7 +242,7 @@ const Rabies_Sample_Information_Form2 = () => {
     const position = user?.position;
     if (isEdit) {
       navigation.navigate('Sample_form_archive', undefined, { pop: true });
-    } else if (position === 'CVO' || position === 'RabDash') {
+    } else if (usesVetMenu(position)) {
       navigation.navigate('VetInputForms', undefined, { pop: true });
     } else if (position === 'Private Veterinarian') {
       navigation.navigate('InputForms', undefined, { pop: true });

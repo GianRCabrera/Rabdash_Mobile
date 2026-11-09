@@ -10,8 +10,11 @@ import {
   AppButton,
   menuStyles,
 } from '../components';
+import { useAuth } from '../context/AuthContext';
+import { canEditRecord, usesVetMenu } from '../constants/roles';
 
 const Rabies_Exposure_Form_Archive = () => {
+  const { state: authState } = useAuth();
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [vaccinationForms, setVaccinationForms] = useState([]);
@@ -36,7 +39,7 @@ const Rabies_Exposure_Form_Archive = () => {
 
   const handleBackPress = () => {
     const position = user?.position;
-    if (position === 'CVO' || position === 'RabDash') {
+    if (usesVetMenu(position)) {
       navigation.navigate('VetArchiveMenu', undefined, { pop: true });
     } else if (position === 'Private Veterinarian') {
       navigation.navigate('ClientDatabase', undefined, { pop: true });
@@ -256,6 +259,7 @@ const Rabies_Exposure_Form_Archive = () => {
           ]}
           onEdit={() => handleEditPress(item)}
           onDelete={() => handleDeletePress(item)}
+          readOnly={!canEditRecord(authState.user, item)}
         />
       ))}
 

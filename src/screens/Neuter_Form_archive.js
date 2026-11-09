@@ -10,11 +10,14 @@ import {
   AppButton,
   menuStyles,
 } from '../components';
+import { useAuth } from '../context/AuthContext';
+import { canEditRecord, canViewAll, usesVetMenu } from '../constants/roles';
 
 const REVIEWER_PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 400;
 
 const Neuter_Form_archive = () => {
+  const { state: authState } = useAuth();
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [vaccinationForms, setVaccinationForms] = useState([]);
@@ -39,13 +42,13 @@ const Neuter_Form_archive = () => {
   const itemsPerPage = 5;
   const isFirstSearchRender = useRef(true);
 
-  // PROVISIONAL (see CLAUDE.md): only RabDash is a full reviewer. The
+  // RabDash and CVO Admin see every user's records (src/constants/roles.js). The
   // reviewer's merged dataset can be large (see backend/app.js's
   // createPaginatedCvoListHandler), so it's paginated and searched
   // server-side. Private Veterinarian/CVO see only their own small,
   // per-user submission list, which stays a one-shot fetch with
   // client-side search/pagination.
-  const isReviewer = user?.position === 'RabDash';
+  const isReviewer = canViewAll(user?.position);
 
   const toggleConfirmModal = () => {
     setConfirmModalVisible(!isConfirmModalVisible);
@@ -73,7 +76,7 @@ const Neuter_Form_archive = () => {
         const response = await axios.get(`${apiURL}/Position`);
         setUser(response.data);
 
-        if (response.data.position === 'RabDash') {
+        if (canViewAll(response.data.position)) {
           await fetchReviewerPage(1, '');
         } else if (response.data.position === 'Private Veterinarian' || response.data.position === 'CVO') {
           const formsResponse = await axios.get(`${apiURL}/getNeuterForms`);
@@ -157,7 +160,7 @@ const Neuter_Form_archive = () => {
 
   const handleBackPress = () => {
     const position = user?.position;
-    if (position === 'CVO' || position === 'RabDash') {
+    if (usesVetMenu(position)) {
       navigation.navigate('VetArchiveMenu', undefined, { pop: true });
     } else if (position === 'Private Veterinarian') {
       navigation.navigate('ClientDatabase', undefined, { pop: true });
@@ -275,6 +278,7 @@ const Neuter_Form_archive = () => {
           ]}
           onEdit={() => handleEditPress(item)}
           onDelete={() => handleDeletePress(item)}
+          readOnly={!canEditRecord(authState.user, item)}
         />
       ))}
 

@@ -4,6 +4,11 @@ import { render, waitFor, fireEvent, act } from '@testing-library/react-native';
 import Field_vacc_archives from '../Field_vacc_archives';
 
 jest.mock('axios');
+// The logged-in user, as AuthContext would hold it; tests can change it.
+let mockAuthUser = { email: 'user@example.invalid', position: 'RabDash' };
+jest.mock('../../context/AuthContext', () => ({
+  useAuth: () => ({ state: { user: mockAuthUser } }),
+}));
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: jest.fn() }),
 }));
@@ -106,5 +111,36 @@ describe('Field_vacc_archives — non-reviewer (own records) stays client-side',
 
     await waitFor(() => expect(queryByText('Bob')).toBeNull());
     expect(axios.get).toHaveBeenCalledTimes(2); // still no additional network calls
+  });
+});
+
+describe('Field_vacc_archives — CVO Admin (sees all, edits only own)', () => {
+  beforeEach(() => {
+    axios.get.mockReset();
+    mockAuthUser = { email: 'admin@example.invalid', position: 'CVO Admin' };
+  });
+
+  afterEach(() => {
+    mockAuthUser = { email: 'user@example.invalid', position: 'RabDash' };
+  });
+
+  test('loads the all-users list, and shows Edit/Delete only on their own records', async () => {
+    axios.get
+      .mockResolvedValueOnce(positionResponse('CVO Admin'))
+      .mockResolvedValueOnce(pageResponse([
+        sampleRow(1, { username: 'vet@example.invalid' }),
+        sampleRow(2, { username: 'Admin@example.invalid' }),
+      ], 2));
+
+    const { findByText, getByText, queryByText, getAllByText } = await render(<Field_vacc_archives />);
+    await findByText('Owner 1');
+    expect(axios.get.mock.calls[1][0]).toMatch(/getVaccinationFormsCVO$/);
+
+    await fireEvent.press(getByText('Owner 1'));
+    expect(getByText('View only — submitted by another user.')).toBeTruthy();
+    expect(queryByText('Delete')).toBeNull();
+
+    await fireEvent.press(getByText('Owner 2'));
+    expect(getAllByText('Delete')).toHaveLength(1);
   });
 });

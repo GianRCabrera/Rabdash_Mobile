@@ -31,8 +31,9 @@ const FieldRow = ({ label, value }) => (
 // a companion website's database, and the two have independent, colliding
 // id sequences. Editing/deleting is backend-rejected for web-sourced rows
 // (see authorizeFormMutation in backend/app.js), so Edit/Delete are hidden
-// here instead of showing a confusing error after the fact.
-const ArchiveListItem = ({ title, subtitle, dbOrigin, fields, sections, onEdit, onDelete }) => {
+// here instead of showing a confusing error after the fact. `readOnly` does
+// the same for other users' records shown to a view-only CVO Admin.
+const ArchiveListItem = ({ title, subtitle, dbOrigin, fields, sections, onEdit, onDelete, readOnly = false }) => {
   const [expanded, setExpanded] = useState(false);
   const isWebSourced = dbOrigin === 'web';
 
@@ -63,6 +64,8 @@ const ArchiveListItem = ({ title, subtitle, dbOrigin, fields, sections, onEdit, 
 
           {isWebSourced ? (
             <Text style={styles.webNotice}>Submitted via the website — manage this record there.</Text>
+          ) : readOnly ? (
+            <Text style={styles.webNotice}>View only — submitted by another user.</Text>
           ) : (
             <View style={styles.actions}>
               <AppButton title="Edit" variant="secondary" onPress={onEdit} style={styles.actionButton} />
