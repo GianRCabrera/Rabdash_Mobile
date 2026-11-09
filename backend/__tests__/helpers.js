@@ -38,7 +38,8 @@ function loadApp() {
 // order, most-recently-registered first (so an in-test override beats a
 // beforeEach default); unmatched queries fall back to an empty result set.
 // Call this as many times as needed per test to cover every query the
-// route makes.
+// route makes. Returning an Error (from `rows` or its function) makes the
+// query fail, simulating the database being down.
 function mockQueryResult(pool, sqlFragment, rows) {
   if (!pool.__rules) {
     pool.__rules = [];
@@ -49,6 +50,7 @@ function mockQueryResult(pool, sqlFragment, rows) {
       const rule = pool.__rules.find((r) => sql.includes(r.sqlFragment));
       if (!rule) return callback(null, []);
       const result = typeof rule.rows === 'function' ? rule.rows(Array.isArray(values) ? values : []) : rule.rows;
+      if (result instanceof Error) return callback(result);
       callback(null, result);
     });
   }
