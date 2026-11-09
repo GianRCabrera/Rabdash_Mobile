@@ -11,4 +11,10 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-module.exports = { transporter };
+// Sender address for OTP emails. MAIL_FROM lets it change (e.g. when the
+// website moves off rabdash.com) without a code change; the address must be
+// a verified sender in Brevo. Read per send so a changed env value applies.
+const DEFAULT_MAIL_FROM = 'admin@rabdash.com';
+const mailFrom = () => process.env.MAIL_FROM || DEFAULT_MAIL_FROM;
+
+module.exports = { transporter, mailFrom, DEFAULT_MAIL_FROM };
