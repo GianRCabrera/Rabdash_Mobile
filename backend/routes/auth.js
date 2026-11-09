@@ -115,7 +115,10 @@ router.post('/login', authLimiter, loginAccountLimiter, async (req, res) => {
     }
   } catch (error) {
     console.error('Error during login:', error);
-    res.json({ success: false, message: 'An error occurred during login' });
+    // 500, not success:false: the app shows "Invalid email or password" for
+    // success:false, which would tell staff their password is wrong when
+    // the database is actually unreachable.
+    res.status(500).json({ success: false, message: 'An error occurred during login' });
   }
 });
 
