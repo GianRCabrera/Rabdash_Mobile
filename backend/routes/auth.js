@@ -5,7 +5,7 @@ const { pool, webPool, queryDatabase } = require('../db');
 const { SELF_REGISTERABLE_POSITIONS } = require('../constants');
 const { requireAuth, authLimiter, loginAccountLimiter } = require('../middleware');
 const { verifyPassword, saltRounds } = require('../lib/passwords');
-const { transporter } = require('../lib/mailer');
+const { transporter, mailFrom } = require('../lib/mailer');
 const {
   generateOTP, upsertOtp, getOtp, deleteOtp, isOtpUsable, makeOtpValidator,
 } = require('../lib/otp');
@@ -176,7 +176,7 @@ router.post('/resetpass', authLimiter, async (req, res) => {
   }
 
   const mailOptions = {
-    from: 'admin@rabdash.com',
+    from: mailFrom(),
     to: email,
     subject: 'Password Reset Notification',
     html: `
@@ -211,7 +211,7 @@ router.post('/registerotp', authLimiter, async (req, res) => {
 
     // Send OTP email
     const mailOptions = {
-      from: 'admin@rabdash.com',
+      from: mailFrom(),
       to: email,
       subject: 'Email Verification OTP',
       html: `

@@ -272,6 +272,18 @@ describe('account routes', () => {
       const [[mail]] = transporter.sendMail.mock.calls;
       expect(mail.to).toBe(email);
       expect(mail.html).toContain(storedOtp);
+      expect(mail.from).toBe('admin@rabdash.com');
+    });
+
+    test.each(['/resetpass', '/registerotp'])('%s sends from MAIL_FROM when it is set', async (path) => {
+      process.env.MAIL_FROM = 'RabDash <no-reply@rabdash.davaocity.gov.ph>';
+      try {
+        await post(request(app), path).send({ email: 'mail-from@example.invalid', name: 'A', last_name: 'B' });
+      } finally {
+        delete process.env.MAIL_FROM;
+      }
+
+      expect(transporter.sendMail.mock.calls[0][0].from).toBe('RabDash <no-reply@rabdash.davaocity.gov.ph>');
     });
 
     test.each(['/resetpass', '/registerotp'])('%s reports failure (500) when the email cannot be sent', async (path) => {
