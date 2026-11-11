@@ -7,17 +7,15 @@ import { colors, spacing } from '../theme/theme';
 // header with the screen title (and the user's position as subtitle) over
 // the light background, then the button list. Being replaced by bottom tabs
 // in the navigation revamp.
-const MenuScreen = ({ title, badge, children }) => (
-  <Screen title={title} subtitle={badge}>
+const MenuScreen = ({ title, badge, showBack = false, children }) => (
+  <Screen title={title} subtitle={badge} showBack={showBack}>
     <View style={styles.buttonList}>{children}</View>
   </Screen>
 );
 
 const styles = StyleSheet.create({
   buttonList: {
-    alignItems: 'center',
     width: '100%',
-    paddingTop: spacing.sm,
   },
 });
 

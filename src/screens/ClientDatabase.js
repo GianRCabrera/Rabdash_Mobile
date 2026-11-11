@@ -1,26 +1,31 @@
 import React from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { AppButton, MenuScreen, menuStyles } from '../components';
+import { useAuth } from '../context/AuthContext';
+import { formsFor, groupItems } from '../constants/catalog';
+import { ListRow, MenuScreen, SectionTitle } from '../components';
 
+// The list of form archives, filtered by role (see constants/catalog.js).
+// VetArchiveMenu re-exports this.
 const ClientDatabase = () => {
   const navigation = useNavigation();
-  const navigateToField_vacc_archives = () => navigation.navigate('Field_vacc_archives', undefined, { pop: true });
-  const navigateToNeuter_Form_archive = () => navigation.navigate('Neuter_Form_archive', undefined, { pop: true });
-  const navigateToSample_form_archive = () => navigation.navigate('Sample_form_archive', undefined, { pop: true });
-  const navigateToMainMenu = () => navigation.navigate('MainMenu', undefined, { pop: true });
+  const { state } = useAuth();
 
   return (
-    <MenuScreen title="Form Archives">
-      <AppButton title="Rabies Field Vaccination Form Archives" variant="inverse" onPress={navigateToField_vacc_archives} style={menuStyles.button} />
-      <AppButton title="Neuter Form Archives" variant="inverse" onPress={navigateToNeuter_Form_archive} style={menuStyles.button} />
-      <AppButton title="Rabies Sample Information Form" variant="inverse" onPress={navigateToSample_form_archive} style={menuStyles.button} />
-      <AppButton
-        title="Main Menu"
-        variant="ghost"
-        onPress={navigateToMainMenu}
-        style={menuStyles.backButton}
-        textStyle={menuStyles.backButtonText}
-      />
+    <MenuScreen title="Form Archives" showBack>
+      {groupItems(formsFor(state.user.position)).map((group, index) => (
+        <React.Fragment key={group.title}>
+          <SectionTitle title={group.title} first={index === 0} />
+          {group.items.map((form) => (
+            <ListRow
+              key={form.key}
+              icon={form.icon}
+              title={form.title}
+              subtitle="View, edit or delete submissions"
+              onPress={() => navigation.navigate(form.archiveRoute, undefined, { pop: true })}
+            />
+          ))}
+        </React.Fragment>
+      ))}
     </MenuScreen>
   );
 };

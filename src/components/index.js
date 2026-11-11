@@ -15,3 +15,5 @@ export { default as ArchivePagination } from './ArchivePagination';
 export { default as AppHeader } from './AppHeader';
 export { default as Screen } from './Screen';
 export { default as ListRow } from './ListRow';
+export { default as SectionTitle } from './SectionTitle';
+export { default as WelcomeCard } from './WelcomeCard';

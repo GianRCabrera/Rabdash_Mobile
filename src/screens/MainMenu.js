@@ -2,13 +2,19 @@ import React from 'react';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { AppButton, MenuScreen, menuStyles } from '../components';
+import { usesVetMenu } from '../constants/roles';
+import { ListRow, MenuScreen, SectionTitle, WelcomeCard } from '../components';
 
+// Home menu for every role. VetMenu (CVO, CVO Admin, RabDash) re-exports this;
+// the role only changes which form/archive/download screens the rows open.
 const MainMenu = () => {
   const navigation = useNavigation();
   const { state, dispatch } = useAuth();
   const apiURL = process.env.EXPO_PUBLIC_URL;
-  const position = state.user.position || 'Private Veterinarian';
+  const { email, position } = state.user;
+  const isVet = usesVetMenu(position);
+
+  const go = (route) => () => navigation.navigate(route, undefined, { pop: true });
 
   const handleLogout = async () => {
     try {
@@ -20,26 +26,34 @@ const MainMenu = () => {
     navigation.navigate('Login', undefined, { pop: true });
   };
 
-  const navigateToAboutUs = () => navigation.navigate('AboutUs', undefined, { pop: true });
-  const navigateToUserProfile = () => navigation.navigate('UserProfile', undefined, { pop: true });
-  const navigateToInputForms = () => navigation.navigate('InputForms', undefined, { pop: true });
-  const navigateToClientDatabase = () => navigation.navigate('ClientDatabase', undefined, { pop: true });
-  const navigateToDownloadableForms = () => navigation.navigate('DownloadableFormsPrivVet', undefined, { pop: true });
-
   return (
-    <MenuScreen title="Main Menu" badge={position}>
-      <AppButton title="Input Forms" variant="inverse" onPress={navigateToInputForms} style={menuStyles.button} />
-      <AppButton title="Form Archives" variant="inverse" onPress={navigateToClientDatabase} style={menuStyles.button} />
-      <AppButton title="Downloadable Forms" variant="inverse" onPress={navigateToDownloadableForms} style={menuStyles.button} />
-      <AppButton title="My Profile" variant="inverse" onPress={navigateToUserProfile} style={menuStyles.button} />
-      <AppButton title="About Us" variant="inverse" onPress={navigateToAboutUs} style={menuStyles.button} />
-      <AppButton
-        title="Log Out"
-        variant="ghost"
-        onPress={handleLogout}
-        style={menuStyles.backButton}
-        textStyle={menuStyles.backButtonText}
+    <MenuScreen title="RabDash">
+      <WelcomeCard email={email} position={position} />
+
+      <SectionTitle title="Work" first />
+      <ListRow
+        icon="file-document-edit-outline"
+        title="Input Forms"
+        subtitle="Fill in a new report"
+        onPress={go(isVet ? 'VetInputForms' : 'InputForms')}
       />
+      <ListRow
+        icon="folder-open-outline"
+        title="Form Archives"
+        subtitle="View and edit past submissions"
+        onPress={go(isVet ? 'VetArchiveMenu' : 'ClientDatabase')}
+      />
+      <ListRow
+        icon="file-download-outline"
+        title="Downloadable Forms"
+        subtitle="Excel report templates"
+        onPress={go(isVet ? 'DownloadableForms' : 'DownloadableFormsPrivVet')}
+      />
+
+      <SectionTitle title="Account" />
+      <ListRow icon="account-circle-outline" title="My Profile" subtitle="Your details and password" onPress={go('UserProfile')} />
+      <ListRow icon="information-outline" title="About RabDash" subtitle="The project and our partners" onPress={go('AboutUs')} />
+      <ListRow icon="logout" title="Log Out" tone="danger" showChevron={false} onPress={handleLogout} />
     </MenuScreen>
   );
 };

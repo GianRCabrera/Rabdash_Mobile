@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Buffer } from 'buffer';
-import { AppButton, AppModal, MenuScreen, menuStyles } from '../components';
+import { useAuth } from '../context/AuthContext';
+import { downloadsFor } from '../constants/catalog';
+import { AppModal, ListRow, MenuScreen } from '../components';
 
+// The Excel report templates, filtered by role (see constants/catalog.js).
+// DownloadableFormsPrivVet re-exports this.
 const DownloadableForms = () => {
-  const navigation = useNavigation();
+  const { state } = useAuth();
 
   const [isModalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
@@ -47,43 +49,21 @@ const DownloadableForms = () => {
     }
   };
 
-  const handleDownloadIEC = () => downloadFile(`${apiURL}/assets/templates/IEC_Report_form.xlsx`, 'IEC_Report_form.xlsx').catch(() => {});
-  const handleDownloadSch = () => downloadFile(`${apiURL}/assets/templates/Schedule_Report_form.xlsx`, 'Schedule_Report_form.xlsx').catch(() => {});
-  const handleDownloadRabVac = () => downloadFile(`${apiURL}/assets/templates/Vaccination_Report_form.xlsx`, 'Vaccination_Report_form.xlsx').catch(() => {});
-  const handleDownloadDailyReportform = () => downloadFile(`${apiURL}/assets/templates/Daily_Report_form.xlsx`, 'Daily_Report_form.xlsx').catch(() => {});
-  const handleDownloadNeuterForm = () => downloadFile(`${apiURL}/assets/templates/Neuter_Report_form.xlsx`, 'Neuter_Report_form.xlsx').catch(() => {});
-  const handleDownloadRabSampleForm = () => downloadFile(`${apiURL}/assets/templates/Rabies_Sample_Report_form.xlsx`, 'Rabies_Sample_Report_form.xlsx').catch(() => {});
-  const handleDownloadBudgetForm = () => downloadFile(`${apiURL}/assets/templates/Budget_Report_form.xlsx`, 'Budget_Report_form.xlsx').catch(() => {});
-  const handleDownloadExpForm = () => downloadFile(`${apiURL}/assets/templates/Rabies_Exposure_Report_form.xlsx`, 'Rabies_Exposure_Report_form.xlsx').catch(() => {});
-
-  const navigateToVetMenu = () => navigation.navigate('VetMenu', undefined, { pop: true });
+  const handleDownload = (file) =>
+    downloadFile(`${apiURL}/assets/templates/${file}`, file).catch(() => {});
 
   return (
-    <MenuScreen title="Downloadable Forms">
-      <View style={menuStyles.row}>
-        <AppButton title="IEC Report Form" variant="inverse" onPress={handleDownloadIEC} style={menuStyles.rowButton} />
-        <AppButton title="Rabies Vaccination Form" variant="inverse" onPress={handleDownloadRabVac} style={menuStyles.rowButton} />
-      </View>
-      <View style={menuStyles.row}>
-        <AppButton title="Animal Control and Rehab. Form" variant="inverse" onPress={handleDownloadDailyReportform} style={menuStyles.rowButton} />
-        <AppButton title="Neuter Form" variant="inverse" onPress={handleDownloadNeuterForm} style={menuStyles.rowButton} />
-      </View>
-      <View style={menuStyles.row}>
-        <AppButton title="Rabies Sample Information Form" variant="inverse" onPress={handleDownloadRabSampleForm} style={menuStyles.rowButton} />
-        <AppButton title="Schedule/Event Form" variant="inverse" onPress={handleDownloadSch} style={menuStyles.rowButton} />
-      </View>
-      <View style={menuStyles.row}>
-        <AppButton title="Budget Form" variant="inverse" onPress={handleDownloadBudgetForm} style={menuStyles.rowButton} />
-        <AppButton title="Exposure Form" variant="inverse" onPress={handleDownloadExpForm} style={menuStyles.rowButton} />
-      </View>
-
-      <AppButton
-        title="Main Menu"
-        variant="ghost"
-        onPress={navigateToVetMenu}
-        style={menuStyles.backButton}
-        textStyle={menuStyles.backButtonText}
-      />
+    <MenuScreen title="Downloadable Forms" showBack>
+      {downloadsFor(state.user.position).map((item) => (
+        <ListRow
+          key={item.key}
+          icon="microsoft-excel"
+          title={item.title}
+          subtitle={item.file}
+          showChevron={false}
+          onPress={() => handleDownload(item.file)}
+        />
+      ))}
 
       <AppModal
         isVisible={isModalVisible}
