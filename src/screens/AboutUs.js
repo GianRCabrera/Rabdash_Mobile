@@ -1,8 +1,6 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '../context/AuthContext';
-import { AppButton, Screen, menuStyles } from '../components';
+import { Screen } from '../components';
 import { colors, spacing, typography, radii, shadow } from '../theme/theme';
 
 const PARTNERS = [
@@ -15,23 +13,9 @@ const PARTNERS = [
 ];
 
 const AboutUs = () => {
-  const navigation = useNavigation();
-  const { state } = useAuth();
-
-  const handleMainMenuNavigation = () => {
-    switch (state.user.position) {
-      case 'CVO':
-      case 'RabDash':
-      case 'CVO Admin':
-        navigation.navigate('VetMenu', undefined, { pop: true });
-        break;
-      default:
-        navigation.navigate('MainMenu', undefined, { pop: true });
-    }
-  };
 
   return (
-    <Screen title="About RabDash" subtitle="A rabies forecasting dashboard" onBack={handleMainMenuNavigation}>
+    <Screen title="About RabDash" subtitle="A rabies forecasting dashboard" showBack>
 
         <Text style={styles.subheader}>About the Project</Text>
         <Text style={styles.content}>
@@ -64,13 +48,6 @@ const AboutUs = () => {
           ))}
         </View>
 
-        <AppButton
-          title="Main Menu"
-          variant="ghost"
-          onPress={handleMainMenuNavigation}
-          style={[menuStyles.backButton, styles.mainMenuButton]}
-          textStyle={menuStyles.backButtonText}
-        />
     </Screen>
   );
 };
@@ -112,9 +89,6 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textSecondary,
     textAlign: 'center',
-  },
-  mainMenuButton: {
-    marginTop: spacing.lg,
   },
 });
 

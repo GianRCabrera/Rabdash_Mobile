@@ -3,13 +3,16 @@ import { View, Text, Image, ActivityIndicator, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import Icon from '@expo/vector-icons/MaterialIcons';
-import { AppButton, AppCard, Screen, menuStyles } from '../components';
+import { AppButton, AppCard, AppModal, ListRow, Screen } from '../components';
+import { useAuth } from '../context/AuthContext';
 import { colors, spacing, typography, radii } from '../theme/theme';
 
 const UserProfile = () => {
   const navigation = useNavigation();
   const apiURL = process.env.EXPO_PUBLIC_URL || 'http://localhost:3000';
+  const { dispatch } = useAuth();
   const [user, setUser] = useState(null);
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   useEffect(() => {
     axios.get(`${apiURL}/userProfile`)
@@ -21,23 +24,15 @@ const UserProfile = () => {
       });
   }, [apiURL]);
 
-  const handleBackToMainMenu = () => {
-    if (user && user.position) {
-      switch (user.position) {
-        case 'CVO':
-        case 'RabDash':
-        case 'CVO Admin':
-          navigation.navigate('VetMenu', undefined, { pop: true });
-          break;
-        case 'Private Veterinarian':
-          navigation.navigate('MainMenu', undefined, { pop: true });
-          break;
-        default:
-          console.warn('Unknown user position:', user.position);
-      }
-    } else {
-      console.warn('User position is undefined');
+  const handleLogout = async () => {
+    setConfirmLogout(false);
+    try {
+      await axios.post(`${apiURL}/logout`, {}, { withCredentials: true });
+    } catch (error) {
+      console.error('Error during logout:', error.message);
     }
+    dispatch({ type: 'LOGOUT' });
+    navigation.navigate('Login', undefined, { pop: true });
   };
 
   const handleResetPassword = () => {
@@ -45,7 +40,7 @@ const UserProfile = () => {
   };
 
   return (
-    <Screen title="User Profile" onBack={handleBackToMainMenu}>
+    <Screen title="My Profile" showBack>
 
         {user ? (
           <AppCard style={styles.card}>
@@ -98,12 +93,19 @@ const UserProfile = () => {
           <ActivityIndicator size="large" color={colors.primary} style={styles.loading} />
         )}
 
-        <AppButton
-          title="Main Menu"
-          variant="ghost"
-          onPress={handleBackToMainMenu}
-          style={menuStyles.backButton}
-          textStyle={menuStyles.backButtonText}
+        <View style={styles.actions}>
+          <ListRow icon="information-outline" title="About RabDash" subtitle="The project and our partners" onPress={() => navigation.navigate('AboutUs', undefined, { pop: true })} />
+          <ListRow icon="logout" title="Log Out" tone="danger" showChevron={false} onPress={() => setConfirmLogout(true)} />
+        </View>
+
+        <AppModal
+          isVisible={confirmLogout}
+          message="Log out of RabDash?"
+          onBackdropPress={() => setConfirmLogout(false)}
+          actions={[
+            { label: 'Cancel', variant: 'secondary', onPress: () => setConfirmLogout(false) },
+            { label: 'Log Out', onPress: handleLogout },
+          ]}
         />
     </Screen>
   );
@@ -158,6 +160,9 @@ const styles = StyleSheet.create({
   },
   loading: {
     marginTop: spacing.xxxl,
+  },
+  actions: {
+    marginTop: spacing.xl,
   },
 });
 

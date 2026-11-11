@@ -3,12 +3,11 @@ import { View, Text, Image, ScrollView, TouchableOpacity, StatusBar, Platform, S
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import Ionicons from '@expo/vector-icons/Ionicons';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { usesVetMenu } from '../constants/roles';
 import { formsFor } from '../constants/catalog';
-import { AppModal, ListRow, SectionTitle } from '../components';
+import { ListRow, SectionTitle } from '../components';
 import { colors, spacing, radii, typography, shadows } from '../theme/theme';
 
 const greetingFor = (hour) => {
@@ -17,28 +16,28 @@ const greetingFor = (hour) => {
   return 'Good evening';
 };
 
-const Tile = ({ icon, title, subtitle, onPress }) => (
+const Tile = ({ icon, title, onPress }) => (
   <TouchableOpacity style={styles.tile} onPress={onPress} activeOpacity={0.75} accessibilityRole="button">
     <View style={styles.tileIcon}>
-      <MaterialCommunityIcons name={icon} size={26} color={colors.primary} />
+      <MaterialCommunityIcons name={icon} size={24} color={colors.primary} />
     </View>
     <Text style={styles.tileTitle} numberOfLines={1}>{title}</Text>
-    <Text style={styles.tileSubtitle} numberOfLines={2}>{subtitle}</Text>
   </TouchableOpacity>
 );
 
 // Home screen for every role. VetMenu (CVO, CVO Admin, RabDash) re-exports
 // this; the role only changes which form/archive/download screens it opens.
+// Profile, About and Log Out live on the profile screen (the round button
+// top right), so the home screen is just "what do you want to do".
 const MainMenu = () => {
   const navigation = useNavigation();
-  const { state, dispatch } = useAuth();
+  const { state } = useAuth();
   const insets = useContext(SafeAreaInsetsContext);
   const topInset = insets ? insets.top : Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
   const apiURL = process.env.EXPO_PUBLIC_URL;
   const { email, position } = state.user;
   const isVet = usesVetMenu(position);
   const [firstName, setFirstName] = useState(null);
-  const [confirmLogout, setConfirmLogout] = useState(false);
 
   // The name isn't kept with the saved login, so fetch it for the greeting.
   // If it fails (offline, backend waking up) the greeting simply has no name.
@@ -57,24 +56,14 @@ const MainMenu = () => {
 
   const go = (route) => () => navigation.navigate(route, undefined, { pop: true });
 
-  const handleLogout = async () => {
-    setConfirmLogout(false);
-    try {
-      await axios.post(`${apiURL}/logout`, {}, { withCredentials: true });
-    } catch (error) {
-      console.error('Error during logout:', error.message);
-    }
-    dispatch({ type: 'LOGOUT' });
-    navigation.navigate('Login', undefined, { pop: true });
-  };
-
   const greeting = greetingFor(new Date().getHours());
+  const initial = (firstName || email || '?').trim().charAt(0).toUpperCase();
   const quickForms = formsFor(position).slice(0, 3);
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={[styles.hero, { paddingTop: topInset + spacing.lg }]}>
+        <View style={[styles.hero, { paddingTop: topInset + spacing.md }]}>
           <View style={styles.heroTop}>
             <View style={styles.brandRow}>
               <View style={styles.logoBadge}>
@@ -83,17 +72,16 @@ const MainMenu = () => {
               <Text style={styles.brand}>RabDash</Text>
             </View>
             <TouchableOpacity
-              onPress={() => setConfirmLogout(true)}
-              hitSlop={12}
+              onPress={go('UserProfile')}
+              hitSlop={8}
               accessibilityRole="button"
-              accessibilityLabel="Log out"
-              style={styles.logoutButton}
+              accessibilityLabel="My profile"
+              style={styles.avatar}
             >
-              <Ionicons name="log-out-outline" size={22} color={colors.onPrimary} />
+              <Text style={styles.avatarText}>{initial}</Text>
             </TouchableOpacity>
           </View>
           <Text style={styles.greeting}>{firstName ? `${greeting}, ${firstName}` : greeting}</Text>
-          {email ? <Text style={styles.email} numberOfLines={1}>{email}</Text> : null}
           {position ? (
             <View style={styles.chip}>
               <Text style={styles.chipText}>{position}</Text>
@@ -102,14 +90,18 @@ const MainMenu = () => {
         </View>
 
         <View style={styles.body}>
-          <View style={styles.grid}>
-            <Tile icon="file-document-edit-outline" title="Input Forms" subtitle="Fill in a new report" onPress={go(isVet ? 'VetInputForms' : 'InputForms')} />
-            <Tile icon="folder-open-outline" title="Form Archives" subtitle="View and edit submissions" onPress={go(isVet ? 'VetArchiveMenu' : 'ClientDatabase')} />
-            <Tile icon="file-download-outline" title="Downloads" subtitle="Excel report templates" onPress={go(isVet ? 'DownloadableForms' : 'DownloadableFormsPrivVet')} />
-            <Tile icon="account-circle-outline" title="My Profile" subtitle="Details and password" onPress={go('UserProfile')} />
+          <View style={styles.tiles}>
+            <Tile icon="file-document-edit-outline" title="New report" onPress={go(isVet ? 'VetInputForms' : 'InputForms')} />
+            <Tile icon="folder-open-outline" title="Archives" onPress={go(isVet ? 'VetArchiveMenu' : 'ClientDatabase')} />
+            <Tile icon="file-download-outline" title="Downloads" onPress={go(isVet ? 'DownloadableForms' : 'DownloadableFormsPrivVet')} />
           </View>
 
-          <SectionTitle title="Quick start" first />
+          <View style={styles.sectionHeader}>
+            <SectionTitle title="Quick start" first />
+            <TouchableOpacity onPress={go(isVet ? 'VetInputForms' : 'InputForms')} hitSlop={8}>
+              <Text style={styles.link}>All forms</Text>
+            </TouchableOpacity>
+          </View>
           {quickForms.map((form) => (
             <ListRow
               key={form.key}
@@ -119,26 +111,13 @@ const MainMenu = () => {
               onPress={go(form.route)}
             />
           ))}
-
-          <SectionTitle title="More" />
-          <ListRow icon="information-outline" title="About RabDash" subtitle="The project and our partners" onPress={go('AboutUs')} />
         </View>
       </ScrollView>
-
-      <AppModal
-        isVisible={confirmLogout}
-        message="Log out of RabDash?"
-        onBackdropPress={() => setConfirmLogout(false)}
-        actions={[
-          { label: 'Cancel', variant: 'secondary', onPress: () => setConfirmLogout(false) },
-          { label: 'Log Out', onPress: handleLogout },
-        ]}
-      />
     </View>
   );
 };
 
-const TILE_OVERLAP = spacing.xxxl;
+const TILE_OVERLAP = spacing.xxl;
 
 const styles = StyleSheet.create({
   container: {
@@ -159,95 +138,100 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   logoBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.sm,
   },
   logo: {
-    width: 28,
-    height: 28,
+    width: 24,
+    height: 24,
   },
   brand: {
-    ...typography.subtitle,
+    ...typography.bodyStrong,
+    fontSize: 17,
     color: colors.onPrimary,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
-  logoutButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+  avatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  greeting: {
-    ...typography.largeTitle,
-    color: colors.onPrimary,
+  avatarText: {
+    ...typography.subtitle,
+    color: colors.primary,
   },
-  email: {
-    ...typography.body,
+  greeting: {
+    ...typography.title,
+    fontSize: 24,
     color: colors.onPrimary,
-    opacity: 0.9,
-    marginTop: spacing.xs,
   },
   chip: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: radii.pill,
-    paddingVertical: 4,
+    paddingVertical: 3,
     paddingHorizontal: spacing.md,
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
   },
   chipText: {
     ...typography.label,
-    color: colors.primary,
+    color: colors.onPrimary,
   },
   body: {
     paddingHorizontal: spacing.lg,
     marginTop: -TILE_OVERLAP,
   },
-  grid: {
+  tiles: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: spacing.lg,
+    gap: spacing.md,
+    marginBottom: spacing.xl,
   },
   tile: {
-    width: '48%',
+    flex: 1,
+    alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: radii.md,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.sm,
     ...shadows.md,
   },
   tileIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   tileTitle: {
-    ...typography.bodyStrong,
+    ...typography.label,
     color: colors.textPrimary,
   },
-  tileSubtitle: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: 2,
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+  },
+  link: {
+    ...typography.label,
+    color: colors.primary,
+    marginRight: spacing.xs,
   },
 });
 
