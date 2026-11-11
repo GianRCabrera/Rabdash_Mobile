@@ -13,7 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bcrypt": "^5.1.1",
+    "bcrypt": "^6.0.0",
     "body-parser": "^2.3.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -24,8 +24,7 @@
     "moment": "^2.31.0",
     "moment-timezone": "^0.5.45",
     "mysql2": "^3.24.4",
-    "nodemailer": "^10.0.10",
-    "nodemon": "^3.0.1"
+    "nodemailer": "^10.0.10"
   },
   "overrides": {
     "express-mysql-session": {
@@ -34,6 +33,7 @@
   },
   "devDependencies": {
     "jest": "^30.5.2",
+    "nodemon": "^3.1.14",
     "supertest": "^7.2.2"
   },
   "engines": {
