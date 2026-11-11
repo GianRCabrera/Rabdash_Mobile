@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -36,8 +37,16 @@ const MainMenu = () => {
     };
   }, [apiURL]);
 
-  const hour = new Date().getHours();
-  const greeting = `${hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'}${firstName ? `, ${firstName}` : ''}`;
+  const now = new Date();
+  const hour = now.getHours();
+  const timeOfDay =
+    hour < 12
+      ? { text: 'Good morning', icon: 'white-balance-sunny' }
+      : hour < 18
+        ? { text: 'Good afternoon', icon: 'weather-sunset' }
+        : { text: 'Good evening', icon: 'weather-night' };
+  const greeting = `${timeOfDay.text}${firstName ? `, ${firstName}` : ''}`;
+  const today = now.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' });
 
   const go = (route) => () => navigation.navigate(route, undefined, { pop: true });
 
@@ -54,7 +63,15 @@ const MainMenu = () => {
 
   return (
     <MenuScreen title="RabDash" badge={position} headerVariant="home">
-      <Text style={styles.greeting}>{greeting}</Text>
+      <View style={styles.greetingRow}>
+        <View style={styles.greetingIcon}>
+          <MaterialCommunityIcons name={timeOfDay.icon} size={24} color={colors.primary} />
+        </View>
+        <View style={styles.greetingText}>
+          <Text style={styles.greeting} numberOfLines={1}>{greeting}</Text>
+          <Text style={styles.date}>{today}</Text>
+        </View>
+      </View>
 
       <SectionTitle title="Work" first />
       <ListGroup>
@@ -89,11 +106,33 @@ const MainMenu = () => {
 };
 
 const styles = StyleSheet.create({
+  greetingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xl,
+    marginLeft: spacing.xs,
+  },
+  greetingIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  greetingText: {
+    flex: 1,
+  },
   greeting: {
     ...typography.subtitle,
+    fontSize: 20,
     color: colors.textPrimary,
-    marginBottom: spacing.lg,
-    marginLeft: spacing.xs,
+  },
+  date: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   logoutGroup: {
     marginTop: spacing.xl,
