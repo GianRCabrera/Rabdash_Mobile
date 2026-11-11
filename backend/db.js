@@ -23,15 +23,30 @@ const webDbConfig = {
 const pool = mysql.createPool(dbConfig);        // Pool for mobile application
 const webPool = mysql.createPool(webDbConfig);  // Pool for web application
 
+// Waits before each reconnect attempt while the database is unreachable:
+// 2s, 4s, 8s, ... capped at 60s. It used to retry every 2s forever, which
+// on Nov 11 2026 hammered Hostinger with ~30 failed connections a minute
+// during a network outage, the kind of traffic that can get a host
+// blocked. Requests still try the database on their own as they come in;
+// this only paces the background reconnect.
+const RETRY_BASE_MS = 2000;
+const RETRY_MAX_MS = 60 * 1000;
+const retryDelay = (attempt) => Math.min(RETRY_BASE_MS * 2 ** attempt, RETRY_MAX_MS);
+
 // Retries the initial connection; does NOT re-register the 'error' listener on each
 // retry (that was a bug — every retry added another listener, eventually tripping
 // Node's MaxListenersExceededWarning when a DB stayed unreachable for a while).
-function tryConnect(pool) {
+function tryConnect(pool, attempt = 0) {
   pool.getConnection((err, connection) => {
+    const name = pool.config?.connectionConfig?.database || 'database';
     if (err) {
-      console.error('Error getting database connection:', err);
-      setTimeout(() => tryConnect(pool), 2000); // Retry after 2 seconds
+      const delay = retryDelay(attempt);
+      // One line per attempt (not the whole error object, which was ~40 log
+      // lines each time); err.code says what went wrong, e.g. ETIMEDOUT.
+      console.error(`Error getting ${name} connection (${err.code || err.message}); retrying in ${delay / 1000}s`);
+      setTimeout(() => tryConnect(pool, attempt + 1), delay);
     } else if (connection) {
+      if (attempt > 0) console.log(`Connected to ${name} after ${attempt} failed attempt(s)`);
       connection.release();
     }
   });
@@ -65,4 +80,4 @@ const queryDatabase = (pool, query, values) => {
   });
 };
 
-module.exports = { pool, webPool, queryDatabase };
+module.exports = { pool, webPool, queryDatabase, tryConnect, retryDelay };
