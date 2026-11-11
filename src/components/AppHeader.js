@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { View, Text, Image, TouchableOpacity, StatusBar, Platform, StyleSheet } from 'react-native';
+import { View, Text, Image, Pressable, StatusBar, Platform, StyleSheet } from 'react-native';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -20,9 +20,15 @@ const AppHeader = ({ title, subtitle, onBack, showBack = !!onBack, right, showLo
     <View style={[styles.bar, { paddingTop: topInset + spacing.md }]}>
       <View style={styles.side}>
         {showBack ? (
-          <TouchableOpacity onPress={handleBack} hitSlop={12} accessibilityRole="button" accessibilityLabel="Back">
-            <Ionicons name="chevron-back" size={26} color={colors.onPrimary} />
-          </TouchableOpacity>
+          <Pressable
+            onPress={handleBack}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
+          >
+            <Ionicons name="chevron-back" size={24} color={colors.onPrimary} />
+          </Pressable>
         ) : null}
       </View>
       <View style={styles.center}>
@@ -47,11 +53,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.md,
+    minHeight: 56,
     ...shadows.md,
   },
   side: {
-    width: 32,
+    width: 40,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backButtonPressed: {
+    backgroundColor: 'rgba(255,255,255,0.32)',
   },
   right: {
     alignItems: 'flex-end',
@@ -59,6 +77,7 @@ const styles = StyleSheet.create({
   center: {
     flex: 1,
     alignItems: 'center',
+    paddingHorizontal: spacing.sm,
   },
   titleRow: {
     flexDirection: 'row',
