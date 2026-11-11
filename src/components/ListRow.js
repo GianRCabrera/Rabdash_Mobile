@@ -9,24 +9,25 @@ import { colors, spacing, radii, typography, shadows } from '../theme/theme';
 // and profile actions. `icon` is a MaterialCommunityIcons name.
 // Inside a ListGroup it drops its own card styling (`grouped`) and draws a
 // divider under itself unless it's the last row (`showDivider`).
-const ListRow = ({ icon, title, subtitle, onPress, tone = 'default', showChevron = true, disabled = false, grouped = false, showDivider = false }) => {
+const ListRow = ({ icon, title, subtitle, onPress, tone = 'default', showChevron = true, disabled = false, grouped = false, showDivider = false, size = 'default' }) => {
+  const large = size === 'large';
   const isDanger = tone === 'danger';
   // Without onPress it's a plain information row (no tap feedback).
   const Container = onPress ? TouchableOpacity : View;
   const touchProps = onPress ? { onPress, disabled, activeOpacity: 0.7, accessibilityRole: 'button' } : {};
   return (
     <Container
-      style={[styles.row, grouped && styles.grouped, showDivider && styles.divider, disabled && styles.disabled]}
+      style={[styles.row, large && styles.rowLarge, grouped && styles.grouped, showDivider && styles.divider, disabled && styles.disabled]}
       {...touchProps}
     >
       {icon ? (
-        <View style={styles.iconCircle}>
-          <MaterialCommunityIcons name={icon} size={22} color={isDanger ? colors.danger : colors.primary} />
+        <View style={[styles.iconCircle, large && styles.iconCircleLarge]}>
+          <MaterialCommunityIcons name={icon} size={large ? 26 : 22} color={isDanger ? colors.danger : colors.primary} />
         </View>
       ) : null}
       <View style={styles.text}>
-        <Text style={[styles.title, isDanger && styles.dangerText]} numberOfLines={2}>{title}</Text>
-        {subtitle ? <Text style={styles.subtitle} numberOfLines={2}>{subtitle}</Text> : null}
+        <Text style={[styles.title, large && styles.titleLarge, isDanger && styles.dangerText]} numberOfLines={2}>{title}</Text>
+        {subtitle ? <Text style={[styles.subtitle, large && styles.subtitleLarge]} numberOfLines={2}>{subtitle}</Text> : null}
       </View>
       {showChevron && onPress ? <Ionicons name="chevron-forward" size={20} color={colors.textOnSurfaceMuted} /> : null}
     </Container>
@@ -44,6 +45,22 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     minHeight: 64,
     ...shadows.sm,
+  },
+  rowLarge: {
+    minHeight: 80,
+    paddingVertical: spacing.lg,
+  },
+  iconCircleLarge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: spacing.lg,
+  },
+  titleLarge: {
+    fontSize: 17,
+  },
+  subtitleLarge: {
+    fontSize: 14,
   },
   grouped: {
     borderRadius: 0,

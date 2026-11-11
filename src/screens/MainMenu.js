@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
@@ -19,6 +19,25 @@ const MainMenu = () => {
   const { position } = state.user;
   const isVet = usesVetMenu(position);
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const [firstName, setFirstName] = useState(null);
+
+  // The name isn't kept with the saved login, so fetch it for the greeting;
+  // if that fails (offline, backend waking up) the greeting has no name.
+  useEffect(() => {
+    let active = true;
+    axios
+      .get(`${apiURL}/userProfile`)
+      .then((response) => {
+        if (active && response.data?.name) setFirstName(response.data.name);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [apiURL]);
+
+  const hour = new Date().getHours();
+  const greeting = `${hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'}${firstName ? `, ${firstName}` : ''}`;
 
   const go = (route) => () => navigation.navigate(route, undefined, { pop: true });
 
@@ -34,22 +53,24 @@ const MainMenu = () => {
   };
 
   return (
-    <MenuScreen title="RabDash" badge={position}>
+    <MenuScreen title="RabDash" badge={position} showLogo>
+      <Text style={styles.greeting}>{greeting}</Text>
+
       <SectionTitle title="Work" first />
       <ListGroup>
-        <ListRow icon="file-document-edit-outline" title="Input Forms" subtitle="Fill in a new report" onPress={go(isVet ? 'VetInputForms' : 'InputForms')} />
-        <ListRow icon="folder-open-outline" title="Form Archives" subtitle="View and edit past submissions" onPress={go(isVet ? 'VetArchiveMenu' : 'ClientDatabase')} />
-        <ListRow icon="file-download-outline" title="Downloadable Forms" subtitle="Excel report templates" onPress={go(isVet ? 'DownloadableForms' : 'DownloadableFormsPrivVet')} />
+        <ListRow size="large" icon="file-document-edit-outline" title="Input Forms" subtitle="Fill in a new report" onPress={go(isVet ? 'VetInputForms' : 'InputForms')} />
+        <ListRow size="large" icon="folder-open-outline" title="Form Archives" subtitle="View and edit past submissions" onPress={go(isVet ? 'VetArchiveMenu' : 'ClientDatabase')} />
+        <ListRow size="large" icon="file-download-outline" title="Downloadable Forms" subtitle="Excel report templates" onPress={go(isVet ? 'DownloadableForms' : 'DownloadableFormsPrivVet')} />
       </ListGroup>
 
       <SectionTitle title="Account" />
       <ListGroup>
-        <ListRow icon="account-circle-outline" title="My Profile" subtitle="Your details and password" onPress={go('UserProfile')} />
-        <ListRow icon="information-outline" title="About RabDash" subtitle="The project and our partners" onPress={go('AboutUs')} />
+        <ListRow size="large" icon="account-circle-outline" title="My Profile" subtitle="Your details and password" onPress={go('UserProfile')} />
+        <ListRow size="large" icon="information-outline" title="About RabDash" subtitle="The project and our partners" onPress={go('AboutUs')} />
       </ListGroup>
 
       <ListGroup style={styles.logoutGroup}>
-        <ListRow icon="logout" title="Log Out" tone="danger" showChevron={false} onPress={() => setConfirmLogout(true)} />
+        <ListRow size="large" icon="logout" title="Log Out" tone="danger" showChevron={false} onPress={() => setConfirmLogout(true)} />
       </ListGroup>
 
       <Text style={styles.version}>RabDash Mobile · v{APP_VERSION}</Text>
@@ -68,6 +89,12 @@ const MainMenu = () => {
 };
 
 const styles = StyleSheet.create({
+  greeting: {
+    ...typography.subtitle,
+    color: colors.textPrimary,
+    marginBottom: spacing.lg,
+    marginLeft: spacing.xs,
+  },
   logoutGroup: {
     marginTop: spacing.xl,
   },

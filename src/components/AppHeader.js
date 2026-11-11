@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { View, Text, TouchableOpacity, StatusBar, Platform, StyleSheet } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StatusBar, Platform, StyleSheet } from 'react-native';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -10,7 +10,7 @@ import { colors, spacing, typography, shadows } from '../theme/theme';
 // safe-area inset. The inset comes from context rather than
 // useSafeAreaInsets() so the header still renders (with a fallback inset)
 // where no SafeAreaProvider exists, e.g. in tests.
-const AppHeader = ({ title, subtitle, onBack, showBack = !!onBack, right }) => {
+const AppHeader = ({ title, subtitle, onBack, showBack = !!onBack, right, showLogo = false }) => {
   const navigation = useNavigation();
   const insets = useContext(SafeAreaInsetsContext);
   const topInset = insets ? insets.top : Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
@@ -26,7 +26,14 @@ const AppHeader = ({ title, subtitle, onBack, showBack = !!onBack, right }) => {
         ) : null}
       </View>
       <View style={styles.center}>
-        <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{title}</Text>
+        <View style={styles.titleRow}>
+          {showLogo ? (
+            <View style={styles.logoBadge}>
+              <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
+            </View>
+          ) : null}
+          <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{title}</Text>
+        </View>
         {subtitle ? <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text> : null}
       </View>
       <View style={[styles.side, styles.right]}>{right}</View>
@@ -52,6 +59,23 @@ const styles = StyleSheet.create({
   center: {
     flex: 1,
     alignItems: 'center',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  logo: {
+    width: 21,
+    height: 21,
   },
   title: {
     ...typography.subtitle,
