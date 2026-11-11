@@ -13,18 +13,18 @@ import appConfig from '../../app.json';
 
 const APP_VERSION = appConfig.expo.version;
 
-// One of the three main actions on the home screen.
-const ActionCard = ({ icon, title, subtitle, onPress }) => (
-  <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8} accessibilityRole="button">
-    <View style={styles.cardIcon}>
-      <MaterialCommunityIcons name={icon} size={30} color={colors.onPrimary} />
-    </View>
-    <View style={styles.cardText}>
-      <Text style={styles.cardTitle}>{title}</Text>
-      <Text style={styles.cardSubtitle}>{subtitle}</Text>
-    </View>
-    <View style={styles.cardArrow}>
+// A square tile for one of the main actions on the home screen.
+const ActionTile = ({ icon, title, subtitle, onPress }) => (
+  <TouchableOpacity style={styles.tile} onPress={onPress} activeOpacity={0.8} accessibilityRole="button">
+    <View style={styles.tileTop}>
+      <View style={styles.tileIcon}>
+        <MaterialCommunityIcons name={icon} size={28} color={colors.onPrimary} />
+      </View>
       <Ionicons name="arrow-forward" size={20} color={colors.primary} />
+    </View>
+    <View>
+      <Text style={styles.tileTitle} numberOfLines={1}>{title}</Text>
+      <Text style={styles.tileSubtitle} numberOfLines={1}>{subtitle}</Text>
     </View>
   </TouchableOpacity>
 );
@@ -123,24 +123,32 @@ const MainMenu = () => {
         </View>
       </View>
 
-      <ActionCard
-        icon="file-document-edit-outline"
-        title="Input Forms"
-        subtitle="Fill in a new report"
-        onPress={go(isVet ? 'VetInputForms' : 'InputForms')}
-      />
-      <ActionCard
-        icon="folder-open-outline"
-        title="Form Archives"
-        subtitle="View and edit past submissions"
-        onPress={go(isVet ? 'VetArchiveMenu' : 'ClientDatabase')}
-      />
-      <ActionCard
-        icon="file-download-outline"
-        title="Downloadable Forms"
-        subtitle="Excel report templates"
-        onPress={go(isVet ? 'DownloadableForms' : 'DownloadableFormsPrivVet')}
-      />
+      <View style={styles.grid}>
+        <ActionTile
+          icon="file-document-edit-outline"
+          title="Input Forms"
+          subtitle="Fill in a report"
+          onPress={go(isVet ? 'VetInputForms' : 'InputForms')}
+        />
+        <ActionTile
+          icon="folder-open-outline"
+          title="Form Archives"
+          subtitle="Past submissions"
+          onPress={go(isVet ? 'VetArchiveMenu' : 'ClientDatabase')}
+        />
+        <ActionTile
+          icon="file-download-outline"
+          title="Downloads"
+          subtitle="Excel templates"
+          onPress={go(isVet ? 'DownloadableForms' : 'DownloadableFormsPrivVet')}
+        />
+        <ActionTile
+          icon="information-outline"
+          title="About"
+          subtitle="Project & partners"
+          onPress={go('AboutUs')}
+        />
+      </View>
 
       <Text style={styles.version}>RabDash Mobile · v{APP_VERSION}</Text>
 
@@ -160,7 +168,6 @@ const MainMenu = () => {
         <View style={styles.panelBody}>
           <ListGroup>
             <ListRow icon="account-circle-outline" title="My Profile" subtitle="Your details and password" onPress={goFromPanel('UserProfile')} />
-            <ListRow icon="information-outline" title="About RabDash" subtitle="The project and our partners" onPress={goFromPanel('AboutUs')} />
           </ListGroup>
           <ListGroup style={styles.panelLogout}>
             <ListRow
@@ -235,45 +242,44 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  card: {
+  grid: {
     flexDirection: 'row',
-    alignItems: 'center',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: spacing.lg,
+  },
+  tile: {
+    width: '47.5%',
+    aspectRatio: 1,
+    justifyContent: 'space-between',
     backgroundColor: colors.surface,
     borderRadius: radii.md + 4,
     padding: spacing.lg,
-    marginBottom: spacing.md,
-    minHeight: 96,
     ...shadows.md,
   },
-  cardIcon: {
-    width: 56,
-    height: 56,
+  tileTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  tileIcon: {
+    width: 52,
+    height: 52,
     borderRadius: radii.md,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.lg,
   },
-  cardText: {
-    flex: 1,
-  },
-  cardTitle: {
-    ...typography.subtitle,
+  tileTitle: {
+    ...typography.bodyStrong,
+    fontSize: 17,
     color: colors.textPrimary,
   },
-  cardSubtitle: {
-    ...typography.body,
+  tileSubtitle: {
+    ...typography.caption,
+    fontSize: 13,
     color: colors.textSecondary,
     marginTop: 2,
-  },
-  cardArrow: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: spacing.sm,
   },
   version: {
     ...typography.caption,
