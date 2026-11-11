@@ -7,11 +7,9 @@ import {
   ArchiveSearchBar,
   ArchiveListItem,
   ArchivePagination,
-  AppButton,
-  menuStyles,
 } from '../components';
 import { useAuth } from '../context/AuthContext';
-import { canEditRecord, usesVetMenu } from '../constants/roles';
+import { canEditRecord } from '../constants/roles';
 
 const ScheduleFormArchive = () => {
   const { state: authState } = useAuth();
@@ -36,17 +34,6 @@ const ScheduleFormArchive = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-
-  const handleBackPress = () => {
-    const position = user?.position;
-    if (usesVetMenu(position)) {
-      navigation.navigate('VetArchiveMenu', undefined, { pop: true });
-    } else if (position === 'Private Veterinarian') {
-      navigation.navigate('ClientDatabase', undefined, { pop: true });
-    } else {
-      console.warn('Unknown user position:', position);
-    }
-  };
 
   const toggleConfirmModal = () => {
     setConfirmModalVisible(!isConfirmModalVisible);
@@ -203,14 +190,6 @@ const ScheduleFormArchive = () => {
         hasNext={filteredForms.length > endIndex}
         onPrev={handlePreviousPage}
         onNext={handleNextPage}
-      />
-
-      <AppButton
-        title="Archives Menu"
-        variant="ghost"
-        onPress={handleBackPress}
-        style={menuStyles.backButton}
-        textStyle={menuStyles.backButtonText}
       />
 
       <AppModal

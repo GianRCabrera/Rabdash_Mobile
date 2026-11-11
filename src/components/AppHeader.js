@@ -26,7 +26,7 @@ const AppHeader = ({ title, subtitle, onBack, showBack = !!onBack, right }) => {
         ) : null}
       </View>
       <View style={styles.center}>
-        <Text style={styles.title} numberOfLines={1}>{title}</Text>
+        <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{title}</Text>
         {subtitle ? <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text> : null}
       </View>
       <View style={[styles.side, styles.right]}>{right}</View>
