@@ -53,7 +53,7 @@ const MainMenu = () => {
   };
 
   return (
-    <MenuScreen title="RabDash" badge={position} showLogo>
+    <MenuScreen title="RabDash" badge={position} headerVariant="home">
       <Text style={styles.greeting}>{greeting}</Text>
 
       <SectionTitle title="Work" first />

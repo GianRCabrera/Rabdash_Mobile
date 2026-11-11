@@ -7,9 +7,9 @@ import { colors, spacing } from '../theme/theme';
 // background below. `scroll={false}` gives a plain View for screens that
 // manage their own scrolling. Header props (subtitle, onBack, showBack,
 // right) pass straight through.
-const Screen = ({ title, subtitle, onBack, showBack, right, showLogo, scroll = true, contentStyle, children }) => (
+const Screen = ({ title, subtitle, onBack, showBack, right, showLogo, headerVariant, scroll = true, contentStyle, children }) => (
   <View style={styles.container}>
-    <AppHeader title={title} subtitle={subtitle} onBack={onBack} showBack={showBack} right={right} showLogo={showLogo} />
+    <AppHeader title={title} subtitle={subtitle} onBack={onBack} showBack={showBack} right={right} showLogo={showLogo} variant={headerVariant} />
     {scroll ? (
       <ScrollView
         style={styles.flex}
