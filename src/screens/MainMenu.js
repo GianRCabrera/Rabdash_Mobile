@@ -87,7 +87,7 @@ const MainMenu = () => {
       </ListGroup>
 
       <ListGroup style={styles.logoutGroup}>
-        <ListRow size="large" icon="logout" title="Log Out" tone="danger" showChevron={false} onPress={() => setConfirmLogout(true)} />
+        <ListRow icon="logout" title="Log Out" tone="danger" showChevron={false} onPress={() => setConfirmLogout(true)} />
       </ListGroup>
 
       <Text style={styles.version}>RabDash Mobile · v{APP_VERSION}</Text>
@@ -106,20 +106,23 @@ const MainMenu = () => {
 };
 
 const styles = StyleSheet.create({
+  // Same left padding and icon size as the large rows below, so the
+  // greeting's icon and text line up with the row icons and titles.
   greetingRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.sm,
     marginBottom: spacing.xl,
-    marginLeft: spacing.xs,
   },
   greetingIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.md,
+    marginRight: spacing.lg,
   },
   greetingText: {
     flex: 1,
@@ -135,7 +138,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   logoutGroup: {
-    marginTop: spacing.xl,
+    marginTop: spacing.xxl,
   },
   version: {
     ...typography.caption,

@@ -13,9 +13,9 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
-    marginTop: spacing.lg,
+    marginTop: spacing.xxl,
     marginBottom: spacing.sm,
-    marginLeft: spacing.xs,
+    marginLeft: spacing.lg,
   },
   first: {
     marginTop: 0,
