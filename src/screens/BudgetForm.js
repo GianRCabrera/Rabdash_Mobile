@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import axios from 'axios';
 import { AppButton, AppInput, AppDateField, AppModal, FormScreen, menuStyles } from '../components';
+import { useSubmission } from '../utils/useSubmission';
 
 const BudgetForm = () => {
   const route = useRoute();
@@ -14,6 +14,7 @@ const BudgetForm = () => {
 
   const apiURL = process.env.EXPO_PUBLIC_URL;
   const navigation = useNavigation();
+  const { isSubmitting, submitError, clearSubmitError, send } = useSubmission();
 
   const [budgetValue, setBudgetValue] = useState('');
   const [costvaxValue, setCostvaxValue] = useState('');
@@ -114,18 +115,15 @@ const BudgetForm = () => {
       formData.id = editableItem.id;
     }
 
-    axios.post(apiUrl, formData)
-      .then(response => {
-        console.log(response.data);
-        if (isEditing) {
-          setUpdateSuccessModalVisible(true);
-        } else {
-          setSuccessModalVisible(true);
-        }
-      })
-      .catch(error => {
-        console.error('Error submitting form:', error);
-      });
+    send(apiUrl, formData).then((response) => {
+      if (!response) return;
+      console.log(response.data);
+      if (isEditing) {
+        setUpdateSuccessModalVisible(true);
+      } else {
+        setSuccessModalVisible(true);
+      }
+    });
   };
 
   const navigateAfterSubmit = () => {
@@ -170,7 +168,7 @@ const BudgetForm = () => {
 
       <View style={menuStyles.formActionsRow}>
         <AppButton title="Back" variant="secondary" onPress={handleBackPress} style={menuStyles.rowButton} />
-        <AppButton title="Submit" variant="primary" onPress={handleSubmitPress} style={menuStyles.rowButton} />
+        <AppButton title="Submit" variant="primary" onPress={handleSubmitPress} loading={isSubmitting} style={menuStyles.rowButton} />
       </View>
 
       <AppModal
@@ -230,6 +228,13 @@ const BudgetForm = () => {
             },
           },
         ]}
+      />
+
+      <AppModal
+        isVisible={submitError !== null}
+        message={submitError}
+        onBackdropPress={clearSubmitError}
+        actions={[{ label: 'OK', onPress: clearSubmitError }]}
       />
     </FormScreen>
   );
