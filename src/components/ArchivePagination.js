@@ -13,7 +13,7 @@ const ArchivePagination = ({ page, hasPrev, hasNext, onPrev, onNext }) => (
   <View style={styles.container}>
     <AppButton
       title="Prev"
-      variant="ghost"
+      variant="secondary"
       onPress={onPrev}
       disabled={!hasPrev}
       style={styles.button}
@@ -22,7 +22,7 @@ const ArchivePagination = ({ page, hasPrev, hasNext, onPrev, onNext }) => (
     <Text style={styles.pageText}>Page {page}</Text>
     <AppButton
       title="Next"
-      variant="ghost"
+      variant="secondary"
       onPress={onNext}
       disabled={!hasNext}
       style={styles.button}
@@ -39,15 +39,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   button: {
-    borderWidth: 1.5,
-    borderColor: colors.onPrimary,
+    minWidth: 96,
   },
-  buttonText: {
-    color: colors.onPrimary,
-  },
+  buttonText: {},
   pageText: {
     ...typography.bodyStrong,
-    color: colors.onPrimary,
+    color: colors.textSecondary,
   },
 });
 

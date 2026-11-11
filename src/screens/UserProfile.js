@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, Image, ActivityIndicator, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import Icon from '@expo/vector-icons/MaterialIcons';
-import { AppButton, AppCard, ScreenHeader, menuStyles } from '../components';
+import { AppButton, AppCard, Screen, menuStyles } from '../components';
 import { colors, spacing, typography, radii } from '../theme/theme';
 
 const UserProfile = () => {
@@ -45,9 +45,7 @@ const UserProfile = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <ScreenHeader title="User Profile" />
+    <Screen title="User Profile" onBack={handleBackToMainMenu}>
 
         {user ? (
           <AppCard style={styles.card}>
@@ -97,7 +95,7 @@ const UserProfile = () => {
             <AppButton title="Reset Password" variant="primary" onPress={handleResetPassword} style={styles.resetButton} />
           </AppCard>
         ) : (
-          <ActivityIndicator size="large" color={colors.onPrimary} style={styles.loading} />
+          <ActivityIndicator size="large" color={colors.primary} style={styles.loading} />
         )}
 
         <AppButton
@@ -107,22 +105,11 @@ const UserProfile = () => {
           style={menuStyles.backButton}
           textStyle={menuStyles.backButtonText}
         />
-      </ScrollView>
-    </View>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.primary,
-    paddingTop: spacing.xxxl * 1.5,
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xl,
-  },
-  scrollContent: {
-    paddingBottom: spacing.xxxl,
-  },
   card: {
     alignItems: 'center',
   },

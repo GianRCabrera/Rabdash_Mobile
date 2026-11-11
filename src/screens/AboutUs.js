@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, ScrollView, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
-import { AppButton, ScreenHeader, menuStyles } from '../components';
+import { AppButton, Screen, menuStyles } from '../components';
 import { colors, spacing, typography, radii, shadow } from '../theme/theme';
 
 const PARTNERS = [
@@ -31,9 +31,7 @@ const AboutUs = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <ScreenHeader title="Welcome to RabDash" subtitle="A rabies forecasting dashboard" />
+    <Screen title="About RabDash" subtitle="A rabies forecasting dashboard" onBack={handleMainMenuNavigation}>
 
         <Text style={styles.subheader}>About the Project</Text>
         <Text style={styles.content}>
@@ -73,30 +71,20 @@ const AboutUs = () => {
           style={[menuStyles.backButton, styles.mainMenuButton]}
           textStyle={menuStyles.backButtonText}
         />
-      </ScrollView>
-    </View>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.primary,
-  },
-  scrollContent: {
-    paddingTop: spacing.xxxl * 1.75,
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xxxl,
-  },
   subheader: {
     ...typography.title,
-    color: colors.onPrimary,
+    color: colors.textPrimary,
     marginTop: spacing.xl,
     marginBottom: spacing.md,
   },
   content: {
     ...typography.body,
-    color: colors.onPrimary,
+    color: colors.textSecondary,
     lineHeight: 24,
     marginBottom: spacing.lg,
   },
