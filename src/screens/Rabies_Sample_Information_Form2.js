@@ -11,6 +11,7 @@ import {
   menuStyles,
 } from '../components';
 import { usesVetMenu } from '../constants/roles';
+import { useSubmission } from '../utils/useSubmission';
 
 const YES_NO = [
   { label: 'Yes', value: 'Yes' },
@@ -104,6 +105,8 @@ const Rabies_Sample_Information_Form2 = () => {
   const [activeDropdown, setActiveDropdown] = useState(null);
 
   const navigation = useNavigation();
+
+  const { isSubmitting, submitError, clearSubmitError, send } = useSubmission();
   const apiURL = process.env.EXPO_PUBLIC_URL;
 
   const [isModalVisible, setModalVisible] = useState(false);
@@ -222,20 +225,16 @@ const Rabies_Sample_Information_Form2 = () => {
 
     const endpoint = isEditing ? `${apiURL}/editRabiesSampleForms` : `${apiURL}/submitRabiesSampleForms`;
 
-    axios
-      .post(endpoint, submissionData)
-      .then((response) => {
-        if (response.data.success) {
-          if (isEditing) {
-            setUpdateSuccessModalVisible(true);
-          } else {
-            setSuccessModalVisible(true);
-          }
+    send(endpoint, submissionData).then((response) => {
+      if (!response) return;
+      if (response.data.success) {
+        if (isEditing) {
+          setUpdateSuccessModalVisible(true);
+        } else {
+          setSuccessModalVisible(true);
         }
-      })
-      .catch((error) => {
-        console.error('Error submitting Rabies Sample form:', error);
-      });
+      }
+    });
   };
 
   const navigateAfterSubmit = () => {
@@ -363,7 +362,7 @@ const Rabies_Sample_Information_Form2 = () => {
 
       <View style={menuStyles.formActionsRow}>
         <AppButton title="Back" variant="secondary" onPress={() => navigation.navigate('Rabies_Sample_Information_Form', undefined, { pop: true })} style={menuStyles.rowButton} />
-        <AppButton title="Submit" variant="primary" onPress={handleSubmitPress} style={menuStyles.rowButton} />
+        <AppButton title="Submit" variant="primary" onPress={handleSubmitPress} loading={isSubmitting} style={menuStyles.rowButton} />
       </View>
 
       <AppModal
@@ -423,6 +422,13 @@ const Rabies_Sample_Information_Form2 = () => {
             },
           },
         ]}
+      />
+
+      <AppModal
+        isVisible={submitError !== null}
+        message={submitError}
+        onBackdropPress={clearSubmitError}
+        actions={[{ label: 'OK', onPress: clearSubmitError }]}
       />
     </FormScreen>
   );

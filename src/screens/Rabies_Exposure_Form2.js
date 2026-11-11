@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import axios from 'axios';
 import {
   AppButton,
   AppInput,
@@ -13,6 +12,7 @@ import {
   FormSectionLabel,
   menuStyles,
 } from '../components';
+import { useSubmission } from '../utils/useSubmission';
 
 const CATEGORIES = [
   { label: '1', value: '1' },
@@ -93,6 +93,8 @@ const Rabies_Exposure_Form2 = () => {
   const [isConfirmModalVisible, setConfirmModalVisible] = useState(false);
 
   const navigation = useNavigation();
+
+  const { isSubmitting, submitError, clearSubmitError, send } = useSubmission();
   const apiURL = process.env.EXPO_PUBLIC_URL;
   const route = useRoute();
 
@@ -281,21 +283,18 @@ const Rabies_Exposure_Form2 = () => {
 
     const endpoint = isEditing ? `${apiURL}/editRabiesExposureForm` : `${apiURL}/submitRabiesExposureForm`;
 
-    axios.post(endpoint, submissionData)
-      .then(response => {
-        if (response.data.success) {
-          setSubmissionResponse(response.data);
-          setIsFormEdit(isEditing);
-          if (isEditing) {
-            setUpdateSuccessModalVisible(true);
-          } else {
-            setSuccessModalVisible(true);
-          }
+    send(endpoint, submissionData).then((response) => {
+      if (!response) return;
+      if (response.data.success) {
+        setSubmissionResponse(response.data);
+        setIsFormEdit(isEditing);
+        if (isEditing) {
+          setUpdateSuccessModalVisible(true);
+        } else {
+          setSuccessModalVisible(true);
         }
-      })
-      .catch(error => {
-        console.error('Error submitting Rabies Exposure form:', error);
-      });
+      }
+    });
   };
 
   const navigateAfterSubmit = () => {
@@ -408,7 +407,7 @@ const Rabies_Exposure_Form2 = () => {
 
       <View style={menuStyles.formActionsRow}>
         <AppButton title="Back" variant="secondary" onPress={() => navigation.navigate('Rabies_Exposure_Form1', undefined, { pop: true })} style={menuStyles.rowButton} />
-        <AppButton title="Submit" variant="primary" onPress={handleSubmitPress} style={menuStyles.rowButton} />
+        <AppButton title="Submit" variant="primary" onPress={handleSubmitPress} loading={isSubmitting} style={menuStyles.rowButton} />
       </View>
 
       <AppModal
@@ -468,6 +467,13 @@ const Rabies_Exposure_Form2 = () => {
             },
           },
         ]}
+      />
+
+      <AppModal
+        isVisible={submitError !== null}
+        message={submitError}
+        onBackdropPress={clearSubmitError}
+        actions={[{ label: 'OK', onPress: clearSubmitError }]}
       />
     </FormScreen>
   );
