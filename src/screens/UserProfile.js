@@ -3,16 +3,13 @@ import { View, Text, Image, ActivityIndicator, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import Icon from '@expo/vector-icons/MaterialIcons';
-import { AppButton, AppCard, AppModal, ListRow, Screen } from '../components';
-import { useAuth } from '../context/AuthContext';
+import { AppButton, AppCard, Screen } from '../components';
 import { colors, spacing, typography, radii } from '../theme/theme';
 
 const UserProfile = () => {
   const navigation = useNavigation();
   const apiURL = process.env.EXPO_PUBLIC_URL || 'http://localhost:3000';
-  const { dispatch } = useAuth();
   const [user, setUser] = useState(null);
-  const [confirmLogout, setConfirmLogout] = useState(false);
 
   useEffect(() => {
     axios.get(`${apiURL}/userProfile`)
@@ -23,17 +20,6 @@ const UserProfile = () => {
         console.error('Error fetching user profile:', error);
       });
   }, [apiURL]);
-
-  const handleLogout = async () => {
-    setConfirmLogout(false);
-    try {
-      await axios.post(`${apiURL}/logout`, {}, { withCredentials: true });
-    } catch (error) {
-      console.error('Error during logout:', error.message);
-    }
-    dispatch({ type: 'LOGOUT' });
-    navigation.navigate('Login', undefined, { pop: true });
-  };
 
   const handleResetPassword = () => {
     navigation.navigate('ResetPasswordPage', { email: user.email, previousScreen: 'UserProfile' }, { pop: true });
@@ -93,20 +79,6 @@ const UserProfile = () => {
           <ActivityIndicator size="large" color={colors.primary} style={styles.loading} />
         )}
 
-        <View style={styles.actions}>
-          <ListRow icon="information-outline" title="About RabDash" subtitle="The project and our partners" onPress={() => navigation.navigate('AboutUs', undefined, { pop: true })} />
-          <ListRow icon="logout" title="Log Out" tone="danger" showChevron={false} onPress={() => setConfirmLogout(true)} />
-        </View>
-
-        <AppModal
-          isVisible={confirmLogout}
-          message="Log out of RabDash?"
-          onBackdropPress={() => setConfirmLogout(false)}
-          actions={[
-            { label: 'Cancel', variant: 'secondary', onPress: () => setConfirmLogout(false) },
-            { label: 'Log Out', onPress: handleLogout },
-          ]}
-        />
     </Screen>
   );
 };
@@ -161,9 +133,7 @@ const styles = StyleSheet.create({
   loading: {
     marginTop: spacing.xxxl,
   },
-  actions: {
-    marginTop: spacing.xl,
-  },
+
 });
 
 export default UserProfile;
