@@ -7,11 +7,13 @@ import { colors, spacing, radii, typography, shadows } from '../theme/theme';
 // A tappable white card row: a tinted icon circle, a title, an optional
 // subtitle, and a chevron. Used for the lists of forms, records, downloads
 // and profile actions. `icon` is a MaterialCommunityIcons name.
-const ListRow = ({ icon, title, subtitle, onPress, tone = 'default', showChevron = true, disabled = false }) => {
+// Inside a ListGroup it drops its own card styling (`grouped`) and draws a
+// divider under itself unless it's the last row (`showDivider`).
+const ListRow = ({ icon, title, subtitle, onPress, tone = 'default', showChevron = true, disabled = false, grouped = false, showDivider = false }) => {
   const isDanger = tone === 'danger';
   return (
     <TouchableOpacity
-      style={[styles.row, disabled && styles.disabled]}
+      style={[styles.row, grouped && styles.grouped, showDivider && styles.divider, disabled && styles.disabled]}
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.7}
@@ -42,6 +44,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     minHeight: 64,
     ...shadows.sm,
+  },
+  grouped: {
+    borderRadius: 0,
+    marginBottom: 0,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  divider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
   },
   disabled: {
     opacity: 0.5,
