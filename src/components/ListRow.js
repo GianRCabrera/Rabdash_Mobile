@@ -11,13 +11,13 @@ import { colors, spacing, radii, typography, shadows } from '../theme/theme';
 // divider under itself unless it's the last row (`showDivider`).
 const ListRow = ({ icon, title, subtitle, onPress, tone = 'default', showChevron = true, disabled = false, grouped = false, showDivider = false }) => {
   const isDanger = tone === 'danger';
+  // Without onPress it's a plain information row (no tap feedback).
+  const Container = onPress ? TouchableOpacity : View;
+  const touchProps = onPress ? { onPress, disabled, activeOpacity: 0.7, accessibilityRole: 'button' } : {};
   return (
-    <TouchableOpacity
+    <Container
       style={[styles.row, grouped && styles.grouped, showDivider && styles.divider, disabled && styles.disabled]}
-      onPress={onPress}
-      disabled={disabled}
-      activeOpacity={0.7}
-      accessibilityRole="button"
+      {...touchProps}
     >
       {icon ? (
         <View style={styles.iconCircle}>
@@ -28,8 +28,8 @@ const ListRow = ({ icon, title, subtitle, onPress, tone = 'default', showChevron
         <Text style={[styles.title, isDanger && styles.dangerText]} numberOfLines={2}>{title}</Text>
         {subtitle ? <Text style={styles.subtitle} numberOfLines={2}>{subtitle}</Text> : null}
       </View>
-      {showChevron ? <Ionicons name="chevron-forward" size={20} color={colors.textOnSurfaceMuted} /> : null}
-    </TouchableOpacity>
+      {showChevron && onPress ? <Ionicons name="chevron-forward" size={20} color={colors.textOnSurfaceMuted} /> : null}
+    </Container>
   );
 };
 

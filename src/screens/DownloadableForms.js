@@ -3,7 +3,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { Buffer } from 'buffer';
 import { useAuth } from '../context/AuthContext';
 import { downloadsFor } from '../constants/catalog';
-import { AppModal, ListRow, MenuScreen } from '../components';
+import { AppModal, ListGroup, ListRow, MenuScreen } from '../components';
 
 // The Excel report templates, filtered by role (see constants/catalog.js).
 // DownloadableFormsPrivVet re-exports this.
@@ -54,16 +54,18 @@ const DownloadableForms = () => {
 
   return (
     <MenuScreen title="Downloadable Forms" showBack>
-      {downloadsFor(state.user.position).map((item) => (
-        <ListRow
-          key={item.key}
-          icon="microsoft-excel"
-          title={item.title}
-          subtitle={item.file}
-          showChevron={false}
-          onPress={() => handleDownload(item.file)}
-        />
-      ))}
+      <ListGroup>
+        {downloadsFor(state.user.position).map((item) => (
+          <ListRow
+            key={item.key}
+            icon="microsoft-excel"
+            title={item.title}
+            subtitle={item.file}
+            showChevron={false}
+            onPress={() => handleDownload(item.file)}
+          />
+        ))}
+      </ListGroup>
 
       <AppModal
         isVisible={isModalVisible}
