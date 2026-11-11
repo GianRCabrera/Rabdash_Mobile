@@ -3,7 +3,7 @@ import { NavigationContainer, useNavigationContainerRef } from '@react-navigatio
 import { createStackNavigator } from '@react-navigation/stack';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { Linking } from 'react-native'; // Correctly import Linking from react-native
-import queryString from 'query-string'; // Import query-string for URL parsing
+import { getResetPasswordEmail } from './src/utils/deepLink';
 import './src/api/axiosSessionInterceptor'; // Side-effect import: registers the global 401 handler once
 
 // Screens
@@ -142,11 +142,9 @@ const RootNavigator = () => {
     }
 
     const handleDeepLink = (event: { url: string }) => {
-      const url = event.url;
-      const parsedUrl = queryString.parseUrl(url);
-
-      if (parsedUrl.url.endsWith('reset-password') && parsedUrl.query.email) {
-        navigationRef.current?.navigate('ResetPasswordPage', { email: parsedUrl.query.email as string });
+      const email = getResetPasswordEmail(event.url);
+      if (email) {
+        navigationRef.current?.navigate('ResetPasswordPage', { email });
       }
     };
 
