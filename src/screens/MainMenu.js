@@ -1,35 +1,59 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import React, { useContext, useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StatusBar, Platform, StyleSheet } from 'react-native';
+import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { usesVetMenu } from '../constants/roles';
-import { AppModal, ListGroup, ListRow, MenuScreen, SectionTitle } from '../components';
-import { colors, spacing, typography } from '../theme/theme';
+import { AppModal, ListGroup, ListRow, MenuScreen, SidePanel } from '../components';
+import { colors, spacing, radii, typography, shadows } from '../theme/theme';
 import appConfig from '../../app.json';
 
 const APP_VERSION = appConfig.expo.version;
 
-// Home menu for every role. VetMenu (CVO, CVO Admin, RabDash) re-exports
+// One of the three main actions on the home screen.
+const ActionCard = ({ icon, title, subtitle, onPress }) => (
+  <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8} accessibilityRole="button">
+    <View style={styles.cardIcon}>
+      <MaterialCommunityIcons name={icon} size={30} color={colors.onPrimary} />
+    </View>
+    <View style={styles.cardText}>
+      <Text style={styles.cardTitle}>{title}</Text>
+      <Text style={styles.cardSubtitle}>{subtitle}</Text>
+    </View>
+    <View style={styles.cardArrow}>
+      <Ionicons name="arrow-forward" size={20} color={colors.primary} />
+    </View>
+  </TouchableOpacity>
+);
+
+// Home screen for every role. VetMenu (CVO, CVO Admin, RabDash) re-exports
 // this; the role only changes which form/archive/download screens it opens.
+// The account actions (profile, about, log out) live in a panel that slides
+// in from the round profile button in the header.
 const MainMenu = () => {
   const navigation = useNavigation();
   const { state, dispatch } = useAuth();
+  const insets = useContext(SafeAreaInsetsContext);
+  const topInset = insets ? insets.top : Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
   const apiURL = process.env.EXPO_PUBLIC_URL;
-  const { position } = state.user;
+  const { email, position } = state.user;
   const isVet = usesVetMenu(position);
+  const [profile, setProfile] = useState(null);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
-  const [firstName, setFirstName] = useState(null);
 
-  // The name isn't kept with the saved login, so fetch it for the greeting;
-  // if that fails (offline, backend waking up) the greeting has no name.
+  // The name isn't kept with the saved login, so fetch it for the greeting
+  // and the panel; if that fails (offline, backend waking up) both simply
+  // show no name.
   useEffect(() => {
     let active = true;
     axios
       .get(`${apiURL}/userProfile`)
       .then((response) => {
-        if (active && response.data?.name) setFirstName(response.data.name);
+        if (active && response.data) setProfile(response.data);
       })
       .catch(() => {});
     return () => {
@@ -37,18 +61,11 @@ const MainMenu = () => {
     };
   }, [apiURL]);
 
-  const now = new Date();
-  const hour = now.getHours();
-  const timeOfDay =
-    hour < 12
-      ? { text: 'Good morning', icon: 'white-balance-sunny' }
-      : hour < 18
-        ? { text: 'Good afternoon', icon: 'weather-sunset' }
-        : { text: 'Good evening', icon: 'weather-night' };
-  const greeting = `${timeOfDay.text}${firstName ? `, ${firstName}` : ''}`;
-  const today = now.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' });
-
   const go = (route) => () => navigation.navigate(route, undefined, { pop: true });
+  const goFromPanel = (route) => () => {
+    setPanelOpen(false);
+    navigation.navigate(route, undefined, { pop: true });
+  };
 
   const handleLogout = async () => {
     setConfirmLogout(false);
@@ -61,8 +78,41 @@ const MainMenu = () => {
     navigation.navigate('Login', undefined, { pop: true });
   };
 
+  const firstName = profile?.name;
+  const fullName = profile ? `${profile.name || ''} ${profile.last_name || ''}`.trim() : '';
+  const initials =
+    (fullName
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0))
+      .join('') || (email || '?').charAt(0)).toUpperCase();
+
+  const now = new Date();
+  const hour = now.getHours();
+  const timeOfDay =
+    hour < 12
+      ? { text: 'Good morning', icon: 'white-balance-sunny' }
+      : hour < 18
+        ? { text: 'Good afternoon', icon: 'weather-sunset' }
+        : { text: 'Good evening', icon: 'weather-night' };
+  const greeting = `${timeOfDay.text}${firstName ? `, ${firstName}` : ''}`;
+  const today = now.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  const profileButton = (
+    <TouchableOpacity
+      onPress={() => setPanelOpen(true)}
+      accessibilityRole="button"
+      accessibilityLabel="Open account menu"
+      hitSlop={8}
+      style={styles.avatarButton}
+    >
+      <Text style={styles.avatarButtonText}>{initials}</Text>
+    </TouchableOpacity>
+  );
+
   return (
-    <MenuScreen title="RabDash" badge={position} headerVariant="home">
+    <MenuScreen title="RabDash" badge={position} headerVariant="home" headerRight={profileButton}>
       <View style={styles.greetingRow}>
         <View style={styles.greetingIcon}>
           <MaterialCommunityIcons name={timeOfDay.icon} size={24} color={colors.primary} />
@@ -73,24 +123,59 @@ const MainMenu = () => {
         </View>
       </View>
 
-      <SectionTitle title="Work" first />
-      <ListGroup>
-        <ListRow size="large" icon="file-document-edit-outline" title="Input Forms" subtitle="Fill in a new report" onPress={go(isVet ? 'VetInputForms' : 'InputForms')} />
-        <ListRow size="large" icon="folder-open-outline" title="Form Archives" subtitle="View and edit past submissions" onPress={go(isVet ? 'VetArchiveMenu' : 'ClientDatabase')} />
-        <ListRow size="large" icon="file-download-outline" title="Downloadable Forms" subtitle="Excel report templates" onPress={go(isVet ? 'DownloadableForms' : 'DownloadableFormsPrivVet')} />
-      </ListGroup>
-
-      <SectionTitle title="Account" />
-      <ListGroup>
-        <ListRow size="large" icon="account-circle-outline" title="My Profile" subtitle="Your details and password" onPress={go('UserProfile')} />
-        <ListRow size="large" icon="information-outline" title="About RabDash" subtitle="The project and our partners" onPress={go('AboutUs')} />
-      </ListGroup>
-
-      <ListGroup style={styles.logoutGroup}>
-        <ListRow icon="logout" title="Log Out" tone="danger" showChevron={false} onPress={() => setConfirmLogout(true)} />
-      </ListGroup>
+      <ActionCard
+        icon="file-document-edit-outline"
+        title="Input Forms"
+        subtitle="Fill in a new report"
+        onPress={go(isVet ? 'VetInputForms' : 'InputForms')}
+      />
+      <ActionCard
+        icon="folder-open-outline"
+        title="Form Archives"
+        subtitle="View and edit past submissions"
+        onPress={go(isVet ? 'VetArchiveMenu' : 'ClientDatabase')}
+      />
+      <ActionCard
+        icon="file-download-outline"
+        title="Downloadable Forms"
+        subtitle="Excel report templates"
+        onPress={go(isVet ? 'DownloadableForms' : 'DownloadableFormsPrivVet')}
+      />
 
       <Text style={styles.version}>RabDash Mobile · v{APP_VERSION}</Text>
+
+      <SidePanel visible={panelOpen} onClose={() => setPanelOpen(false)}>
+        <View style={[styles.panelHeader, { paddingTop: topInset + spacing.xl }]}>
+          <View style={styles.panelAvatar}>
+            <Text style={styles.panelAvatarText}>{initials}</Text>
+          </View>
+          <Text style={styles.panelName} numberOfLines={1}>{fullName || 'RabDash user'}</Text>
+          {email ? <Text style={styles.panelEmail} numberOfLines={1}>{email}</Text> : null}
+          {position ? (
+            <View style={styles.panelChip}>
+              <Text style={styles.panelChipText}>{position}</Text>
+            </View>
+          ) : null}
+        </View>
+        <View style={styles.panelBody}>
+          <ListGroup>
+            <ListRow icon="account-circle-outline" title="My Profile" subtitle="Your details and password" onPress={goFromPanel('UserProfile')} />
+            <ListRow icon="information-outline" title="About RabDash" subtitle="The project and our partners" onPress={goFromPanel('AboutUs')} />
+          </ListGroup>
+          <ListGroup style={styles.panelLogout}>
+            <ListRow
+              icon="logout"
+              title="Log Out"
+              tone="danger"
+              showChevron={false}
+              onPress={() => {
+                setPanelOpen(false);
+                setConfirmLogout(true);
+              }}
+            />
+          </ListGroup>
+        </View>
+      </SidePanel>
 
       <AppModal
         isVisible={confirmLogout}
@@ -106,8 +191,21 @@ const MainMenu = () => {
 };
 
 const styles = StyleSheet.create({
-  // Same left padding and icon size as the large rows below, so the
-  // greeting's icon and text line up with the row icons and titles.
+  avatarButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: spacing.sm,
+  },
+  avatarButtonText: {
+    ...typography.bodyStrong,
+    fontSize: 17,
+    color: colors.primary,
+  },
+  // Same left padding as the cards below, so the greeting lines up with them.
   greetingRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -137,14 +235,97 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  logoutGroup: {
-    marginTop: spacing.xxl,
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radii.md + 4,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    minHeight: 96,
+    ...shadows.md,
+  },
+  cardIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: radii.md,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.lg,
+  },
+  cardText: {
+    flex: 1,
+  },
+  cardTitle: {
+    ...typography.subtitle,
+    color: colors.textPrimary,
+  },
+  cardSubtitle: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  cardArrow: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: spacing.sm,
   },
   version: {
     ...typography.caption,
     color: colors.textOnSurfaceMuted,
     textAlign: 'center',
     marginTop: spacing.xl,
+  },
+  panelHeader: {
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xl,
+  },
+  panelAvatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
+  panelAvatarText: {
+    ...typography.title,
+    color: colors.primary,
+  },
+  panelName: {
+    ...typography.subtitle,
+    color: colors.onPrimary,
+  },
+  panelEmail: {
+    ...typography.body,
+    color: colors.onPrimary,
+    opacity: 0.9,
+    marginTop: 2,
+  },
+  panelChip: {
+    backgroundColor: colors.surface,
+    borderRadius: radii.pill,
+    paddingVertical: 3,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.md,
+  },
+  panelChipText: {
+    ...typography.label,
+    color: colors.primary,
+  },
+  panelBody: {
+    padding: spacing.lg,
+  },
+  panelLogout: {
+    marginTop: spacing.lg,
   },
 });
 

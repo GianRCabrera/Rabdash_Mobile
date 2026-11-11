@@ -26,13 +26,9 @@ const AppHeader = ({ title, subtitle, onBack, showBack = !!onBack, right, showLo
         </View>
         <View style={styles.homeText}>
           <Text style={styles.homeTitle} numberOfLines={1}>{title}</Text>
-          <Text style={styles.homeTagline} numberOfLines={1}>Rabies control · Davao City</Text>
+          {subtitle ? <Text style={styles.homeTagline} numberOfLines={1}>{subtitle}</Text> : null}
         </View>
-        {subtitle ? (
-          <View style={styles.roleChip}>
-            <Text style={styles.roleChipText} numberOfLines={1}>{subtitle}</Text>
-          </View>
-        ) : null}
+        {right}
       </View>
     );
   }
@@ -100,22 +96,10 @@ const styles = StyleSheet.create({
     color: colors.onPrimary,
   },
   homeTagline: {
-    ...typography.caption,
+    ...typography.body,
     color: colors.onPrimary,
     opacity: 0.85,
     marginTop: 2,
-  },
-  roleChip: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.pill,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-    marginLeft: spacing.sm,
-    maxWidth: 140,
-  },
-  roleChipText: {
-    ...typography.label,
-    color: colors.primary,
   },
   bar: {
     flexDirection: 'row',
