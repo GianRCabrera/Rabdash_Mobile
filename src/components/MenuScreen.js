@@ -7,8 +7,8 @@ import { colors, spacing } from '../theme/theme';
 // header with the screen title (and the user's position as subtitle) over
 // the light background, then the button list. Being replaced by bottom tabs
 // in the navigation revamp.
-const MenuScreen = ({ title, badge, showBack = false, showLogo = false, headerVariant, headerRight, children }) => (
-  <Screen title={title} subtitle={badge} showBack={showBack} showLogo={showLogo} headerVariant={headerVariant} right={headerRight}>
+const MenuScreen = ({ title, badge, showBack = false, showLogo = false, headerVariant, headerRight, refreshControl, children }) => (
+  <Screen title={title} subtitle={badge} showBack={showBack} showLogo={showLogo} headerVariant={headerVariant} right={headerRight} refreshControl={refreshControl}>
     <View style={styles.buttonList}>{children}</View>
   </Screen>
 );

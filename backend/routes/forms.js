@@ -343,4 +343,68 @@ router.delete('/deleteRabiesExposureForm/:id', requireAuth, async (req, res) => 
   }
 });
 
+// "My activity" for the home screen: how many forms the logged-in user has
+// submitted this month and in total, and their 5 most recent submissions.
+// Always the user's own rows (every role, reviewers included), mobile DB
+// only. Keys match FORMS in the app's src/constants/catalog.js; the label
+// column is what each archive already searches by. Table and column names
+// are fixed literals here, never from the request.
+const SUMMARY_TABLES = [
+  { key: 'vaccination', table: 'vaccination_form', label: 'ownerName' },
+  { key: 'neuter', table: 'consent_form', label: 'client' },
+  { key: 'sample', table: 'bite_form', label: 'name' },
+  { key: 'exposure', table: 'exposure_form', label: 'name' },
+  { key: 'animalControl', table: 'control_form', label: 'cageNum' },
+  { key: 'schedule', table: 'schedule_form', label: 'title' },
+  { key: 'iec', table: 'iec_form', label: 'title' },
+  { key: 'budget', table: 'budget_form', label: 'year' },
+];
+const RECENT_LIMIT = 5;
+const MANILA_OFFSET_MS = 8 * 60 * 60 * 1000;
+
+// created_at is stored in UTC (nowMysql in lib/formHelpers.js), but "this
+// month" means the month in Davao (UTC+8): midnight on the 1st, Manila
+// time, expressed as a UTC 'YYYY-MM-DD HH:MM:SS' string.
+const manilaMonthStartUtc = (now = new Date()) => {
+  const manilaNow = new Date(now.getTime() + MANILA_OFFSET_MS);
+  const startUtc = Date.UTC(manilaNow.getUTCFullYear(), manilaNow.getUTCMonth(), 1) - MANILA_OFFSET_MS;
+  return new Date(startUtc).toISOString().slice(0, 19).replace('T', ' ');
+};
+
+router.get('/mySummary', requireAuth, async (req, res) => {
+  const username = req.session.user.email;
+  const monthStart = manilaMonthStartUtc();
+
+  const countQuery = SUMMARY_TABLES.map(
+    ({ table }) => `SELECT COUNT(*) AS total, COALESCE(SUM(created_at >= ?), 0) AS month FROM ${table} WHERE username = ?`
+  ).join(' UNION ALL ');
+  const countParams = SUMMARY_TABLES.flatMap(() => [monthStart, username]);
+
+  const recentQuery = `${SUMMARY_TABLES.map(
+    ({ key, table, label }) => `SELECT '${key}' AS form, id, ${label} AS label, created_at FROM ${table} WHERE username = ?`
+  ).join(' UNION ALL ')} ORDER BY created_at DESC LIMIT ${RECENT_LIMIT}`;
+  const recentParams = SUMMARY_TABLES.map(() => username);
+
+  try {
+    const [counts, recent] = await Promise.all([
+      queryDatabase(pool, countQuery, countParams),
+      queryDatabase(pool, recentQuery, recentParams),
+    ]);
+    res.json({
+      thisMonth: counts.reduce((sum, row) => sum + Number(row.month || 0), 0),
+      total: counts.reduce((sum, row) => sum + Number(row.total || 0), 0),
+      recent: recent.map((row) => ({
+        form: row.form,
+        id: row.id,
+        label: row.label === null || row.label === undefined ? '' : String(row.label),
+        createdAt: row.created_at,
+      })),
+    });
+  } catch (error) {
+    console.error('Error building activity summary:', error);
+    res.status(500).json({ message: 'An error occurred while loading your activity' });
+  }
+});
+
 module.exports = router;
+module.exports.manilaMonthStartUtc = manilaMonthStartUtc;

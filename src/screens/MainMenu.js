@@ -1,16 +1,34 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StatusBar, Platform, StyleSheet } from 'react-native';
+import React, { useCallback, useContext, useState } from 'react';
+import { View, Text, TouchableOpacity, RefreshControl, StatusBar, Platform, StyleSheet } from 'react-native';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { usesVetMenu } from '../constants/roles';
+import { FORMS } from '../constants/catalog';
+import { formatRelativeDay } from '../utils/relativeDate';
 import { AppModal, ListGroup, ListRow, MenuScreen, SectionTitle, SidePanel } from '../components';
 import { colors, spacing, radii, typography, shadows } from '../theme/theme';
 import appConfig from '../../app.json';
 
 const APP_VERSION = appConfig.expo.version;
+const FORM_BY_KEY = Object.fromEntries(FORMS.map((form) => [form.key, form]));
+
+// "12 this month · 148 total": how much the user has submitted.
+const StatStrip = ({ thisMonth, total }) => (
+  <View style={styles.stats}>
+    <View style={styles.stat}>
+      <Text style={styles.statNumber}>{thisMonth}</Text>
+      <Text style={styles.statLabel}>submitted this month</Text>
+    </View>
+    <View style={styles.statDivider} />
+    <View style={styles.stat}>
+      <Text style={styles.statNumber}>{total}</Text>
+      <Text style={styles.statLabel}>submitted in total</Text>
+    </View>
+  </View>
+);
 
 // A square tile for one of the main actions on the home screen.
 const ActionTile = ({ icon, title, subtitle, onPress }) => (
@@ -38,24 +56,43 @@ const MainMenu = () => {
   const { email, position } = state.user;
   const isVet = usesVetMenu(position);
   const [profile, setProfile] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [summaryFailed, setSummaryFailed] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
 
-  // The name isn't kept with the saved login, so fetch it for the greeting
-  // and the panel; if that fails (offline, backend waking up) both simply
-  // show no name.
-  useEffect(() => {
-    let active = true;
-    axios
-      .get(`${apiURL}/userProfile`)
-      .then((response) => {
-        if (active && response.data) setProfile(response.data);
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
+  // The name isn't kept with the saved login, so it's fetched for the
+  // greeting and the panel (if that fails, they simply show no name).
+  // The activity summary is fetched alongside it; if that fails, a small
+  // retry line replaces it and the rest of the page works as normal.
+  const load = useCallback(async () => {
+    setSummaryFailed(false);
+    const [profileResult, summaryResult] = await Promise.allSettled([
+      axios.get(`${apiURL}/userProfile`),
+      axios.get(`${apiURL}/mySummary`),
+    ]);
+    if (profileResult.status === 'fulfilled' && profileResult.value.data) setProfile(profileResult.value.data);
+    if (summaryResult.status === 'fulfilled' && summaryResult.value.data) {
+      setSummary(summaryResult.value.data);
+    } else {
+      setSummaryFailed(true);
+    }
   }, [apiURL]);
+
+  // Reload whenever the home screen comes back into view, so a report just
+  // submitted shows up in the numbers and the recent list.
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }, [load]);
 
   const go = (route) => () => navigation.navigate(route, undefined, { pop: true });
   const goFromPanel = (route) => () => {
@@ -108,7 +145,13 @@ const MainMenu = () => {
   );
 
   return (
-    <MenuScreen title="RabDash" badge={position} headerVariant="home" headerRight={profileButton}>
+    <MenuScreen
+      title="RabDash"
+      badge={position}
+      headerVariant="home"
+      headerRight={profileButton}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[colors.primary]} tintColor={colors.primary} />}
+    >
       <View style={styles.greetingRow}>
         <View style={styles.greetingIcon}>
           <MaterialCommunityIcons name={timeOfDay.icon} size={24} color={colors.primary} />
@@ -148,6 +191,48 @@ const MainMenu = () => {
           <Text style={styles.tileSubtitle}>Excel report templates</Text>
         </View>
       </TouchableOpacity>
+
+      <SectionTitle title="Your activity" />
+      {summaryFailed && !summary ? (
+        <TouchableOpacity onPress={load} style={styles.activityError} accessibilityRole="button">
+          <Text style={styles.activityErrorText}>
+            Couldn't load your activity · <Text style={styles.retry}>Retry</Text>
+          </Text>
+        </TouchableOpacity>
+      ) : !summary ? (
+        <>
+          <View style={[styles.placeholder, styles.placeholderStats]} />
+          <View style={[styles.placeholder, styles.placeholderRow]} />
+        </>
+      ) : summary.total === 0 ? (
+        <ListGroup>
+          <ListRow
+            icon="file-document-outline"
+            title="No submissions yet"
+            subtitle="Start with Input Forms"
+            onPress={go(isVet ? 'VetInputForms' : 'InputForms')}
+          />
+        </ListGroup>
+      ) : (
+        <>
+          <StatStrip thisMonth={summary.thisMonth} total={summary.total} />
+          <ListGroup>
+            {summary.recent.map((item) => {
+              const form = FORM_BY_KEY[item.form];
+              if (!form) return null;
+              return (
+                <ListRow
+                  key={`${item.form}-${item.id}`}
+                  icon={form.icon}
+                  title={item.label ? `${form.title} · ${item.label}` : form.title}
+                  subtitle={formatRelativeDay(item.createdAt)}
+                  onPress={go(form.archiveRoute)}
+                />
+              );
+            })}
+          </ListGroup>
+        </>
+      )}
 
       <SectionTitle title="More" />
       <ListGroup>
@@ -297,6 +382,57 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  stats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
+    paddingVertical: spacing.lg,
+    marginBottom: spacing.md,
+    ...shadows.sm,
+  },
+  stat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statNumber: {
+    ...typography.largeTitle,
+    color: colors.primary,
+  },
+  statLabel: {
+    ...typography.caption,
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  statDivider: {
+    width: StyleSheet.hairlineWidth,
+    alignSelf: 'stretch',
+    backgroundColor: colors.border,
+  },
+  placeholder: {
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radii.md,
+    marginBottom: spacing.md,
+  },
+  placeholderStats: {
+    height: 88,
+  },
+  placeholderRow: {
+    height: 64,
+  },
+  activityError: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  activityErrorText: {
+    ...typography.body,
+    color: colors.textSecondary,
+  },
+  retry: {
+    color: colors.primary,
+    fontWeight: '600',
   },
   version: {
     ...typography.caption,
