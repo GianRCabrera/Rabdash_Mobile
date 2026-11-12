@@ -7,7 +7,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { usesVetMenu } from '../constants/roles';
-import { AppModal, ListGroup, ListRow, MenuScreen, SidePanel } from '../components';
+import { AppModal, ListGroup, ListRow, MenuScreen, SectionTitle, SidePanel } from '../components';
 import { colors, spacing, radii, typography, shadows } from '../theme/theme';
 import appConfig from '../../app.json';
 
@@ -136,19 +136,28 @@ const MainMenu = () => {
           subtitle="Past submissions"
           onPress={go(isVet ? 'VetArchiveMenu' : 'ClientDatabase')}
         />
-        <ActionTile
-          icon="file-download-outline"
-          title="Downloads"
-          subtitle="Excel templates"
-          onPress={go(isVet ? 'DownloadableForms' : 'DownloadableFormsPrivVet')}
-        />
-        <ActionTile
-          icon="information-outline"
-          title="About"
-          subtitle="Project & partners"
-          onPress={go('AboutUs')}
-        />
       </View>
+
+      <TouchableOpacity
+        style={styles.wideCard}
+        onPress={go(isVet ? 'DownloadableForms' : 'DownloadableFormsPrivVet')}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+      >
+        <View style={styles.tileIcon}>
+          <MaterialCommunityIcons name="file-download-outline" size={28} color={colors.onPrimary} />
+        </View>
+        <View style={styles.wideText}>
+          <Text style={styles.tileTitle}>Downloadable Forms</Text>
+          <Text style={styles.tileSubtitle}>Excel report templates</Text>
+        </View>
+        <Ionicons name="arrow-forward" size={20} color={colors.primary} />
+      </TouchableOpacity>
+
+      <SectionTitle title="More" />
+      <ListGroup>
+        <ListRow icon="information-outline" title="About RabDash" subtitle="The project and our partners" onPress={go('AboutUs')} />
+      </ListGroup>
 
       <Text style={styles.version}>RabDash Mobile · v{APP_VERSION}</Text>
 
@@ -247,6 +256,19 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     rowGap: spacing.lg,
+  },
+  wideCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radii.md + 4,
+    padding: spacing.lg,
+    marginTop: spacing.lg,
+    ...shadows.md,
+  },
+  wideText: {
+    flex: 1,
+    marginLeft: spacing.lg,
   },
   tile: {
     width: '47.5%',
