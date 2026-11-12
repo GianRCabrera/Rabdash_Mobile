@@ -1,176 +1,138 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Image, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import Icon from '@expo/vector-icons/MaterialIcons';
-import { AppButton, AppCard, ScreenHeader, menuStyles } from '../components';
-import { colors, spacing, typography, radii } from '../theme/theme';
+import { AppButton, ListGroup, ListRow, Screen, SectionTitle } from '../components';
+import { colors, spacing, typography, radii, shadows } from '../theme/theme';
+
+const initialsOf = (user) =>
+  [user.name, user.last_name]
+    .map((part) => (part || '').trim().charAt(0))
+    .join('')
+    .toUpperCase() || (user.email || '?').charAt(0).toUpperCase();
 
 const UserProfile = () => {
   const navigation = useNavigation();
   const apiURL = process.env.EXPO_PUBLIC_URL || 'http://localhost:3000';
   const [user, setUser] = useState(null);
+  const [failed, setFailed] = useState(false);
 
-  useEffect(() => {
-    axios.get(`${apiURL}/userProfile`)
-      .then(response => {
-        setUser(response.data);
-      })
-      .catch(error => {
+  const load = useCallback(() => {
+    setFailed(false);
+    axios
+      .get(`${apiURL}/userProfile`)
+      .then((response) => setUser(response.data))
+      .catch((error) => {
         console.error('Error fetching user profile:', error);
+        setFailed(true);
       });
   }, [apiURL]);
 
-  const handleBackToMainMenu = () => {
-    if (user && user.position) {
-      switch (user.position) {
-        case 'CVO':
-        case 'RabDash':
-        case 'CVO Admin':
-          navigation.navigate('VetMenu', undefined, { pop: true });
-          break;
-        case 'Private Veterinarian':
-          navigation.navigate('MainMenu', undefined, { pop: true });
-          break;
-        default:
-          console.warn('Unknown user position:', user.position);
-      }
-    } else {
-      console.warn('User position is undefined');
-    }
-  };
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  const handleResetPassword = () => {
+  const handleChangePassword = () => {
     navigation.navigate('ResetPasswordPage', { email: user.email, previousScreen: 'UserProfile' }, { pop: true });
   };
 
+  const fullName = user ? `${user.name || ''} ${user.last_name || ''}`.trim() : '';
+
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <ScreenHeader title="User Profile" />
-
-        {user ? (
-          <AppCard style={styles.card}>
-            <Image source={require('../../assets/avatar.png')} style={styles.avatar} />
-            <Text style={styles.name}>{`${user.name || ''} ${user.last_name || ''}`}</Text>
-
-            <View style={styles.infoList}>
-              <View style={styles.infoRow}>
-                <Icon name="person" size={20} color={colors.primary} style={styles.icon} />
-                <View style={styles.infoTextGroup}>
-                  <Text style={styles.infoLabel}>First Name</Text>
-                  <Text style={styles.infoValue}>{user.name || 'N/A'}</Text>
-                </View>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.infoRow}>
-                <Icon name="person-outline" size={20} color={colors.primary} style={styles.icon} />
-                <View style={styles.infoTextGroup}>
-                  <Text style={styles.infoLabel}>Last Name</Text>
-                  <Text style={styles.infoValue}>{user.last_name || 'N/A'}</Text>
-                </View>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.infoRow}>
-                <Icon name="email" size={20} color={colors.primary} style={styles.icon} />
-                <View style={styles.infoTextGroup}>
-                  <Text style={styles.infoLabel}>Email</Text>
-                  <Text style={styles.infoValue}>{user.email || 'N/A'}</Text>
-                </View>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.infoRow}>
-                <Icon name="work" size={20} color={colors.primary} style={styles.icon} />
-                <View style={styles.infoTextGroup}>
-                  <Text style={styles.infoLabel}>Position</Text>
-                  <Text style={styles.infoValue}>{user.position || 'N/A'}</Text>
-                </View>
-              </View>
+    <Screen title="My Profile" showBack>
+      {user ? (
+        <>
+          <View style={styles.header}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{initialsOf(user)}</Text>
             </View>
+            <Text style={styles.name}>{fullName || user.email}</Text>
+            {user.position ? (
+              <View style={styles.chip}>
+                <Text style={styles.chipText}>{user.position}</Text>
+              </View>
+            ) : null}
+          </View>
 
-            <AppButton title="Reset Password" variant="primary" onPress={handleResetPassword} style={styles.resetButton} />
-          </AppCard>
-        ) : (
-          <ActivityIndicator size="large" color={colors.onPrimary} style={styles.loading} />
-        )}
+          <SectionTitle title="Details" first />
+          <ListGroup>
+            <ListRow icon="account-outline" title={fullName || 'N/A'} subtitle="Name" />
+            <ListRow icon="email-outline" title={user.email || 'N/A'} subtitle="Email" />
+            <ListRow icon="briefcase-outline" title={user.position || 'N/A'} subtitle="Position" />
+          </ListGroup>
 
-        <AppButton
-          title="Main Menu"
-          variant="ghost"
-          onPress={handleBackToMainMenu}
-          style={menuStyles.backButton}
-          textStyle={menuStyles.backButtonText}
-        />
-      </ScrollView>
-    </View>
+          <SectionTitle title="Security" />
+          <ListGroup>
+            <ListRow icon="lock-reset" title="Change password" subtitle="Requires your current password" onPress={handleChangePassword} />
+          </ListGroup>
+        </>
+      ) : failed ? (
+        <View style={styles.message}>
+          <Text style={styles.messageText}>Couldn't load your profile. Check your connection and try again.</Text>
+          <AppButton title="Try again" variant="secondary" onPress={load} style={styles.retry} />
+        </View>
+      ) : (
+        <ActivityIndicator size="large" color={colors.primary} style={styles.loading} />
+      )}
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.primary,
-    paddingTop: spacing.xxxl * 1.5,
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xl,
-  },
-  scrollContent: {
-    paddingBottom: spacing.xxxl,
-  },
-  card: {
+  header: {
     alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
+    ...shadows.sm,
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: radii.pill,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: spacing.md,
   },
-  name: {
+  avatarText: {
     ...typography.title,
+    color: colors.primary,
+  },
+  name: {
+    ...typography.subtitle,
     color: colors.textPrimary,
-    marginBottom: spacing.xl,
+    textAlign: 'center',
   },
-  infoList: {
-    width: '100%',
+  chip: {
+    backgroundColor: colors.primarySoft,
+    borderRadius: radii.pill,
+    paddingVertical: 3,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.sm,
   },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    paddingVertical: spacing.sm,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  icon: {
-    marginRight: spacing.md,
-  },
-  infoTextGroup: {
-    flex: 1,
-  },
-  infoLabel: {
+  chipText: {
     ...typography.label,
-    color: colors.textSecondary,
-  },
-  infoValue: {
-    ...typography.bodyStrong,
-    color: colors.textPrimary,
-    marginTop: spacing.xs / 2,
-  },
-  resetButton: {
-    width: '100%',
-    marginTop: spacing.lg,
+    color: colors.primary,
   },
   loading: {
     marginTop: spacing.xxxl,
+  },
+  message: {
+    alignItems: 'center',
+    marginTop: spacing.xxxl,
+    paddingHorizontal: spacing.lg,
+  },
+  messageText: {
+    ...typography.body,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  retry: {
+    marginTop: spacing.lg,
+    minWidth: 160,
   },
 });
 

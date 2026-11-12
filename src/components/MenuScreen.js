@@ -1,45 +1,20 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
-import ScreenHeader from './ScreenHeader';
+import { View, StyleSheet } from 'react-native';
+import Screen from './Screen';
 import { colors, spacing } from '../theme/theme';
 
-// Shared layout for the app's grid-of-buttons menu screens (MainMenu, VetMenu,
-// InputForms, VetInputForms, ClientDatabase, VetArchiveMenu): solid red
-// background (matching Login/Landing/FormScreen), a white header card (title
-// + optional subtitle, e.g. the user's position), and the button list below
-// it. Header and buttons live in ONE centered group (not a fixed header +
-// independently-positioned list) — the same fix Landing_page needed: two
-// separately-positioned blocks drift apart or leave a lopsided gap depending
-// on content length, while one group centered as a whole keeps consistent
-// internal spacing and puts any leftover space symmetrically above/below
-// instead of dumping it all at the bottom. On the longer 8-9 button screens
-// (VetInputForms/VetArchiveMenu) the content simply exceeds the centered
-// space and scrolls from the top as normal.
-const MenuScreen = ({ title, badge, children }) => {
-  return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <ScreenHeader title={title} subtitle={badge} />
-        <View style={styles.buttonList}>{children}</View>
-      </ScrollView>
-    </View>
-  );
-};
+// Layout for the menu screens (MainMenu, VetMenu, InputForms, ...): the red
+// header with the screen title (and the user's position as subtitle) over
+// the light background, then the button list. Being replaced by bottom tabs
+// in the navigation revamp.
+const MenuScreen = ({ title, badge, showBack = false, showLogo = false, headerVariant, headerRight, refreshControl, children }) => (
+  <Screen title={title} subtitle={badge} showBack={showBack} showLogo={showLogo} headerVariant={headerVariant} right={headerRight} refreshControl={refreshControl}>
+    <View style={styles.buttonList}>{children}</View>
+  </Screen>
+);
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.primary,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.xxl,
-    paddingVertical: spacing.xxxl,
-  },
   buttonList: {
-    alignItems: 'center',
-    marginTop: spacing.xl,
     width: '100%',
   },
 });
@@ -71,14 +46,17 @@ export const menuStyles = StyleSheet.create({
     gap: spacing.md,
     marginTop: spacing.lg,
   },
+  // Outline red-on-light: used on light screens (archives, profile, about)
+  // as well as the menus, so it must not be white.
   backButton: {
     width: '100%',
     marginTop: spacing.lg,
     borderWidth: 1.5,
-    borderColor: colors.onPrimary,
+    borderColor: colors.primary,
+    backgroundColor: colors.surface,
   },
   backButtonText: {
-    color: colors.onPrimary,
+    color: colors.primary,
   },
 });
 

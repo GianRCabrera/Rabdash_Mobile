@@ -9,6 +9,9 @@ export const colors = {
   // Brand — unchanged from every existing screen.
   primary: '#E74A3B',
   primaryDark: '#C43A2D', // pressed/active state, derived from primary
+  // Header bars: the deeper red keeps small white text readable outdoors
+  // (5.3:1 vs 3.9:1 for primary).
+  header: '#C43A2D',
   onPrimary: '#FFFFFF', // text/icons on top of primary
 
   // Neutrals — a handful of screens already reached for Tailwind's slate
@@ -24,6 +27,11 @@ export const colors = {
 
   danger: '#D64545',
   success: '#2E9E5B',
+
+  // Revamp (Nov 2026): light screens with red accents.
+  primarySoft: '#FDECEA', // tinted icon circles, info strips
+  surfaceMuted: '#F1F2F4', // subtle fills inside cards
+  overlay: 'rgba(0,0,0,0.5)', // behind modals
 };
 
 // 4px base unit — every existing padding/margin value (5, 8, 10, 15, 20)
@@ -70,5 +78,18 @@ export const shadow = {
   elevation: 3,
 };
 
-const theme = { colors, spacing, typography, radii, shadow };
+// Two strengths for the light layouts: `sm` for list rows and cards that sit
+// on the light background, `md` for things that float (headers, modals).
+export const shadows = {
+  sm: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  md: shadow,
+};
+
+const theme = { colors, spacing, typography, radii, shadow, shadows };
 export default theme;

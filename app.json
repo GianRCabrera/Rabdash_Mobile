@@ -44,7 +44,10 @@
           "backgroundColor": "#ffffff",
           "imageWidth": 200
         }
-      ]
+      ],
+      "expo-asset",
+      "expo-sharing",
+      "expo-status-bar"
     ],
     "owner": "gianlangpo21"
   }

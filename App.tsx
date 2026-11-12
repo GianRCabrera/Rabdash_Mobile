@@ -48,6 +48,8 @@ import DownloadableFormsPrivVet from './src/screens/DownloadableFormsPrivVet';
 import Landing_page from './src/screens/Landing_page';
 import withAuthGuard from './src/context/AuthGuard';
 import { VET_MENU_POSITIONS, usesVetMenu } from './src/constants/roles';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 
 // Screens below require a logged-in session; VetMenu additionally requires
 // the CVO/RabDash role. Public screens (Landing_page, Login, ForgotPassword,
@@ -217,9 +219,12 @@ const RootNavigator = () => {
 };
 
 const App = () => (
-  <AuthProvider>
-    <RootNavigator />
-  </AuthProvider>
+  <SafeAreaProvider>
+    <StatusBar style="light" />
+    <AuthProvider>
+      <RootNavigator />
+    </AuthProvider>
+  </SafeAreaProvider>
 );
 
 export default App;

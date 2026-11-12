@@ -7,11 +7,9 @@ import {
   ArchiveSearchBar,
   ArchiveListItem,
   ArchivePagination,
-  AppButton,
-  menuStyles,
 } from '../components';
 import { useAuth } from '../context/AuthContext';
-import { canEditRecord, canViewAll, usesVetMenu } from '../constants/roles';
+import { canEditRecord, canViewAll } from '../constants/roles';
 
 const REVIEWER_PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -169,17 +167,6 @@ const Field_vacc_archives = () => {
     }
   };
 
-  const handleBackPress = () => {
-    const position = user?.position;
-    if (usesVetMenu(position)) {
-      navigation.navigate('VetArchiveMenu', undefined, { pop: true });
-    } else if (position === 'Private Veterinarian') {
-      navigation.navigate('ClientDatabase', undefined, { pop: true });
-    } else {
-      console.warn('Unknown user position:', position);
-    }
-  };
-
   const handleDeletePress = (item) => {
     setDeletableItem(item);
     toggleDeleteModal();
@@ -312,14 +299,6 @@ const Field_vacc_archives = () => {
         hasNext={hasNext}
         onPrev={handlePreviousPage}
         onNext={handleNextPage}
-      />
-
-      <AppButton
-        title="Archives Menu"
-        variant="ghost"
-        onPress={handleBackPress}
-        style={menuStyles.backButton}
-        textStyle={menuStyles.backButtonText}
       />
 
       <AppModal
