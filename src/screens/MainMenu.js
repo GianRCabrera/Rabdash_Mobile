@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity, StatusBar, Platform, StyleSheet } from 'r
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import Ionicons from '@expo/vector-icons/Ionicons';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { usesVetMenu } from '../constants/roles';
@@ -16,11 +15,8 @@ const APP_VERSION = appConfig.expo.version;
 // A square tile for one of the main actions on the home screen.
 const ActionTile = ({ icon, title, subtitle, onPress }) => (
   <TouchableOpacity style={styles.tile} onPress={onPress} activeOpacity={0.8} accessibilityRole="button">
-    <View style={styles.tileTop}>
-      <View style={styles.tileIcon}>
-        <MaterialCommunityIcons name={icon} size={28} color={colors.onPrimary} />
-      </View>
-      <Ionicons name="arrow-forward" size={20} color={colors.primary} />
+    <View style={styles.tileIcon}>
+      <MaterialCommunityIcons name={icon} size={28} color={colors.onPrimary} />
     </View>
     <View>
       <Text style={styles.tileTitle} numberOfLines={1}>{title}</Text>
@@ -148,10 +144,9 @@ const MainMenu = () => {
           <MaterialCommunityIcons name="file-download-outline" size={28} color={colors.onPrimary} />
         </View>
         <View style={styles.wideText}>
-          <Text style={styles.tileTitle}>Downloadable Forms</Text>
+          <Text style={styles.wideTitle}>Downloadable Forms</Text>
           <Text style={styles.tileSubtitle}>Excel report templates</Text>
         </View>
-        <Ionicons name="arrow-forward" size={20} color={colors.primary} />
       </TouchableOpacity>
 
       <SectionTitle title="More" />
@@ -270,19 +265,18 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: spacing.lg,
   },
+  wideTitle: {
+    ...typography.bodyStrong,
+    fontSize: 17,
+    color: colors.textPrimary,
+  },
   tile: {
     width: '47.5%',
-    aspectRatio: 1,
-    justifyContent: 'space-between',
+    aspectRatio: 1.2,
     backgroundColor: colors.surface,
     borderRadius: radii.md + 4,
     padding: spacing.lg,
     ...shadows.md,
-  },
-  tileTop: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
   },
   tileIcon: {
     width: 52,
@@ -294,6 +288,7 @@ const styles = StyleSheet.create({
   },
   tileTitle: {
     ...typography.bodyStrong,
+    marginTop: spacing.lg,
     fontSize: 17,
     color: colors.textPrimary,
   },
@@ -305,7 +300,7 @@ const styles = StyleSheet.create({
   },
   version: {
     ...typography.caption,
-    color: colors.textOnSurfaceMuted,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginTop: spacing.xl,
   },

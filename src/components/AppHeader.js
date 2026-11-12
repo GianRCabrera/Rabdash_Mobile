@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
   homeBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.header,
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xl,
     borderBottomLeftRadius: radii.md * 1.5,
@@ -96,15 +96,14 @@ const styles = StyleSheet.create({
     color: colors.onPrimary,
   },
   homeTagline: {
-    ...typography.body,
+    ...typography.bodyStrong,
     color: colors.onPrimary,
-    opacity: 0.85,
     marginTop: 2,
   },
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.header,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
     minHeight: 56,

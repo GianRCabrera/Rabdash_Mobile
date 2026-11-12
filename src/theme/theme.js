@@ -9,6 +9,9 @@ export const colors = {
   // Brand — unchanged from every existing screen.
   primary: '#E74A3B',
   primaryDark: '#C43A2D', // pressed/active state, derived from primary
+  // Header bars: the deeper red keeps small white text readable outdoors
+  // (5.3:1 vs 3.9:1 for primary).
+  header: '#C43A2D',
   onPrimary: '#FFFFFF', // text/icons on top of primary
 
   // Neutrals — a handful of screens already reached for Tailwind's slate
